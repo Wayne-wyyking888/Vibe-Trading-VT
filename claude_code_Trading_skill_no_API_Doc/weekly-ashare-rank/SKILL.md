@@ -40,7 +40,7 @@ Python 引擎（免费东财/新浪/腾讯行情）+ 自带 WebSearch 完成"量
 
 ### 选股模式 = 一句话搞定，我自动编排这几步（用户无需手动跑任何东西）
 1. **解析参数** N/板块/top。
-2. **权重自校准（自动，必要时才跑）**：检查 `weights.json` 是否存在、`fwd_days==N` 且 ≤14 天。
+2. **权重自校准（自动，必要时才跑）**：检查 `weights.json` 是否存在、`fwd_days==N` 且 ≤3 天。
    不满足就先自动跑一次回测刷新（约 1 分钟，告诉用户"首次/换持有天数，先校准因子权重"）：
    ```powershell
    python "...\ashare_weekly_rank.py" --backtest --hold-days N --bt-sample 60

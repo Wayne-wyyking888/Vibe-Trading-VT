@@ -41,6 +41,7 @@ claude_code_Trading_skill_no_API_Doc/
 
 现有 skill：
 - **weekly-ashare-rank** — 周度A股选股排名（量化因子 + 消息催化剂 + 风险三方辩论）。
+- **stock-diagnostic** — 单只A股持仓深度诊断（给代码+成本价，5-agent 辩论：技术/基本面/消息中英文/资金板块/风险裁决 → 综合裁定 + 结合成本的加仓/持有/减仓/止损建议）。复用 weekly-ashare-rank 引擎做数据客户端。
 
 ---
 
