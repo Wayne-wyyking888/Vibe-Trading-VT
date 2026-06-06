@@ -29,7 +29,8 @@
 ```
 
 > 调用后我（Claude Code）会：解析参数 → 自动查清 **T / 买入日T+1 / 最晚卖出日T+N 的真实日期**（含春节国庆等节假日）
-> → 必要时自动校准权重 → 跑量化引擎 + WebSearch 催化剂 + 风险综合 → 给最终排名表。**0 API、0 额外花费。**
+> → 必要时自动校准权重**并验证排名 edge** → 跑量化引擎(全市场~600只翻页扫描 + 跨源价格校验) + WebSearch 催化剂 + 风险综合
+> → **Agent④ 复核(建议都 verify 过)** → 给最终排名表。**0 API、0 额外花费。**
 
 参数对照：`天数/持有/hold/N`→持有交易日数(默认5)；`板块/行业/sector`→限定板块(默认全市场)；`top/数量`→输出几只(默认8)。
 
@@ -43,12 +44,12 @@
 
 Vibe-Trading 自带 swarm（`agent/src/swarm/presets/`）每个 agent 都调外部 LLM，需 API key/Ollama。
 本 skill 反过来：**Claude Code 本身就是大脑**，读 `SKILL.md` 后亲自跑 Python 引擎（免费行情）+
-自带 WebSearch + 自己判断排名。0 API、0 额外花费。
+自带 WebSearch + 自己判断排名 + 自己回测验证。0 API、0 额外花费。四个 agent：①量化筛选 ②催化剂 ③风险定价 ④验证复核。
 
 ## 2. 文件结构
 ```
 weekly-ashare-rank/
-├── SKILL.md                 # Claude Code 执行流程（三方辩论 + 参数解析 + 跳空规则）
+├── SKILL.md                 # Claude Code 执行流程（四方辩论:量化/催化剂/风险/验证 + 参数解析 + 跳空规则）
 ├── DOC.md                   # 本文件
 ├── ashare_weekly_rank.py    # 量化引擎（Agent①）+ 因子IC回测 + HTML报告渲染
 ├── recheck.py               # T+1 盘前复核（跳空/破位 → 可买/等回调/放弃）
@@ -66,15 +67,21 @@ python ashare_weekly_rank.py [选项]
   --top K           最终输出数量。默认15（skill 默认传8）
   --out 路径.json   结果写JSON
   --backtest        跑因子IC回测，产出 weights.json（不出选股）
-  --bt-sample M     回测样本股数。默认60
+  --validate        走样本验证『综合分排名』本身的 edge：Top-K超额/胜率/多空价差/排名IC + 裁定（不出选股）
+  --val-topk K      验证时每个横截面取前K只。默认5
+  --shrink λ        回测桶权重向中性1.0收缩的系数[0~1]。默认0.5(0=纯回测,1=全中性)，降过拟合
+  --bt-sample M     回测/验证样本股数。默认60
   --weights auto    使用 weights.json 的回测权重（或给文件路径）
   --no-cache        禁用缓存
   --refresh         强制重拉（绕过读缓存）
+  --no-verify       跳过最终候选的跨源价格校验（默认开启）
 ```
 > Windows：先刷新 PATH，且行情请求要 `dangerouslyDisableSandbox: true`（沙箱拦外网）。
 
 ### 数据流水线
 1. **快照/universe**（按成交额降序取前600）：东方财富 clist → 新浪 Market_Center → 种子(腾讯报价)。
+   - **东财 clist 单页硬上限100行**，引擎用 `pn` 翻页累计到600（早期版本误以为 `pz` 生效→实际只扫前100，
+     universe 缩水6倍、漏掉大量中盘短线机会；现已修复，真·全市场前600）。
    - 盘前/收盘后实时数据归零时，自动用K线最后完整交易日兜底。
 2. **初筛**：剔除 ST/退市/北交所 → 流通≥15亿 → 成交额≥1亿 → 剔大跌；**涨停票保留**（后续打标）。
 3. **粗排**：量比/换手/涨幅取前 `pool` 拉K线。
@@ -107,7 +114,31 @@ python ashare_weekly_rank.py [选项]
 - 输出每因子 **IC均值 / ICIR / |IC| / 截面日数**；按经济含义归 5 桶，用平均 |IC| 推**建议权重**写入 weights.json。
 - 解读：|IC|>0.03 有效、>0.05 较强；ICIR>0.5 稳定。
 - 实测（40样本/25截面/5日窗口）：量比、20日动量、60日位置 IC 最高(~0.07)；盘口/反转较弱 → 权重自动下调。
-- 用法：先 `--backtest --hold-days N` 刷权重，再正式跑 `--weights auto`。
+- **权重收缩(shrinkage，`--shrink`，默认0.5)**：桶权重 |IC| 的估计标准误(≈0.03)与均值(≈0.05)同量级，
+  直接重注极端配比样本外不稳。引擎把原始配比向中性1.0收缩：`w=0.5×1.0+0.5×w_raw`，weights.json 同时存
+  `weights_raw`(收缩前)与 `weights`(收缩后=实际使用)。**实测收缩0.5 在 Top-K 超额/价差/胜率上均优于纯回测与全中性两端**
+  (超额 1.63%→1.96%、胜率 62.4%→65.6%)，且让"多久 re-backtest"不再敏感。`--shrink 0` 关闭、`--shrink 1` 全中性。
+- 用法：先 `--backtest --hold-days N` 刷权重(已含收缩)，再正式跑 `--weights auto`。
+- **再校准频率**：刻意是**周度(≤7天)**而非每日——每日 refit 只会去拟合抽样/构成噪声(样本是"当前"高流动票、名单天天换)，
+  反而过拟合；真正每天刷新的是行情/因子值/催化剂，权重这个元参数不该天天动。规律真变了由 `--validate` 裁定兜底。
+
+## 4a2. 综合分实战验证（--validate，Phase2b）—— 让"建议都 verify 过"的核心
+因子IC只回答"单因子有没有预测力"，**不等于"用户照着买的那张综合分排名表有没有 edge"**。
+`--validate` 直接验证后者：在历史每个横截面，用**与实盘完全相同的 `composite()` 打分**取 Top-K，
+按 **T+1 开盘买入、持有 N 个交易日(收盘卖)** 算真实收益，逐截面汇总。无未来函数。
+- 输出：`Top-K平均收益 / 市场平均 / Bottom-K平均 / 超额(Top−市场) / 多空价差(Top−Bottom) / Top组胜率 / 排名IC·ICIR / 裁定`。
+- **裁定**自动分三档：`通过`(超额>0且价差>0且胜率≥50)、`弱通过`(仅小幅超额)、`未通过`(没跑赢市场)；
+  Agent④ 据此设**置信度上限**：未通过→不给「高」、提示轻仓。
+- 实测（40样本/25截面/5日窗口，2026-06）：Top5 +4.62% vs 市场 +2.99%（超额+1.63%）、多空价差+2.9%、
+  胜率62.4%、排名IC 0.076 → **通过**。说明当前综合分(含过热/连板惩罚后)整体有正向选择力。
+- ⚠ **幸存者偏差**：样本取自"当前"高流动性股票回溯历史，绝对收益偏乐观；**应看相对指标**(超额/价差/胜率)是否稳定为正。
+- 用法：`--validate --hold-days N --bt-sample 60 --val-topk 5 --out validate_latest.json`。
+
+## 4a3. 跨源价格校验（每次选股自动，Agent④）
+选股末尾对**最终候选**逐只做 **东财K线 vs 腾讯K线 收盘价**交叉比对，写进结果 JSON 的 `verify` 字段：
+- `一致`(偏差≤1%) / `存疑(跨源偏差大)`(>1%，可能除权未对齐或脏数据，需人工复核) / `单源未校验`(东财被限流时只剩一源)。
+- 目的：买入价/止损/目标都从收盘价派生，**单一数据源错价会直接污染建议**；交叉校验把这种风险挡在出表前。
+- `--no-verify` 可关闭。另：结果 JSON 顶层新增 `spot_source`(实际行情源) 与 `sanity_flags`(universe偏小/兜底源/价格存疑等显式警示)。
 
 ## 4b. HTML 报告（每次run自动生成）
 每次选股 run 结束，引擎自动在 `reports/` 写一份自包含 HTML（无外部依赖，可直接双击打开）：
@@ -139,7 +170,9 @@ python recheck.py --in C:\Trading_analysis\data\rank_latest.json
 
 ## 7. 已知限制
 - 板块解析依赖东财板块接口；东财被限流时板块模式回退全市场。
-- 引擎只做量价/技术/盘口因子；基本面与消息面由 Agent②(WebSearch) 补足。
+- 引擎只做量价/技术/盘口因子；基本面与消息面由 Agent②(WebSearch) 补足；建议可信度由 Agent④ 验证/复核把关。
+- `--validate` 的样本是"当前"高流动性股票回溯历史，有**幸存者偏差**，绝对收益偏乐观；看相对指标(超额/价差/胜率)更可靠。
+- 跨源价格校验在东财被限流时退化为"单源未校验"（非错误，仅未交叉验证），此时买入价以另一可用源为准。
 - 交易日历用 akshare 权威源(覆盖到当年底)，春节/国庆等节假日已精确处理；跨年且新一年日历未发布时，
   会回退"仅跳周末"并明确标注[日历未取到]，此时跨年节假日可能偏差，以交易所公告为准。
 - 结果为量化+研究分析，**非投资建议**；A股 T+1 当日买入次日才能卖。
@@ -147,11 +180,14 @@ python recheck.py --in C:\Trading_analysis\data\rank_latest.json
 ## 8. 手动自测
 ```powershell
 $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH","User")
-# 选股
+# 选股（末尾会有"跨源价格校验"表 + 行情源/sanity 行）
 python ashare_weekly_rank.py --hold-days 5 --top 8
 # 回测刷权重
 python ashare_weekly_rank.py --backtest --bt-sample 40 --hold-days 5
+# 策略验证(排名edge)：看到 超额/胜率/排名IC + 裁定 即正常
+python ashare_weekly_rank.py --validate --bt-sample 40 --hold-days 5 --val-topk 5
 # T+1 复核
 python recheck.py
 ```
-看到带 T/T+1/持有天数 表头 + 真实价格/信号列即正常。
+看到带 T/T+1/持有天数 表头 + 真实价格/信号列 + 跨源校验表即正常；validate 给出"通过/弱通过/未通过"裁定即正常。
+- 自检：`初筛漏斗` 第一段数应≈600（翻页生效）；若只有~100 说明翻页被限流降级（重试或等1–2分钟）。

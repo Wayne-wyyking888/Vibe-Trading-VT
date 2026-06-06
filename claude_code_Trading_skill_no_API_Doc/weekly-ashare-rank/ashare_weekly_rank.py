@@ -58,6 +58,8 @@ _KLINE_PATH = "/api/qt/stock/kline/get"
 
 # 熔断：东财一旦被限流，本次运行后续直接跳过它走回退源，避免每只票都白等重试
 _EM_DEAD = False
+# 本次实际命中的快照数据源（透明度：写进结果，让用户知道 universe 从哪来、是否兜底）
+_LAST_SPOT_SRC = "?"
 
 # ---------------------------------------------------------------- 本地缓存
 # K线/快照当天缓存，避免周五反复跑时重复拉数、触发限流。K线收盘后当天不变，
@@ -147,18 +149,40 @@ def _get(hosts: list[str], path: str, params: dict, retries: int = 8) -> dict:
     raise RuntimeError(f"请求失败 {path}: {last}")
 
 
+_CLIST_PER_PAGE = 100  # 东财 clist 单页硬上限 100 行（pz>100 会被截断），必须翻页累计
+
+
 def _clist_top(fs: str, fields: str, fid: str = "f6", pz: int = 600,
                retries: int = 8) -> list[dict]:
-    """单页拉取 clist：服务端按 fid 降序，取前 pz 行（避免翻页限流）。"""
-    params = {
-        "pn": 1, "pz": pz, "po": 1, "np": 1, "fltt": 2, "invt": 2,
-        "fid": fid, "fs": fs, "fields": fields,
-    }
-    data = _get(_PUSH_HOSTS, _CLIST_PATH, params, retries=retries).get("data")
-    if not data or not data.get("diff"):
-        return []
-    diff = data["diff"]
-    return list(diff.values()) if isinstance(diff, dict) else list(diff)
+    """分页拉取 clist：服务端按 fid 降序。
+
+    东财 clist 单页最多返回 100 行（即便传 pz=600 也只给 100），
+    因此必须用 pn 翻页累计到 pz 行——否则"全市场前600"实际只有前100，
+    universe 缩水 6 倍、漏掉大量中盘短线机会。中途某页限流则用已得行(部分universe)。
+    """
+    rows: list[dict] = []
+    pages = max(1, (pz + _CLIST_PER_PAGE - 1) // _CLIST_PER_PAGE)
+    for pn in range(1, pages + 1):
+        params = {
+            "pn": pn, "pz": _CLIST_PER_PAGE, "po": 1, "np": 1, "fltt": 2, "invt": 2,
+            "fid": fid, "fs": fs, "fields": fields,
+        }
+        try:
+            data = _get(_PUSH_HOSTS, _CLIST_PATH, params, retries=retries).get("data")
+        except Exception:  # noqa: BLE001
+            break  # 翻页中途被限流：保留已拿到的行，部分 universe 仍可用
+        if not data or not data.get("diff"):
+            break
+        diff = data["diff"]
+        page = list(diff.values()) if isinstance(diff, dict) else list(diff)
+        if not page:
+            break
+        rows.extend(page)
+        if len(page) < _CLIST_PER_PAGE:
+            break  # 末页（不足整页），后面没有了
+        if pn < pages:
+            time.sleep(0.15)  # 翻页间轻微节流
+    return rows[:pz]
 
 
 _SINA_HQ = (
@@ -280,15 +304,19 @@ def _seed_spot(top: int) -> pd.DataFrame | None:
 
 def get_spot(top_by_amount: int = 600) -> pd.DataFrame:
     """全市场A股快照：按成交额降序取前 top_by_amount 只。东财→新浪→种子 自动回退。"""
+    global _LAST_SPOT_SRC
     log(f"拉取全市场成交额前 {top_by_amount} 只 ...")
     cached = _cache_get("spot", f"all_{top_by_amount}", max_age_h=6)
     if cached is not None:
-        log(f"  命中缓存，{len(cached)} 行")
-        return pd.DataFrame(cached)
+        df = pd.DataFrame(cached)  # cached 是 列→list 的 dict，行数取重建后的 DataFrame
+        log(f"  命中缓存，{len(df)} 行")
+        _LAST_SPOT_SRC = "缓存"
+        return df
     for name, fn in (("eastmoney", _em_spot), ("sina", _sina_spot), ("seed", _seed_spot)):
         df = fn(top_by_amount)
         if df is not None and len(df) > 0:
             log(f"  数据源={name}，收到 {len(df)} 行")
+            _LAST_SPOT_SRC = name
             _cache_put("spot", f"all_{top_by_amount}", df.to_dict("list"))
             return df
     raise RuntimeError("所有行情源均不可用（eastmoney + sina + seed 都失败）")
@@ -786,8 +814,33 @@ def _trade_window(last_date: str, hold_days: int) -> dict:
             "note": "（日历未取到，仅跳周末，遇节假日可能偏差）"}
 
 
+def verify_picks(cands: list[dict]) -> list[dict]:
+    """对最终候选做跨源收盘价校验：东财K线 vs 腾讯K线 的最新收盘。
+    两源都拿到且偏差≤1% → 一致；偏差大 → 标记存疑(可能除权未对齐/脏数据)；
+    只有一源 → 单源未校验。防止单一数据源错价误导买入价/止损。"""
+    out = []
+    for c in cands:
+        code = c["code"]
+        em = _em_kline(code, bars=5) if not _EM_DEAD else None
+        tx = _tx_kline(code, bars=5)
+        em_c = round(float(em["收盘"].iloc[-1]), 2) if em is not None and len(em) else None
+        tx_c = round(float(tx["收盘"].iloc[-1]), 2) if tx is not None and len(tx) else None
+        dev = None
+        if em_c and tx_c:
+            dev = round(abs(em_c - tx_c) / max(em_c, tx_c) * 100, 2)
+            status = "一致" if dev <= 1.0 else "存疑(跨源偏差大)"
+        else:
+            status = "单源未校验"
+        c["verify"] = {"em_close": em_c, "tx_close": tx_c, "dev_pct": dev, "status": status}
+        out.append({"code": code, "name": c.get("name", ""),
+                    "em": em_c, "tx": tx_c, "dev": dev, "status": status})
+        time.sleep(0.1)
+    return out
+
+
 def run(sector: str | None, pool: int, top: int, out_path: str | None,
-        weights: dict | None = None, hold_days: int = 5) -> dict:
+        weights: dict | None = None, hold_days: int = 5,
+        verify: bool = True) -> dict:
     if weights is None:
         weights = _auto_weights(hold_days)
     if sector and sector not in ("全市场", "all", "ALL"):
@@ -833,19 +886,37 @@ def run(sector: str | None, pool: int, top: int, out_path: str | None,
             log(f"  已处理 {i}/{len(ranked_pre)}")
 
     rows.sort(key=lambda x: x["score"], reverse=True)
+    picks = rows[:top]
+    # 跨源价格校验：只对最终候选做（防脏数据误导买入/止损价）
+    if verify and picks:
+        log(f"跨源价格校验 Top{len(picks)} ...")
+        verify_picks(picks)
     # T = 最新交易日；用权威交易日历算 T+1(买入)、T+N(最晚卖出)
     dates = [r.get("last_date") for r in rows if r.get("last_date")]
     as_of = max(dates) if dates else dt.date.today().isoformat()
     win = _trade_window(as_of, hold_days)
+    # 数据自检：universe 太小/兜底源/价格存疑 → 显式警示，避免"看着精准其实样本不足"
+    sanity = []
+    if _LAST_SPOT_SRC == "seed":
+        sanity.append("⚠universe走种子兜底(非全市场)，覆盖面有限")
+    elif _LAST_SPOT_SRC == "sina":
+        sanity.append("行情源回退到新浪(无量比，盘口因子略弱)")
+    if len(filt) < 60:
+        sanity.append(f"⚠初筛后universe仅{len(filt)}只，样本偏小、排名区分度下降")
+    suspect = [c["code"] for c in picks if c.get("verify", {}).get("status", "").startswith("存疑")]
+    if suspect:
+        sanity.append(f"⚠跨源价格存疑(请人工复核): {', '.join(suspect)}")
     result = {
         "generated_at": dt.datetime.now().isoformat(timespec="seconds"),
         "hold_days": hold_days,         # 最多持有交易日数
         "sector": sector or "全市场",
         "weights": weights or "默认均衡",
         "calendar_authoritative": win["authoritative"],
+        "spot_source": _LAST_SPOT_SRC,
         "universe_after_filter": int(len(filt)),
         "scored": len(rows),
-        "candidates": rows[:top],
+        "sanity_flags": sanity,
+        "candidates": picks,
     }
     result.update(win)  # as_of/buy_date/sell_by + 各自星期 + note
     if out_path:
@@ -879,8 +950,11 @@ def print_table(result: dict) -> None:
           f"→ 买入日 T+1={result.get('buy_date','?')} {result.get('buy_dow','')}  "
           f"→ 最晚卖出 T+{result.get('hold_days','?')}={result.get('sell_by','?')} {result.get('sell_dow','')}"
           f"{auth}{note_s}")
-    print(f"初筛后universe={result['universe_after_filter']}  打分={result['scored']}  "
-          f"输出Top {len(result['candidates'])}  (生成于 {result['generated_at']})\n")
+    print(f"行情源={result.get('spot_source','?')}  初筛后universe={result['universe_after_filter']}  "
+          f"打分={result['scored']}  输出Top {len(result['candidates'])}  (生成于 {result['generated_at']})")
+    for s in result.get("sanity_flags", []):
+        print(f"  {s}")
+    print()
     hdr = ["代码", "名称", "综合", "风险", "动量", "量能", "技术", "盘口", "回调", "收盘", "今涨%",
            "5日%", "20日%", "量比", "当日量", "尾盘", "距MA10", "60位", "ATR%", "额亿",
            "流通亿", "信号", "多头", "MACD"]
@@ -906,6 +980,17 @@ def print_table(result: dict) -> None:
         print(f"| {i} | {c['code']} | {c['name']} | {c.get('buy_zone','')} | "
               f"{c.get('position_pct','')}% | {c.get('entry_mode','')}：{c.get('entry_tactic','')} | "
               f"{c.get('stop','')} | {c.get('abort','')} |")
+
+    # 跨源价格校验结果（若已做）
+    vrows = [c for c in result["candidates"] if c.get("verify")]
+    if vrows:
+        print("\n### 跨源价格校验（东财K线 vs 腾讯K线 收盘）")
+        print("| 代码 | 名称 | 东财收盘 | 腾讯收盘 | 偏差% | 状态 |")
+        print("|---|---|---|---|---|---|")
+        for c in vrows:
+            v = c["verify"]
+            print(f"| {c['code']} | {c['name']} | {v.get('em_close','-')} | "
+                  f"{v.get('tx_close','-')} | {v.get('dev_pct','-')} | {v.get('status','')} |")
 
     # Agent③ 重点关注：买不进 / 追高风险
     oneword = [c["code"] for c in result["candidates"] if c.get("oneword")]
@@ -964,9 +1049,22 @@ def _factors_at(o, c, h, l, v, t: int) -> dict:
     return out
 
 
+def _shrink_weights(raw: dict, shrink: float) -> dict:
+    """把回测原始桶权重向中性 1.0 收缩，降低对噪声IC的过拟合。
+
+    w_final = shrink×1.0 + (1−shrink)×w_raw。shrink=0 纯回测、=1 全中性。
+    理由：桶权重由 ~25 截面的 |IC| 估出，IC 标准误(≈0.03)与均值(≈0.05)同量级，
+    直接重注极端配比(如 tape0.58/pull0.52 vs mom1.3)样本外不稳；收缩后更稳健，
+    也让"多久 re-backtest 一次"变得不敏感。
+    """
+    shrink = min(1.0, max(0.0, shrink))
+    return {b: round(shrink * 1.0 + (1 - shrink) * v, 2) for b, v in raw.items()}
+
+
 def backtest(sector: str | None, sample: int, fwd: int = 5, step: int = 5,
-             hist_bars: int = 200) -> dict:
-    """对样本股做横截面因子 IC 回测：因子(T) vs 未来 fwd 日收益。输出每因子 IC/ICIR + 建议权重。"""
+             hist_bars: int = 200, shrink: float = 0.5) -> dict:
+    """对样本股做横截面因子 IC 回测：因子(T) vs 未来 fwd 日收益。输出每因子 IC/ICIR + 建议权重。
+    weights 已对原始 |IC| 配比做收缩(shrink, 默认0.5)，weights_raw 保留收缩前以便透明对照。"""
     log(f"=== 因子IC回测：样本≤{sample} 只，预测未来{fwd}日收益 ===")
     spot = fetch_sector_spot(sector) if sector and sector not in ("全市场", "all") else get_spot()
     filt = prefilter(spot)
@@ -1019,11 +1117,13 @@ def backtest(sector: str | None, sample: int, fwd: int = 5, step: int = 5,
         vals = [r["absIC"] for r in ic_rows if r["factor"] in cols]
         bw[b] = float(np.mean(vals)) if vals else 0.0
     base = np.mean([x for x in bw.values() if x > 0]) or 1.0
-    weights = {b: round(v / base, 2) if v > 0 else 0.6 for b, v in bw.items()}
+    weights_raw = {b: round(v / base, 2) if v > 0 else 0.6 for b, v in bw.items()}
+    weights = _shrink_weights(weights_raw, shrink)  # 收缩后才是引擎实际使用的权重
 
     return {"generated_at": dt.datetime.now().isoformat(timespec="seconds"),
             "fwd_days": fwd, "n_records": len(df), "n_dates": int(df["_date"].nunique()),
-            "n_stocks": len(codes), "ic": ic_rows, "weights": weights}
+            "n_stocks": len(codes), "ic": ic_rows,
+            "shrink": shrink, "weights_raw": weights_raw, "weights": weights}
 
 
 def print_backtest(bt: dict) -> None:
@@ -1033,9 +1133,181 @@ def print_backtest(bt: dict) -> None:
     print("|---|---|---|---|---|")
     for r in bt["ic"]:
         print(f"| {r['factor']} | {r['IC']} | {r['ICIR']} | {round(r['absIC'],4)} | {r['n_days']} |")
-    print("\n按经济含义归桶后的**建议权重**（写入 weights.json，可 --weights auto 调用）:")
-    print("  " + "  ".join(f"{k}={v}" for k, v in bt["weights"].items()))
+    print("\n按经济含义归桶后的桶权重（写入 weights.json，可 --weights auto 调用）:")
+    if bt.get("weights_raw"):
+        print("  收缩前(纯|IC|): " + "  ".join(f"{k}={v}" for k, v in bt["weights_raw"].items()))
+    print(f"  收缩后(shrink={bt.get('shrink','?')},实际使用): "
+          + "  ".join(f"{k}={v}" for k, v in bt["weights"].items()))
     print("\n解读：IC>0 因子值越大未来越涨；|IC|>0.03 即有效，>0.05 较强；ICIR>0.5 稳定。")
+    print("收缩=向中性1.0拉近，降低对噪声IC的过拟合；shrink越大越保守(0=纯回测,1=全中性)。")
+
+
+# ---------------------------------------------------------------- Phase2b 综合分实战验证
+# 因子IC只验证「单因子」是否有预测力；本节验证「最终综合分排名」本身有没有 edge——
+# 即用户真正照着买的那张表。做法：在历史每个横截面用 *与实盘完全相同的* composite()
+# 打分，取 Top-K，按 T+1 开盘买入、持有 fwd 个交易日(收盘卖)算真实收益，逐截面汇总。
+
+def _score_factors_at(o, c, h, l, v, code: str, t: int) -> dict | None:
+    """在第 t 根K线(仅用 ≤t 数据，无未来函数)复刻 hist_factors 的关键因子，
+    键名/单位与 composite() 期望完全一致，从而能直接复用实盘打分函数做回测。"""
+    if t < 21 or c[t] <= 0:
+        return None
+    last = float(c[t])
+
+    def ma(n):
+        return float(c[t - n + 1:t + 1].mean()) if t - n + 1 >= 0 else np.nan
+
+    ma5_, ma10_, ma20_ = ma(5), ma(10), ma(20)
+    bull = bool(ma5_ == ma5_ and ma10_ == ma10_ and ma20_ == ma20_ and ma5_ > ma10_ > ma20_)
+    ret5 = last / float(c[t - 5]) - 1 if c[t - 5] > 0 else np.nan
+    ret20 = last / float(c[t - 20]) - 1 if c[t - 20] > 0 else np.nan
+    v5 = float(v[t - 4:t + 1].mean())
+    v20 = float(v[t - 19:t + 1].mean())
+    vr = v5 / v20 if v20 > 0 else np.nan
+    vol_today = float(v[t]) / v20 if v20 > 0 else np.nan
+    dist_ma10 = last / ma10_ - 1 if ma10_ > 0 else 0.0
+    w0 = max(0, t - 59)
+    lo, hi = float(l[w0:t + 1].min()), float(h[w0:t + 1].max())
+    rng_pos = (last - lo) / (hi - lo) if hi > lo else 0.5
+    cser = pd.Series(c[:t + 1], dtype=float)
+    dif = cser.ewm(span=12).mean() - cser.ewm(span=26).mean()
+    dea = dif.ewm(span=9).mean()
+    macd_gold = bool(dif.iloc[-1] > dea.iloc[-1])
+    drng = float(h[t] - l[t])
+    tail = (last - float(l[t])) / drng if drng > 0 else 0.5
+    is_yang = bool(last > float(o[t]))
+    body_ratio = abs(last - float(o[t])) / drng if drng > 0 else 0.0
+    # 连板（用 ≤t 的日涨跌幅）：创业板/科创 20%，其余 10%
+    limit_pct = 20.0 if str(code).startswith(("30", "68")) else 10.0
+    thr = limit_pct * 0.985
+    dchg = (cser.pct_change() * 100).to_numpy()
+    streak = 0
+    for x in dchg[::-1]:
+        if x == x and x >= thr:
+            streak += 1
+        else:
+            break
+    pullback = bool(bull and ret20 == ret20 and ret20 > 0.05
+                    and -3 <= dist_ma10 * 100 <= 5 and is_yang)
+    # vr/vol_today 必须给 None(而非 np.nan)：composite() 用 `x if x else 1.0` 判空，
+    # np.nan 是 truthy 会把 nan 漏进打分；与 hist_factors 的处理保持一致。
+    vr = None if vr != vr else vr
+    vol_today = None if vol_today != vol_today else vol_today
+    return dict(
+        ret5=ret5 * 100, ret20=ret20 * 100, vr=vr, vol_today=vol_today,
+        tail_strength=tail, dist_ma10=dist_ma10 * 100, bull=bull, macd_gold=macd_gold,
+        rng_pos=rng_pos * 100, is_yang=is_yang, body_ratio=body_ratio,
+        pullback=pullback, limit_streak=streak,
+    )
+
+
+def validate(sector: str | None, sample: int, fwd: int = 5, top_k: int = 5,
+             step: int = 5, hist_bars: int = 220, weights: dict | None = None) -> dict:
+    """综合分排名的走样本验证：每个横截面按 composite() 取 Top-K，
+    T+1 开盘买入、持有 fwd 日(收盘卖)算真实收益，对比全样本(市场)与 Bottom-K。"""
+    if weights is None:
+        weights = _auto_weights(fwd)
+    log(f"=== 综合分实战验证：样本≤{sample} 只，Top{top_k}，T+1开盘买入持有{fwd}日 ===")
+    spot = fetch_sector_spot(sector) if sector and sector not in ("全市场", "all") else get_spot()
+    filt = prefilter(spot)
+    codes = [str(x) for x in filt["代码"].tolist()][:sample]
+    log(f"  样本股 {len(codes)} 只，构建 (日期,股票)→综合分/未来收益 面板 ...")
+
+    panel: list[dict] = []
+    for i, code in enumerate(codes, 1):
+        h = get_kline(code, bars=hist_bars)
+        if h is None or len(h) < 95:
+            continue
+        o, c, hh, ll, vv = (h[k].to_numpy(dtype=float)
+                            for k in ("开盘", "收盘", "最高", "最低", "成交量"))
+        dates = h["日期"].astype(str).to_numpy()
+        # 需要 t+1 开盘买、t+fwd 收盘卖 → t 最大到 len-1-fwd
+        for t in range(70, len(c) - fwd - 1, step):
+            f = _score_factors_at(o, c, hh, ll, vv, code, t)
+            if f is None:
+                continue
+            sc = composite(dict(f), weights)["score"]
+            buy = float(o[t + 1])
+            sell = float(c[t + fwd])
+            if buy <= 0:
+                continue
+            panel.append({"_date": str(dates[t])[:10], "code": code,
+                          "score": sc, "fwd_ret": sell / buy - 1})
+        time.sleep(0.1)
+        if i % 20 == 0:
+            log(f"  已处理 {i}/{len(codes)}")
+
+    if not panel:
+        raise RuntimeError("验证无数据（行情源不可用）")
+    df = pd.DataFrame(panel)
+
+    top_rets, bot_rets, mkt_rets, top_wins, ic_list = [], [], [], [], []
+    n_sections = 0
+    for _, g in df.groupby("_date"):
+        if len(g) < max(8, top_k * 2):      # 截面太小不足以区分 Top/Bottom
+            continue
+        n_sections += 1
+        g = g.sort_values("score", ascending=False)
+        k = min(top_k, len(g) // 2)
+        top = g.head(k)["fwd_ret"]
+        bot = g.tail(k)["fwd_ret"]
+        top_rets.append(float(top.mean()))
+        bot_rets.append(float(bot.mean()))
+        mkt_rets.append(float(g["fwd_ret"].mean()))
+        top_wins.extend((top > 0).tolist())
+        ic = g["score"].corr(g["fwd_ret"], method="spearman")
+        if ic == ic:
+            ic_list.append(float(ic))
+
+    def _avg(x):
+        return round(float(np.mean(x)) * 100, 2) if x else None
+
+    top_avg = _avg(top_rets)
+    mkt_avg = _avg(mkt_rets)
+    bot_avg = _avg(bot_rets)
+    win_rate = round(float(np.mean(top_wins)) * 100, 1) if top_wins else None
+    excess = round(top_avg - mkt_avg, 2) if (top_avg is not None and mkt_avg is not None) else None
+    spread = round(top_avg - bot_avg, 2) if (top_avg is not None and bot_avg is not None) else None
+    ic_mean = round(float(np.mean(ic_list)), 4) if ic_list else None
+    ic_ir = (round(ic_mean / (float(np.std(ic_list)) + 1e-9), 3)
+             if ic_list and len(ic_list) > 1 else None)
+
+    # 给 Agent 用的一句话判定
+    if top_avg is None or n_sections < 5:
+        verdict = "数据不足，验证不充分"
+    elif excess and excess > 0 and (spread or 0) > 0 and (win_rate or 0) >= 50:
+        verdict = "通过：Top组跑赢市场且胜率达标，综合分有 edge"
+    elif excess and excess > 0:
+        verdict = "弱通过：Top组小幅跑赢，edge 偏弱，置信度宜保守"
+    else:
+        verdict = "未通过：Top组未跑赢市场，本期慎用排名/调低仓位"
+
+    return {"generated_at": dt.datetime.now().isoformat(timespec="seconds"),
+            "fwd_days": fwd, "top_k": top_k, "n_stocks": len(codes),
+            "n_sections": n_sections, "n_records": len(df),
+            "weights": weights or "默认均衡",
+            "top_avg_ret": top_avg, "market_avg_ret": mkt_avg, "bottom_avg_ret": bot_avg,
+            "excess_vs_market": excess, "top_minus_bottom": spread,
+            "top_win_rate": win_rate, "rank_ic": ic_mean, "rank_icir": ic_ir,
+            "verdict": verdict}
+
+
+def print_validation(v: dict) -> None:
+    print(f"\n## 综合分实战验证（走样本，无未来函数）  ({v['generated_at']})")
+    print(f"样本股={v['n_stocks']}  有效截面={v['n_sections']}  样本点={v['n_records']}  "
+          f"Top{v['top_k']}  持有{v['fwd_days']}日(T+1开盘买→收盘卖)\n")
+    print("| 指标 | 数值 | 含义 |")
+    print("|---|---|---|")
+    print(f"| Top{v['top_k']}平均收益 | {v['top_avg_ret']}% | 照排名买前{v['top_k']}只的平均{v['fwd_days']}日收益 |")
+    print(f"| 市场平均 | {v['market_avg_ret']}% | 同期样本全体平均(基准) |")
+    print(f"| Bottom{v['top_k']}平均 | {v['bottom_avg_ret']}% | 排名垫底组(对照) |")
+    print(f"| 超额(Top−市场) | {v['excess_vs_market']}% | >0 才说明排名有正向选择力 |")
+    print(f"| 多空价差(Top−Bottom) | {v['top_minus_bottom']}% | 越大越说明分数单调有效 |")
+    print(f"| Top组胜率 | {v['top_win_rate']}% | 前{v['top_k']}只里收正的比例 |")
+    print(f"| 排名IC(Spearman) | {v['rank_ic']}  ICIR={v['rank_icir']} | 综合分与未来收益的秩相关 |")
+    print(f"\n**裁定**：{v['verdict']}")
+    print("> 说明：样本取自当前高流动性股票回溯历史，存在幸存者偏差，绝对收益偏乐观；")
+    print("> 应重点看『超额/多空价差/胜率』等相对指标是否稳定为正，而非绝对收益数字。")
 
 
 # ---------------------------------------------------------------- HTML 报告
@@ -1111,10 +1383,20 @@ def render_html(result: dict, report_dir: str | None = None) -> str:
     oneword = [c["code"] for c in cands if c.get("oneword")]
     hot = [f"{c['code']}({c['limit_streak']}板)" for c in cands if c.get("limit_streak", 0) >= 3]
     warn = ""
+    for s in result.get("sanity_flags", []):
+        warn += f"<p class=warn>{_esc(s)}</p>"
     if oneword:
         warn += f"<p class=warn>⚠ 一字板(次日难买入)：{_esc(', '.join(oneword))}</p>"
     if hot:
         warn += f"<p class=warn>⚠ 高位连板(追高风险)：{_esc(', '.join(hot))}</p>"
+
+    # 综合分实战验证裁定（若 Agent 把 validate 结果回填到 result["validation"]）
+    val = result.get("validation")
+    if isinstance(val, dict) and val.get("verdict"):
+        warn += (f"<p class=warn>📐 策略验证：{_esc(val['verdict'])}　"
+                 f"(Top{val.get('top_k','')}超额 {val.get('excess_vs_market','?')}% · "
+                 f"胜率 {val.get('top_win_rate','?')}% · 排名IC {val.get('rank_ic','?')} · "
+                 f"有效截面 {val.get('n_sections','?')})</p>")
 
     extra = ""
     if result.get("catalysts_md"):
@@ -1196,12 +1478,18 @@ def main() -> None:
     ap.add_argument("--out", default=None, help="把结果 JSON 写到此路径")
     ap.add_argument("--hold-days", type=int, default=5, help="最多持有交易日数N(T+1买入,持有≤N)；驱动权重与回测窗口")
     ap.add_argument("--backtest", action="store_true", help="运行因子IC回测并产出建议权重")
-    ap.add_argument("--bt-sample", type=int, default=60, help="回测样本股数")
+    ap.add_argument("--validate", action="store_true",
+                    help="走样本验证『综合分排名』本身的 edge（Top-K超额/胜率/多空价差），不出选股")
+    ap.add_argument("--val-topk", type=int, default=5, help="验证时每截面取前K只")
+    ap.add_argument("--shrink", type=float, default=0.5,
+                    help="回测桶权重向中性1.0收缩的系数[0~1]，默认0.5(0=纯回测,1=全中性)，降低过拟合")
+    ap.add_argument("--bt-sample", type=int, default=60, help="回测/验证样本股数")
     ap.add_argument("--weights", default=None,
-                    help="权重: 默认自动检测同目录weights.json(需持有天数匹配且<14天); 'auto'=强制用; 路径=指定; 'none'=用默认配比")
+                    help="权重: 默认自动检测同目录weights.json(需持有天数匹配且≤7天); 'auto'=强制用; 路径=指定; 'none'=用默认配比")
     ap.add_argument("--no-cache", action="store_true", help="禁用缓存")
     ap.add_argument("--refresh", action="store_true", help="强制重拉(绕过读缓存)")
     ap.add_argument("--no-report", action="store_true", help="不生成HTML报告")
+    ap.add_argument("--no-verify", action="store_true", help="跳过最终候选的跨源价格校验")
     ap.add_argument("--report-dir", default=None, help="HTML报告目录(默认 skill下 reports/)")
     args = ap.parse_args()
 
@@ -1213,15 +1501,35 @@ def main() -> None:
 
     here = pathlib.Path(__file__).resolve().parent
     if args.backtest:
-        bt = backtest(args.sector, args.bt_sample, fwd=args.hold_days)
+        bt = backtest(args.sector, args.bt_sample, fwd=args.hold_days, shrink=args.shrink)
         (here / "weights.json").write_text(
             json.dumps(bt, ensure_ascii=False, indent=2), encoding="utf-8")
         print_backtest(bt)
         log(f"已写出 weights.json: {here / 'weights.json'}")
         return
 
+    if args.validate:
+        # 用与实盘一致的权重做验证（默认自动检测 weights.json）
+        wp = here / "weights.json"
+        vw = None
+        if args.weights != "none" and wp.exists():
+            try:
+                obj = json.loads(wp.read_text(encoding="utf-8"))
+                if obj.get("fwd_days") == args.hold_days:
+                    vw = obj.get("weights")
+            except Exception:  # noqa: BLE001
+                pass
+        v = validate(args.sector, args.bt_sample, fwd=args.hold_days,
+                     top_k=args.val_topk, weights=vw)
+        if args.out:
+            with open(args.out, "w", encoding="utf-8") as fh:
+                json.dump(v, fh, ensure_ascii=False, indent=2)
+            log(f"已写出验证结果: {args.out}")
+        print_validation(v)
+        return
+
     # 权重解析：显式 --weights 优先；否则自动检测同目录 weights.json
-    # （需 持有天数匹配 且 不超过14天），匹配不上就回落到持有天数自适应默认权重。
+    # （需 持有天数匹配 且 不超过7天），匹配不上就回落到持有天数自适应默认权重。
     weights = None
     if args.weights and args.weights != "none":
         wp = (here / "weights.json") if args.weights == "auto" else pathlib.Path(args.weights)
@@ -1238,7 +1546,7 @@ def main() -> None:
                 obj = json.loads(wp.read_text(encoding="utf-8"))
                 ts = dt.datetime.fromisoformat(obj.get("generated_at", "2000-01-01"))
                 age_d = (dt.datetime.now() - ts).days
-                if obj.get("fwd_days") == args.hold_days and age_d <= 14:
+                if obj.get("fwd_days") == args.hold_days and age_d <= 7:
                     weights = obj.get("weights")
                     log(f"自动使用回测权重(fwd={args.hold_days}, {age_d}天前): {weights}")
                 else:
@@ -1248,7 +1556,7 @@ def main() -> None:
                 pass
 
     result = run(args.sector, args.pool, args.top, args.out,
-                 weights=weights, hold_days=args.hold_days)
+                 weights=weights, hold_days=args.hold_days, verify=not args.no_verify)
     print_table(result)
     if not args.no_report:
         rp = render_html(result, args.report_dir)

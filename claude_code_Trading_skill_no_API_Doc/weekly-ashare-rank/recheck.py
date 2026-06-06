@@ -52,7 +52,11 @@ def main() -> None:
         cur = q.get("price")
         t_close = c.get("close")
         atr = c.get("atr14") or 0
-        stop = round(t_close - 1.3 * atr, 2) if t_close else None
+        # 优先用引擎/Agent③ 已写入JSON的止损(含-6%封顶/人工改写)，保持全流程一致；
+        # 缺失才回退到 ATR 公式
+        stop = c.get("stop")
+        if stop is None and t_close:
+            stop = round(t_close - 1.3 * atr, 2)
         if not cur or not t_close:
             print(f"| {c['code']} | {c['name']} | {t_close} | - | - | {stop} | - | 无实时报价 |")
             continue

@@ -119,10 +119,18 @@
     }
   ],
   "weights": {
+    "mom": 1.15,
+    "vol": 1.17,
+    "tech": 1.14,
+    "tape": 0.79,
+    "pull": 0.76
+  },
+  "weights_raw": {
     "mom": 1.3,
     "vol": 1.33,
     "tech": 1.27,
     "tape": 0.58,
     "pull": 0.52
-  }
+  },
+  "shrink": 0.5
 }
