@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "vibe-trading": {
+      "command": "vibe-trading-mcp"
+    }
+  }
+}
