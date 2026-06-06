@@ -685,6 +685,24 @@ def buy_plan(f: dict) -> dict:
     return f
 
 
+def derive_targets(f: dict, hold_days: int) -> dict:
+    """基线目标价/预期收益/盈亏比(ATR 法，作为 Agent③ 的量化基线，可被催化剂目标改写)。"""
+    close = f["close"]
+    atr = f.get("atr14") or close * 0.05
+    buy_mid = (f.get("buy_low", close) + f.get("buy_high", close)) / 2
+    stop = f.get("stop", close * 0.94)
+    k = max(2.0, hold_days * 0.5)          # 持有越久目标越远
+    target = round(close + k * atr, 2)
+    risk_amt = max(0.01, buy_mid - stop)
+    rr = (target - buy_mid) / risk_amt
+    lo = (target / f.get("buy_high", close) - 1) * 100
+    hi = (target / max(f.get("buy_low", close), 0.01) - 1) * 100
+    f["target"] = target
+    f["rr"] = f"{rr:.1f}:1"
+    f["exp_return"] = f"+{lo:.0f}~{hi:.0f}%" if hi - lo >= 1 else f"+{max(lo,0):.0f}%"
+    return f
+
+
 # ---------------------------------------------------------------- 主流程
 
 def _auto_weights(hold_days: int) -> dict | None:
@@ -809,6 +827,7 @@ def run(sector: str | None, pool: int, top: int, out_path: str | None,
         f["float_cap_yi"] = round(float(spot_fcap) / 1e8, 1) if pd.notna(spot_fcap) and spot_fcap > 0 else None
         f = risk_assess(f)  # 客观技术风险分(spot字段就绪后算)
         f = buy_plan(f)     # 买入方案
+        f = derive_targets(f, hold_days)  # 基线目标价/预期收益/盈亏比
         rows.append(f)
         if i % 10 == 0:
             log(f"  已处理 {i}/{len(ranked_pre)}")
@@ -1019,6 +1038,156 @@ def print_backtest(bt: dict) -> None:
     print("\n解读：IC>0 因子值越大未来越涨；|IC|>0.03 即有效，>0.05 较强；ICIR>0.5 稳定。")
 
 
+# ---------------------------------------------------------------- HTML 报告
+def _cn_now() -> dt.datetime:
+    """中国当地时间(UTC+8，中国无夏令时)。即时取系统UTC再换算，不受机器时区影响。"""
+    return dt.datetime.now(dt.timezone.utc).astimezone(dt.timezone(dt.timedelta(hours=8)))
+
+
+_RISK_COLOR = {"低": "#2e7d32", "中": "#1565c0", "中高": "#ef6c00", "高": "#c62828"}
+
+
+def _esc(x) -> str:
+    return str(x).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def render_html(result: dict, report_dir: str | None = None) -> str:
+    """把选股结果渲染成自包含(无外部依赖)的易读 HTML，文件名后缀为中国当地时间。"""
+    cn = _cn_now()
+    ts = cn.strftime("%Y-%m-%d_%H-%M-%S")
+    rdir = pathlib.Path(report_dir) if report_dir else (pathlib.Path(__file__).resolve().parent / "reports")
+    rdir.mkdir(parents=True, exist_ok=True)
+    path = rdir / f"ashare_rank_cn_{ts}.html"
+
+    cands = result.get("candidates", [])
+    auth = "权威交易日历" if result.get("calendar_authoritative") else "⚠仅跳周末(日历未取到)"
+    note = result.get("note", "")
+
+    # 主体：每只股一张卡片（长文本整行铺开，避免横向滚动）
+    cards = ""
+    for i, c in enumerate(cands, 1):
+        rl = c.get("risk_level", "")
+        color = _RISK_COLOR.get(rl, "#666")
+        chips = "".join(f"<span class=chip>{_esc(s)}</span>"
+                        for s in _signal_tag(c).split("/") if s)
+        rnote = c.get("risk_note", "")
+        rnote_html = (f"<div class=line><span class='k grey'>风险补充</span>{_esc(rnote)}</div>"
+                      if rnote else "")
+        cards += (
+            f"<div class=card><div class=ctop>"
+            f"<div class=rank>{i}</div>"
+            f"<div class=tt><span class=title>{_esc(c.get('name',''))}</span>"
+            f"<span class=tk>{_esc(c.get('code',''))}</span></div>"
+            f"<div class=tags><span class=qs>量化 {c.get('score','')}</span>"
+            f"<span class=badge style='background:{color}'>风险 {rl}({c.get('risk_score','')})</span>"
+            f"{chips}</div></div>"
+            f"<div class=stats>"
+            f"<div class=stat><span class=lab>预期收益</span><b class=ret>{_esc(c.get('exp_return','—'))}</b></div>"
+            f"<div class=stat><span class=lab>置信度</span><b>{_esc(c.get('confidence','—'))}</b></div>"
+            f"<div class=stat><span class=lab>R:R</span><b>{_esc(c.get('rr','—'))}</b></div>"
+            f"<div class=stat><span class=lab>持仓上限</span><b>{c.get('position_pct','')}%</b></div></div>"
+            f"<div class=plan><span><i>买入</i><b>{_esc(c.get('buy_zone',''))}</b></span>"
+            f"<span><i>目标</i><b>{c.get('target','')}</b></span>"
+            f"<span><i>止损</i><b>{c.get('stop','')}</b></span></div>"
+            f"<div class=line><span class=k>入场</span>{_esc(c.get('entry_mode',''))}：{_esc(c.get('entry_tactic',''))}</div>"
+            f"<div class=line><span class='k red'>放弃</span>{_esc(c.get('abort',''))}</div>"
+            f"<div class=line><span class='k green'>催化剂</span>{_esc(c.get('catalyst','—'))}</div>"
+            f"{rnote_html}</div>"
+        )
+
+    # 量化明细（透明附录，可折叠）
+    detail_rows = ""
+    for i, c in enumerate(cands, 1):
+        detail_rows += (
+            f"<tr><td>{i}</td><td class=code>{_esc(c.get('code',''))}</td>"
+            f"<td class=nm>{_esc(c.get('name',''))}</td><td>{c.get('close','')}</td>"
+            f"<td>{c.get('ret5','')}</td><td>{c.get('ret20','')}</td><td>{c.get('vr','')}</td>"
+            f"<td>{c.get('vol_today','')}</td><td>{c.get('tail_strength','')}</td>"
+            f"<td>{c.get('dist_ma10','')}</td><td>{c.get('rng_pos','')}</td><td>{c.get('atr_pct','')}</td>"
+            f"<td>{c.get('amount_yi','')}</td><td>{c.get('float_cap_yi','')}</td>"
+            f"<td>{'多头' if c.get('bull') else '—'}/{'金叉' if c.get('macd_gold') else '—'}</td></tr>"
+        )
+
+    oneword = [c["code"] for c in cands if c.get("oneword")]
+    hot = [f"{c['code']}({c['limit_streak']}板)" for c in cands if c.get("limit_streak", 0) >= 3]
+    warn = ""
+    if oneword:
+        warn += f"<p class=warn>⚠ 一字板(次日难买入)：{_esc(', '.join(oneword))}</p>"
+    if hot:
+        warn += f"<p class=warn>⚠ 高位连板(追高风险)：{_esc(', '.join(hot))}</p>"
+
+    extra = ""
+    if result.get("catalysts_md"):
+        extra += f"<h2>消息面（Agent②）</h2><div class=md><pre>{_esc(result['catalysts_md'])}</pre></div>"
+    if result.get("final_md"):
+        extra += f"<h2>最终裁决（Agent③）</h2><div class=md><pre>{_esc(result['final_md'])}</pre></div>"
+
+    css = (
+        "body{font-family:-apple-system,'Segoe UI','Microsoft YaHei',sans-serif;margin:0;"
+        "background:#eef1f5;color:#1a1a1a;line-height:1.5}"
+        ".wrap{max-width:1000px;margin:0 auto;padding:20px}"
+        "h1{font-size:21px;margin:6px 0}h2{font-size:16px;margin:20px 0 8px;border-left:4px solid #1565c0;padding-left:8px}"
+        ".meta{background:#fff;border:1px solid #e0e4e8;border-radius:10px;padding:12px 14px;font-size:13px;color:#333}"
+        ".warn{background:#fff3e0;border-left:4px solid #ef6c00;padding:7px 11px;margin:8px 0;font-size:13px;border-radius:6px}"
+        # 卡片
+        ".card{background:#fff;border:1px solid #e6e9ed;border-radius:12px;padding:14px 16px;margin:12px 0;"
+        "box-shadow:0 1px 4px rgba(0,0,0,.06)}"
+        ".ctop{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid #eef1f4;padding-bottom:9px}"
+        ".rank{width:26px;height:26px;border-radius:50%;background:#1565c0;color:#fff;display:flex;"
+        "align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}"
+        ".tt .title{font-size:16px;font-weight:700}.tt .tk{color:#999;font-family:monospace;font-size:12px;margin-left:6px}"
+        ".tags{margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap}"
+        ".qs{background:#eef4ff;color:#1565c0;border-radius:6px;padding:2px 8px;font-weight:700;font-size:12px}"
+        ".badge{color:#fff;padding:2px 9px;border-radius:10px;font-size:12px;font-weight:600}"
+        ".chip{background:#fff3e0;color:#c62828;border:1px solid #ffd8a8;border-radius:10px;padding:1px 8px;font-size:11px}"
+        ".stats{display:flex;gap:26px;flex-wrap:wrap;margin:10px 0 4px}"
+        ".stat .lab{color:#999;font-size:11px;display:block}.stat b{font-size:15px}.stat .ret{color:#c62828}"
+        ".plan{background:#f5f8fc;border-radius:8px;padding:8px 12px;display:flex;gap:24px;flex-wrap:wrap;"
+        "font-size:13.5px;margin:8px 0}.plan i{color:#999;font-style:normal;margin-right:5px;font-size:12px}"
+        ".plan b{font-weight:700}"
+        ".line{font-size:12.5px;line-height:1.65;margin:5px 0;color:#333}"
+        ".k{font-weight:700;margin-right:6px}.k{color:#1565c0}.k.red{color:#b71c1c}.k.green{color:#1b5e20}.k.grey{color:#888}"
+        # 明细表(折叠)
+        "table{width:100%;border-collapse:collapse;background:#fff;font-size:12px;border-radius:8px;overflow:hidden}"
+        "th,td{padding:6px 8px;text-align:center;border-bottom:1px solid #eef1f4;white-space:nowrap}"
+        "th{background:#1565c0;color:#fff;font-weight:600}.code{font-family:monospace;color:#666}.nm{font-weight:600}"
+        ".scroll{overflow-x:auto}"
+        ".legend{font-size:12px;color:#666;background:#fff;border:1px dashed #cfd6dd;border-radius:8px;padding:10px;margin-top:14px}"
+        ".foot{font-size:12px;color:#888;margin-top:14px;padding-top:10px;border-top:1px solid #e0e4e8}"
+        ".md pre{white-space:pre-wrap;background:#fff;border:1px solid #e0e4e8;border-radius:8px;padding:12px;font-size:13px}"
+        "details{margin-top:14px}summary{cursor:pointer;font-weight:600;color:#1565c0;font-size:14px;padding:6px 0}"
+    )
+
+    html = (
+        f"<!doctype html><html lang=zh><head><meta charset=utf-8>"
+        f"<meta name=viewport content='width=device-width,initial-scale=1'>"
+        f"<title>A股短线选股报告 {ts}</title><style>{css}</style></head><body><div class=wrap>"
+        f"<h1>📊 A股短线选股报告</h1>"
+        f"<div class=meta><b>生成(中国时间)</b>：{cn.strftime('%Y-%m-%d %H:%M:%S')} CST"
+        f" &nbsp;|&nbsp; <b>T(数据截止)</b>：{result.get('as_of','?')} {result.get('as_of_dow','')}"
+        f" &nbsp;→&nbsp; <b>买入日 T+1</b>：{result.get('buy_date','?')} {result.get('buy_dow','')}"
+        f" &nbsp;→&nbsp; <b>最晚卖出 T+{result.get('hold_days','?')}</b>：{result.get('sell_by','?')} {result.get('sell_dow','')}"
+        f"<br>范围：{_esc(result.get('sector','全市场'))} &nbsp;|&nbsp; {auth}"
+        f"{(' · '+_esc(note)) if note else ''} &nbsp;|&nbsp; 候选 {len(cands)} 只"
+        f"（universe {result.get('universe_after_filter','?')} → 打分 {result.get('scored','?')}）</div>"
+        f"{warn}"
+        f"<h2>选股结果（按综合排名，每卡含买入方案）</h2>{cards}"
+        f"{extra}"
+        f"<details><summary>量化明细（点击展开：因子原始值）</summary><div class=scroll><table><tr>"
+        f"<th>#</th><th>代码</th><th>名称</th><th>收盘</th><th>5日%</th><th>20日%</th><th>量比</th>"
+        f"<th>当日量</th><th>尾盘</th><th>距MA10</th><th>60位</th><th>ATR%</th><th>额亿</th><th>流通亿</th><th>均线/MACD</th>"
+        f"</tr>{detail_rows}</table></div></details>"
+        f"<div class=legend><b>看卡片</b>：上排=量化分·风险等级(分)·盘口信号；中间=预期收益/置信度/R:R/仓位；"
+        f"蓝条=买入价/目标/止损；下面三行=入场方式·放弃条件·催化剂。"
+        f"预期收益/目标/R:R 为引擎ATR基线(Agent③可按催化剂改写)；未做消息面时 置信度/催化剂 显示 — 。</div>"
+        f"<div class=foot>数据源：东方财富 / 新浪 / 腾讯（免费公开行情）。本报告为量化研究分析，"
+        f"<b>非投资建议</b>；A股 T+1，当日买入次日才可卖，注意仓位与止损纪律。</div>"
+        f"</div></body></html>"
+    )
+    path.write_text(html, encoding="utf-8")
+    return str(path)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="Weekly A-share quant screener (Agent 1 engine, 0-API)")
     ap.add_argument("--sector", default=None, help="行业/概念板块名，如 光通信；省略=全市场")
@@ -1032,6 +1201,8 @@ def main() -> None:
                     help="权重: 默认自动检测同目录weights.json(需持有天数匹配且<14天); 'auto'=强制用; 路径=指定; 'none'=用默认配比")
     ap.add_argument("--no-cache", action="store_true", help="禁用缓存")
     ap.add_argument("--refresh", action="store_true", help="强制重拉(绕过读缓存)")
+    ap.add_argument("--no-report", action="store_true", help="不生成HTML报告")
+    ap.add_argument("--report-dir", default=None, help="HTML报告目录(默认 skill下 reports/)")
     args = ap.parse_args()
 
     global _USE_CACHE, _REFRESH
@@ -1079,6 +1250,9 @@ def main() -> None:
     result = run(args.sector, args.pool, args.top, args.out,
                  weights=weights, hold_days=args.hold_days)
     print_table(result)
+    if not args.no_report:
+        rp = render_html(result, args.report_dir)
+        print(f"\n📄 HTML报告已保存: {rp}")
 
 
 if __name__ == "__main__":

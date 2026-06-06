@@ -122,6 +122,19 @@ python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc
 > 引擎已直接产出：风险等级(分)、买入区间、建议仓位、入场方式、止损、放弃条件 —— Agent③ 拿来即用并叠加基本面。
 收尾声明：T 日期、数据源、本结果为研究分析非投资建议；A股 T+1 当日买入次日才能卖。
 
+### 步骤 5 — 生成 HTML 报告（每次必做）
+引擎跑完已**自动**在 `reports/ashare_rank_cn_<中国时间>.html` 存一份量化预览报告（含①最终排名②买入方案③量化明细，文件名后缀=中国当地时间UTC+8）。
+做完 Agent②/③ 后，把消息面/裁决结论**回填**进结果 JSON，再生成**完整版**报告：
+1. 编辑 `C:\Trading_analysis\data\rank_latest.json`：给 `candidates[]` 每只补充
+   `exp_return`(预期收益% 如"+8~12%")、`confidence`(置信度 如"中高(75)")、`target`(目标价)、
+   `rr`(如"2.5:1")、`catalyst`(核心催化剂一句话)、`risk_note`(基本面风险补充)；
+   可选顶层加 `catalysts_md`/`final_md`(消息面/裁决全文)。
+2. 运行：
+   ```powershell
+   python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\weekly-ashare-rank\make_report.py" --in "C:\Trading_analysis\data\rank_latest.json"
+   ```
+3. 把生成的 HTML 路径告诉用户（report 文件名里的时间戳是中国当地时间）。
+
 ---
 
 ## 底层命令参考（一般不用手敲，模式判定里我已自动调用）

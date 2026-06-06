@@ -50,10 +50,12 @@ Vibe-Trading 自带 swarm（`agent/src/swarm/presets/`）每个 agent 都调外�
 weekly-ashare-rank/
 ├── SKILL.md                 # Claude Code 执行流程（三方辩论 + 参数解析 + 跳空规则）
 ├── DOC.md                   # 本文件
-├── ashare_weekly_rank.py    # 量化引擎（Agent①）+ 因子IC回测
+├── ashare_weekly_rank.py    # 量化引擎（Agent①）+ 因子IC回测 + HTML报告渲染
 ├── recheck.py               # T+1 盘前复核（跳空/破位 → 可买/等回调/放弃）
+├── make_report.py           # 由结果JSON渲染HTML报告（Agent③富集后出完整版）
 ├── universe_seed.txt        # 兜底种子universe（约100只龙头）
-└── weights.json             # 回测产出的因子权重（--backtest 生成，--weights auto 调用）
+├── weights.json             # 回测产出的因子权重（--backtest 生成，--weights auto 调用）
+└── reports/                 # 每次run自动生成的HTML报告（文件名后缀=中国当地时间）
 ```
 
 ## 3. 引擎命令行
@@ -106,6 +108,20 @@ python ashare_weekly_rank.py [选项]
 - 解读：|IC|>0.03 有效、>0.05 较强；ICIR>0.5 稳定。
 - 实测（40样本/25截面/5日窗口）：量比、20日动量、60日位置 IC 最高(~0.07)；盘口/反转较弱 → 权重自动下调。
 - 用法：先 `--backtest --hold-days N` 刷权重，再正式跑 `--weights auto`。
+
+## 4b. HTML 报告（每次run自动生成）
+每次选股 run 结束，引擎自动在 `reports/` 写一份自包含 HTML（无外部依赖，可直接双击打开）：
+- **文件名**：`ashare_rank_cn_YYYY-MM-DD_HH-MM-SS.html`，时间戳为**中国当地时间(UTC+8)**，
+  每次运行即时由系统 UTC 换算(`_cn_now()`)，不受机器时区影响、中国无夏令时故恒准确。
+- **结构(卡片式，易读、无横向滚动、适配一页宽)**：顶部信息条 → **每只股一张卡片** → 量化明细(可折叠) → 图例 + 免责声明。
+  每张卡片：①顶排 量化分·风险等级(分,按低/中/中高/高配色)·盘口信号chip；②四指标 预期收益/置信度/R:R/持仓上限；
+  ③蓝条 买入价/目标价/止损价；④三行 入场方式·放弃条件·核心催化剂(长文本整行铺开，不挤成窄列)。
+- 顶部信息条含 T/买入日T+1/最晚卖出T+N(带星期) + 跨周末/节假日提示 + 连板/一字警示。
+- 之所以用卡片而非宽表：14列宽表会横向溢出、长文本被挤成一字一行；卡片让催化剂等长文本在整页宽度自然换行。
+- **预览 vs 完整版**：引擎自动出的是量化预览（置信度/核心催化剂为"—"）；做完 Agent②/③ 后回填 JSON
+  再 `python make_report.py --in rank_latest.json` 出完整版（catalysts_md/final_md 会渲染成章节）。
+- `--no-report` 关闭自动报告；`--report-dir` 改输出目录。
+- `reports/.gitignore` 默认不把 *.html 入 git（避免膨胀）；想同步删掉该忽略即可。
 
 ## 5. T+1 盘前复核（recheck.py，Phase3）
 买入日早上 9:15–9:25 跑：读 `rank_latest.json`，用腾讯实时集合竞价价算每只票相对 T 收盘的
