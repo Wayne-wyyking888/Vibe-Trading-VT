@@ -147,7 +147,7 @@ python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc
      `技术×0.28+基本面×0.22+消息×0.22+资金×0.28−风险×0.15`（dim 名含"技术/基本面/消息/资金/风险"即可被识别）。
    - `operation_plan`（可选）：覆盖引擎自动生成的操作方案。格式 `[{"trigger":"反弹到47.4压力","action":"减仓","position":"减30-50%","note":"..."}]`；不填则用引擎版（已含 T+N 到期行）。**建议据基本面/消息细化后回填**。
    - `agents_md`（五方辩论全文，字符串）、`final_md`（裁决与操作全文，字符串）
-   > 报告每只票只保留**一份最新** HTML（自动删旧的预览/历史，reports/ 是 gitignore 临时产物），不会留半成品。
+   > 报告留存：**完整版每次都另存一份、永久保留、不覆盖**（按时间戳累积，可对比历次诊断）；只有引擎直出的**半成品预览**（`diag_{代码}_preview_*.html`）会被新报告清掉，不累积。reports/ 是 gitignore 临时产物。
 2. 运行：
    ```powershell
    python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\stock-diagnostic\make_diag_report.py" --in "C:\Trading_analysis\data\diag_latest.json"

@@ -34,8 +34,8 @@ def main() -> None:
         print(f"找不到 {p}")
         return
     result = json.loads(p.read_text(encoding="utf-8"))
-    out = diag.render_html(result, args.report_dir)
-    print(f"📄 HTML诊断报告已保存: {out}")
+    out = diag.render_html(result, args.report_dir, is_final=True)  # 完整版：永久保留、不覆盖旧的完整报告
+    print(f"📄 HTML完整诊断报告已保存(每次另存,不覆盖): {out}")
 
 
 if __name__ == "__main__":

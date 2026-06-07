@@ -94,8 +94,10 @@ python stock_diagnostic.py --code 600519 [选项]
 - **横幅**指标都带方向标注：持仓健康度↑、量化买入分↑（0-100，弱势持仓可能接近0属正常）、技术风险↓
   （注意：横幅"技术风险"是引擎客观技术风险；表格⑤是叠加基本面/事件后的综合风险，两者可不同）。
 - **关键价位地图**：每个 cell 内含一句说明（止损=破位离场、加仓区=回踩低吸、MA20=中期多空线…）。
-- **每只票只保留一份最新报告**：`render_html` 默认 `prune=True`，写新报告时删掉同代码的旧 HTML（含半成品预览），
-  reports/ 是 gitignore 的临时产物。想保留多份历史可调 `render_html(..., prune=False)`。
+- **报告留存规则**：
+  - **完整版**（`make_diag_report.py` 出的 `diag_{代码}_cn_{时间}.html`）：每次都**另存一份、永久保留、不覆盖**，可对比同一只票历次诊断。
+  - **半成品预览**（引擎直出的 `diag_{代码}_preview_cn_{时间}.html`）：不累积，写新报告时自动清掉同代码旧预览。
+  - reports/ 是 gitignore 的临时产物。`render_html(r, is_final=False)` 出预览、`is_final=True`(默认) 出永久完整版。
 - **预览 vs 完整版**：引擎自动出的是量化预览（②③维度显示"待回填"）；做完 Agent②~⑤ 后回填 JSON
   （`final_action`/`final_confidence`/`final_score`/`agent_scores`/`agents_md`/`final_md`）再
   `python make_diag_report.py --in diag_latest.json` 出**完整版**（会自动替换掉预览）。

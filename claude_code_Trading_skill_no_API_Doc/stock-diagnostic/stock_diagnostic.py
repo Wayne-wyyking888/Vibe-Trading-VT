@@ -856,20 +856,22 @@ def _agent_dir(dim: str) -> str:
     return "↓越低越好" if "风险" in dim else "↑越高越好"
 
 
-def render_html(r: dict, report_dir: str | None = None, prune: bool = True) -> str:
+def render_html(r: dict, report_dir: str | None = None, is_final: bool = True) -> str:
     cn = eng._cn_now()
     ts = cn.strftime("%Y-%m-%d_%H-%M-%S")
     rdir = pathlib.Path(report_dir) if report_dir else (HERE / "reports")
     rdir.mkdir(parents=True, exist_ok=True)
-    path = rdir / f"diag_{r['code']}_cn_{ts}.html"
-    # prune: 同一只票只保留这一份最新报告，删掉旧的/半成品预览（reports/ 是 gitignore 的临时产物）
-    if prune:
-        for old in rdir.glob(f"diag_{r['code']}_cn_*.html"):
-            if old.resolve() != path.resolve():
-                try:
-                    old.unlink()
-                except OSError:
-                    pass
+    # 完整报告 → diag_{code}_cn_{ts}.html（永久保留、每次跑都新存一份、不覆盖）
+    # 半成品预览 → diag_{code}_preview_cn_{ts}.html（不累积）
+    tag = "" if is_final else "_preview"
+    path = rdir / f"diag_{r['code']}{tag}_cn_{ts}.html"
+    # 只清理同代码的旧"预览"半成品（无论本次是预览还是完整报告都清）；完整报告永不删除。
+    for old in rdir.glob(f"diag_{r['code']}_preview_cn_*.html"):
+        if old.resolve() != path.resolve():
+            try:
+                old.unlink()
+            except OSError:
+                pass
 
     q, t, v = r["quote"], r["technical"], r["engine_verdict"]
     ca, sc, pm = r.get("cost_analysis"), r["scenario"], r["price_map"]
@@ -1096,8 +1098,10 @@ def main() -> None:
                  weights_mode=args.weights, out_path=args.out)
     print_report(r)
     if not args.no_report:
-        rp = render_html(r, args.report_dir)
-        print(f"\n📄 HTML诊断报告已保存: {rp}")
+        # 引擎直出的是"预览"(未含 Agent②~⑤ 回填)；完整版由 make_diag_report.py 出并永久保留
+        rp = render_html(r, args.report_dir, is_final=False)
+        print(f"\n📄 HTML诊断报告(预览)已保存: {rp}")
+        print("   (做完五方裁决后跑 make_diag_report.py 出完整版，完整版每次都另存、不覆盖)")
 
 
 if __name__ == "__main__":
