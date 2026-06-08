@@ -856,16 +856,34 @@ def _agent_dir(dim: str) -> str:
     return "↓越低越好" if "风险" in dim else "↑越高越好"
 
 
+def _report_ts(r: dict) -> str:
+    """报告文件名时间戳 = 本次**诊断生成时间**(取自结果JSON)，不是渲染时刻。
+    这样同一次诊断无论重渲染几次(预览→完整→重出完整)都映射到同一文件名，不产生中间文件；
+    而另一次新诊断(重新跑引擎)时间不同 → 另存一份，历史得以保留。"""
+    s = r.get("cn_time")  # "YYYY-MM-DD HH:MM:SS"（中国时间）
+    if s:
+        try:
+            return dt.datetime.strptime(s, "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d_%H-%M-%S")
+        except ValueError:
+            pass
+    ga = r.get("generated_at")
+    if ga:
+        try:
+            return dt.datetime.fromisoformat(ga).strftime("%Y-%m-%d_%H-%M-%S")
+        except ValueError:
+            pass
+    return eng._cn_now().strftime("%Y-%m-%d_%H-%M-%S")
+
+
 def render_html(r: dict, report_dir: str | None = None, is_final: bool = True) -> str:
-    cn = eng._cn_now()
-    ts = cn.strftime("%Y-%m-%d_%H-%M-%S")
+    ts = _report_ts(r)  # 时间戳=诊断生成时间(同次诊断重渲染→同名文件,不产生中间文件)
     rdir = pathlib.Path(report_dir) if report_dir else (HERE / "reports")
     rdir.mkdir(parents=True, exist_ok=True)
-    # 完整报告 → diag_{code}_cn_{ts}.html（永久保留、每次跑都新存一份、不覆盖）
+    # 完整报告 → diag_{code}_cn_{ts}.html（不同诊断各存一份、保留历史；同次诊断重渲染同名→覆盖自身）
     # 半成品预览 → diag_{code}_preview_cn_{ts}.html（不累积）
     tag = "" if is_final else "_preview"
     path = rdir / f"diag_{r['code']}{tag}_cn_{ts}.html"
-    # 只清理同代码的旧"预览"半成品（无论本次是预览还是完整报告都清）；完整报告永不删除。
+    # 写完整报告时，清掉同代码、同次诊断的预览（同 ts 的 _preview_）；其它完整报告永不删除。
     for old in rdir.glob(f"diag_{r['code']}_preview_cn_*.html"):
         if old.resolve() != path.resolve():
             try:
