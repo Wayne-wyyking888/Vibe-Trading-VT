@@ -1323,13 +1323,27 @@ def _esc(x) -> str:
     return str(x).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def render_html(result: dict, report_dir: str | None = None) -> str:
-    """把选股结果渲染成自包含(无外部依赖)的易读 HTML，文件名后缀为中国当地时间。"""
+PREVIEW_NAME = "ashare_rank_cn_preview.html"  # 引擎自动预览版的固定名(反复覆盖,不堆时间戳中间文件)
+
+
+def render_html(result: dict, report_dir: str | None = None, preview: bool = False) -> str:
+    """把选股结果渲染成自包含(无外部依赖)的易读 HTML。
+    preview=True(引擎自动出的量化预览)→ 固定文件名,每次覆盖,引擎跑几次都只占1个;
+    preview=False(make_report 出的完整版)→ 时间戳命名,并清掉预览中间文件,只留这份最终版。"""
     cn = _cn_now()
     ts = cn.strftime("%Y-%m-%d_%H-%M-%S")
     rdir = pathlib.Path(report_dir) if report_dir else (pathlib.Path(__file__).resolve().parent / "reports")
     rdir.mkdir(parents=True, exist_ok=True)
-    path = rdir / f"ashare_rank_cn_{ts}.html"
+    if preview:
+        path = rdir / PREVIEW_NAME
+    else:
+        path = rdir / f"ashare_rank_cn_{ts}.html"
+        prev = rdir / PREVIEW_NAME  # 完整版生成 → 删掉预览中间文件
+        if prev.exists():
+            try:
+                prev.unlink()
+            except OSError:
+                pass
 
     cands = result.get("candidates", [])
     auth = "权威交易日历" if result.get("calendar_authoritative") else "⚠仅跳周末(日历未取到)"
@@ -1383,6 +1397,9 @@ def render_html(result: dict, report_dir: str | None = None) -> str:
     oneword = [c["code"] for c in cands if c.get("oneword")]
     hot = [f"{c['code']}({c['limit_streak']}板)" for c in cands if c.get("limit_streak", 0) >= 3]
     warn = ""
+    if preview:
+        warn += ("<p class=warn>📝 量化预览版（仅引擎打分，未含消息面/裁决）——"
+                 "生成完整版后本文件会被自动清除，请以带时间戳的完整版为准。</p>")
     for s in result.get("sanity_flags", []):
         warn += f"<p class=warn>{_esc(s)}</p>"
     if oneword:
@@ -1559,8 +1576,8 @@ def main() -> None:
                  weights=weights, hold_days=args.hold_days, verify=not args.no_verify)
     print_table(result)
     if not args.no_report:
-        rp = render_html(result, args.report_dir)
-        print(f"\n📄 HTML报告已保存: {rp}")
+        rp = render_html(result, args.report_dir, preview=True)
+        print(f"\n📄 量化预览报告(中间版,完整版生成后会清除): {rp}")
 
 
 if __name__ == "__main__":

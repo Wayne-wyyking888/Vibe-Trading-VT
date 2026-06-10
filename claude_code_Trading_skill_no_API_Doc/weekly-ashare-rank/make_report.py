@@ -36,8 +36,8 @@ def main() -> None:
         print(f"找不到 {p}")
         return
     result = json.loads(p.read_text(encoding="utf-8"))
-    out = eng.render_html(result, args.report_dir)
-    print(f"📄 HTML报告已保存: {out}")
+    out = eng.render_html(result, args.report_dir)  # preview=False → 完整版+清掉预览中间文件
+    print(f"📄 完整版HTML报告已保存: {out}（已清除引擎预览中间文件）")
 
 
 if __name__ == "__main__":

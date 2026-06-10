@@ -206,8 +206,8 @@ python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc
 收尾声明：T 日期、数据源、本结果为研究分析非投资建议；A股 T+1 当日买入次日才能卖。
 
 ### 步骤 5 — 生成 HTML 报告（每次必做）
-引擎跑完已**自动**在 `reports/ashare_rank_cn_<中国时间>.html` 存一份量化预览报告（含①最终排名②买入方案③量化明细，文件名后缀=中国当地时间UTC+8）。
-做完 Agent②/③ 后，把消息面/裁决结论**回填**进结果 JSON，再生成**完整版**报告：
+引擎跑完已**自动**在 `reports/ashare_rank_cn_preview.html` 存一份量化预览报告（**固定文件名**，引擎跑几次都只覆盖这一个，不堆中间文件）。
+做完 Agent②/③ 后，把消息面/裁决结论**回填**进结果 JSON，再生成**完整版**报告（完整版用时间戳命名，并**自动删掉那个 preview 预览文件**，最终 reports/ 里每个 session 只留一份带时间戳的完整版）：
 1. 编辑 `C:\Trading_analysis\data\rank_latest.json`：给 `candidates[]` 每只补充
    `exp_return`(预期收益% 如"+8~12%")、`confidence`(置信度 如"中高(75)")、`target`(目标价)、
    `rr`(如"2.5:1")、`catalyst`(核心催化剂一句话)、`risk_note`(基本面风险补充)；

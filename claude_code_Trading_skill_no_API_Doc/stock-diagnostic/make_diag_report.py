@@ -35,6 +35,7 @@ def main() -> None:
         return
     result = json.loads(p.read_text(encoding="utf-8"))
     out = diag.render_html(result, args.report_dir, is_final=True)  # 完整版：永久保留、不覆盖旧的完整报告
+    diag._save_sidecar(result)  # 富集版JSON同名留痕，供下次诊断「与上次对比」与盘前复核
     print(f"📄 HTML完整诊断报告已保存(每次另存,不覆盖): {out}")
 
 

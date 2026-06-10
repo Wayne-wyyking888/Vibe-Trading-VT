@@ -30,6 +30,8 @@ import json
 import pathlib
 import sys
 import time
+import urllib.parse
+import urllib.request
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -65,6 +67,61 @@ eng = _load_engine()
 def log(msg: str) -> None:
     sys.stderr.write(f"[diag] {msg}\n")
     sys.stderr.flush()
+
+
+# ---------------------------------------------------------------- 数据新鲜度守卫
+def _session_now() -> str:
+    """当前处于 A 股的哪个时段（中国时间）：盘前/盘中/午休/盘后/休市日。"""
+    now = eng._cn_now()
+    cal = eng._trade_calendar()
+    today = now.date().isoformat()
+    if cal and today not in cal:
+        return "休市日"
+    hm = now.hour * 60 + now.minute
+    if hm < 9 * 60 + 15:
+        return "盘前"
+    if hm < 9 * 60 + 30:
+        return "集合竞价"
+    if hm < 11 * 60 + 30:
+        return "盘中"
+    if hm < 13 * 60:
+        return "午休"
+    if hm < 15 * 60:
+        return "盘中"
+    return "盘后"
+
+
+def _expected_last_kline_date() -> str | None:
+    """行情源此刻应有的最新K线日期：盘中=今天(未完成bar)，收盘后=今天，盘前=上一交易日。"""
+    cal = eng._trade_calendar()
+    if not cal:
+        return None
+    now = eng._cn_now()
+    today = now.date().isoformat()
+    past = [d for d in cal if d <= today]
+    if not past:
+        return None
+    if past[-1] == today and now.hour * 60 + now.minute < 9 * 60 + 31:
+        return past[-2] if len(past) >= 2 else None  # 还没开盘，最新完整bar=上一交易日
+    return past[-1]
+
+
+def _fresh_kline(code: str, bars: int = 260) -> pd.DataFrame | None:
+    """get_kline + 新鲜度守卫：缓存K线落后于行情源应有日期时强制重拉（修复60h缓存
+    导致盘中诊断用前一天均线/RSI 的口径错配）。"""
+    h = eng.get_kline(code, bars=bars)
+    exp = _expected_last_kline_date()
+    if h is not None and exp and str(h["日期"].iloc[-1])[:10] < exp:
+        log(f"  K线缓存滞后({h['日期'].iloc[-1]} < 应有{exp})，强制重拉 {code}")
+        old = eng._REFRESH
+        eng._REFRESH = True
+        try:
+            h2 = eng.get_kline(code, bars=bars)
+        finally:
+            eng._REFRESH = old
+        if h2 is not None and len(h2) >= 25:
+            h = h2
+    return h
 
 
 # ---------------------------------------------------------------- 个股快照（扩展字段）
@@ -184,6 +241,135 @@ def fetch_fund_flow(code: str, days: int = 10) -> dict:
     return {"available": False, "days": []}
 
 
+# ---------------------------------------------------------------- F10 事件面（解禁/质押/业绩预告/股东户数/两融）
+_DC_URL = "https://datacenter-web.eastmoney.com/api/data/v1/get"
+_DC_UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+
+
+def _dc_get(report: str, filt: str, sort: str = "", ps: int = 20) -> list[dict]:
+    """东财数据中心 datacenter-web 通用查询（免费、无 key）。失败返回 []。"""
+    p = {"reportName": report, "columns": "ALL", "filter": filt,
+         "pageSize": str(ps), "pageNumber": "1", "source": "WEB", "client": "WEB"}
+    if sort:
+        p["sortColumns"], p["sortTypes"] = sort.split(":")
+    req = urllib.request.Request(_DC_URL + "?" + urllib.parse.urlencode(p), headers=_DC_UA)
+    try:
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            obj = json.load(resp)
+        return ((obj.get("result") or {}).get("data")) or []
+    except Exception as e:  # noqa: BLE001
+        log(f"  datacenter {report} 失败: {str(e)[:50]}")
+        return []
+
+
+def fetch_f10_extras(code: str, hold_days: int, float_cap_yi: float | None) -> dict:
+    """客观事件面数据（替代 WebSearch 记忆）：未来解禁、质押比例、最近业绩预告、
+    股东户数变化、两融余额。每项独立容错；并产出 事件风险加点(risk_bump) + 理由。"""
+    out: dict = {"available": True}
+    today = dt.date.today()
+    risks: list[str] = []
+    notes: list[str] = []
+    bump = 0
+    flt = f'(SECURITY_CODE="{code}")'
+
+    # 1) 未来解禁（按解禁日升序取未来批次）
+    lift_rows = _dc_get("RPT_LIFT_STAGE", flt, sort="FREE_DATE:-1", ps=40)
+    fut = []
+    for r in lift_rows:
+        d = str(r.get("FREE_DATE", ""))[:10]
+        try:
+            dd = dt.date.fromisoformat(d)
+        except ValueError:
+            continue
+        if dd >= today:
+            ratio = r.get("TOTAL_RATIO") or r.get("FREE_RATIO")
+            fut.append({"date": d, "days_to": (dd - today).days,
+                        "ratio_pct": round(float(ratio), 2) if ratio is not None else None,
+                        "type": r.get("FREE_SHARES_TYPE"),
+                        "cap_yi": round(float(r["LIFT_MARKET_CAP"]) / 1e8, 2)
+                        if r.get("LIFT_MARKET_CAP") else None})
+    fut.sort(key=lambda x: x["days_to"])
+    out["lift"] = fut[:3]
+    if fut:
+        nx = fut[0]
+        rt = nx.get("ratio_pct") or 0
+        if nx["days_to"] <= max(30, hold_days * 2) and rt >= 1:
+            add = 12 if rt >= 5 else 8
+            bump += add
+            risks.append(f"{nx['date']}解禁{rt}%({nx['type']})")
+        elif nx["days_to"] <= 90:
+            notes.append(f"{nx['date']}有解禁({_d(rt,'%')})")
+
+    # 2) 质押比例（中证登周频）
+    pl = _dc_get("RPT_CSDC_LIST", flt, sort="TRADE_DATE:-1", ps=1)
+    out["pledge"] = None
+    if pl:
+        ratio = pl[0].get("PLEDGE_RATIO")
+        out["pledge"] = {"ratio_pct": round(float(ratio), 2) if ratio is not None else None,
+                         "date": str(pl[0].get("TRADE_DATE", ""))[:10]}
+        if ratio is not None:
+            if float(ratio) >= 50:
+                bump += 12; risks.append(f"质押比例{round(float(ratio),1)}%极高")
+            elif float(ratio) >= 30:
+                bump += 6; risks.append(f"质押比例{round(float(ratio),1)}%偏高")
+
+    # 3) 最近业绩预告（仅12个月内的才计入风险）
+    pf = _dc_get("RPT_PUBLIC_OP_NEWPREDICT", flt, sort="NOTICE_DATE:-1", ps=1)
+    out["forecast"] = None
+    if pf:
+        r0 = pf[0]
+        nd = str(r0.get("NOTICE_DATE", ""))[:10]
+        out["forecast"] = {"notice_date": nd, "report_date": str(r0.get("REPORT_DATE", ""))[:10],
+                           "type": r0.get("PREDICT_TYPE"), "content": r0.get("PREDICT_CONTENT"),
+                           "chg_lo": r0.get("ADD_AMP_LOWER"), "chg_hi": r0.get("ADD_AMP_UPPER")}
+        try:
+            recent = (today - dt.date.fromisoformat(nd)).days <= 370
+        except ValueError:
+            recent = False
+        tp = str(r0.get("PREDICT_TYPE") or "")
+        if recent and any(k in tp for k in ("预亏", "首亏", "续亏")):
+            bump += 15; risks.append(f"业绩预告{tp}({nd})")
+        elif recent and any(k in tp for k in ("预减", "略减")):
+            bump += 8; risks.append(f"业绩预告{tp}({nd})")
+
+    # 4) 股东户数变化（筹码集中/分散）
+    hn = _dc_get("RPT_HOLDERNUM_DET", flt, sort="END_DATE:-1", ps=1)
+    out["holders"] = None
+    if hn:
+        r0 = hn[0]
+        chg = r0.get("HOLDER_NUM_RATIO")
+        out["holders"] = {"end_date": str(r0.get("END_DATE", ""))[:10],
+                          "num": r0.get("HOLDER_NUM"),
+                          "chg_pct": round(float(chg), 2) if chg is not None else None}
+        if chg is not None and float(chg) >= 10:
+            notes.append(f"股东户数+{round(float(chg),1)}%(筹码分散)")
+        elif chg is not None and float(chg) <= -8:
+            notes.append(f"股东户数{round(float(chg),1)}%(筹码集中)")
+
+    # 5) 两融（融资余额与5/10日净买入）
+    mg = _dc_get("RPTA_WEB_RZRQ_GGMX", f'(scode="{code}")', sort="date:-1", ps=1)
+    out["margin"] = None
+    if mg:
+        r0 = mg[0]
+        def _yi(k):
+            v = r0.get(k)
+            return round(float(v) / 1e8, 2) if v is not None else None
+        out["margin"] = {"date": str(r0.get("DATE", ""))[:10], "rzye_yi": _yi("RZYE"),
+                         "rz_net5d_yi": _yi("RZJME5D"), "rz_net10d_yi": _yi("RZJME10D"),
+                         "rzye_ratio_pct": round(float(r0["RZYEZB"]), 2) if r0.get("RZYEZB") is not None else None}
+        n5 = out["margin"]["rz_net5d_yi"]
+        if n5 is not None:
+            notes.append(f"融资5日净{'买入' if n5 >= 0 else '偿还'}{abs(n5)}亿")
+
+    got = any((out.get("lift"), out.get("pledge"), out.get("forecast"),
+               out.get("holders"), out.get("margin")))
+    out["available"] = bool(got)
+    out["event_risks"] = risks
+    out["event_notes"] = notes
+    out["risk_bump"] = min(30, bump)
+    return out
+
+
 # ---------------------------------------------------------------- 扩展技术面
 def extra_technicals(h: pd.DataFrame) -> dict:
     """在 hist_factors 之外补：RSI14 / BOLL%b / 多周期位置 / 支撑压力 / 60·120·250日位。"""
@@ -255,7 +441,7 @@ def fetch_index_context() -> dict:
                          retries=2).get("data") or {}
             chg = _num(d.get("f170"))
             code = secid.split(".")[1]
-            h = eng.get_kline(code)
+            h = _fresh_kline(code, bars=160)
             above_ma20, pos60 = None, None
             if h is not None and len(h) >= 20:
                 c = h["收盘"]
@@ -328,10 +514,9 @@ def fetch_peers(industry: str, board: str, target_code: str, target_chg: float |
     spot = pd.DataFrame(rows).rename(columns=eng._COL_MAP).drop_duplicates("代码")
     spot["成交额"] = pd.to_numeric(spot["成交额"], errors="coerce")
     spot = spot.sort_values("成交额", ascending=False)
-    codes = [str(c) for c in spot["代码"].tolist()]
-    if target_code not in codes:
-        codes = [target_code] + codes
-    codes = list(dict.fromkeys(codes))[:max_peers + 1]
+    codes = [str(c) for c in spot["代码"].tolist() if str(c) != target_code]
+    # 本股必须保住头名位置，不能被成交额排序裁掉（否则强弱排名缺本股）
+    codes = [target_code] + codes[:max_peers]
     peers = []
     name_map = dict(zip(spot["代码"].astype(str), spot["名称"].astype(str)))
     chg_map = dict(zip(spot["代码"].astype(str),
@@ -364,10 +549,31 @@ def fetch_peers(industry: str, board: str, target_code: str, target_chg: float |
 
 
 # ---------------------------------------------------------------- 权重校准（≤24h）
+def _sign_adjust_weights(weights: dict | None, ic_rows: list[dict]) -> tuple[dict | None, str]:
+    """修正 |IC| 配桶的方向盲区：某桶因子的**带符号**平均 IC ≤ 0（负向预测，
+    如尾盘强→未来反而跌的均值回归期），该桶权重不应被 |IC| 抬高 → 压到 ≤0.8。
+    返回 (修正后权重, 说明)。"""
+    if not weights or not ic_rows:
+        return weights, ""
+    try:
+        icm = {r["factor"]: r.get("IC") for r in ic_rows if r.get("IC") is not None}
+        buckets = getattr(eng, "FACTOR_BUCKETS", {})
+        out = dict(weights)
+        demoted = []
+        for b, cols in buckets.items():
+            vals = [icm[c] for c in cols if c in icm]
+            if vals and float(np.mean(vals)) < 0 and out.get(b, 0) > 0.8:
+                out[b] = 0.8
+                demoted.append(b)
+        note = f"；负IC桶降权:{'/'.join(demoted)}" if demoted else ""
+        return out, note
+    except Exception:  # noqa: BLE001
+        return weights, ""
+
+
 def ensure_weights(sector: str | None, fwd: int, sample: int = 50,
                    max_age_h: float = 24.0) -> tuple[dict | None, dict]:
-    """qlib 风格因子 IC 权重：≤24h 自动重跑，保证最新最 predictive。
-    返回 (weights, meta)。weights 喂给 eng.composite。"""
+    """qlib 风格因子 IC 权重：≤24h 自动重跑 + 符号修正。返回 (weights, meta)。"""
     wp = HERE / "weights.json"
     meta = {"calibrated": False, "age_h": None, "note": ""}
     if wp.exists():
@@ -377,9 +583,10 @@ def ensure_weights(sector: str | None, fwd: int, sample: int = 50,
             age_h = (dt.datetime.now() - ts).total_seconds() / 3600
             meta["age_h"] = round(age_h, 1)
             if obj.get("fwd_days") == fwd and age_h <= max_age_h:
-                meta["note"] = f"复用{round(age_h,1)}h前权重(fwd={fwd})"
+                w, sn = _sign_adjust_weights(obj.get("weights"), obj.get("ic") or [])
+                meta["note"] = f"复用{round(age_h,1)}h前权重(fwd={fwd}){sn}"
                 log(meta["note"])
-                return obj.get("weights"), meta
+                return w, meta
         except Exception:  # noqa: BLE001
             pass
     # 重跑回测刷新（≤24h 纪律）
@@ -387,10 +594,11 @@ def ensure_weights(sector: str | None, fwd: int, sample: int = 50,
     try:
         bt = eng.backtest(sector if sector else None, sample, fwd=fwd)
         wp.write_text(json.dumps(bt, ensure_ascii=False, indent=2), encoding="utf-8")
+        w, sn = _sign_adjust_weights(bt.get("weights"), bt.get("ic") or [])
         meta.update(calibrated=True, age_h=0.0,
-                    note=f"已重跑IC回测刷新权重(fwd={fwd}, 样本{bt.get('n_stocks')})")
+                    note=f"已重跑IC回测刷新权重(fwd={fwd}, 样本{bt.get('n_stocks')}){sn}")
         log(meta["note"])
-        return bt.get("weights"), meta
+        return w, meta
     except Exception as e:  # noqa: BLE001
         log(f"  权重校准失败({str(e)[:50]})，用持有天数自适应默认权重")
         meta["note"] = "校准失败，用默认权重"
@@ -400,28 +608,48 @@ def ensure_weights(sector: str | None, fwd: int, sample: int = 50,
 # ---------------------------------------------------------------- 成本相关 + 裁决底座
 def cost_analysis(price: float, cost: float | None, atr: float,
                   near_support: float, near_resist: float, ma20: float,
-                  hold_days: int) -> dict:
-    """成本相关测算 + 关键价位地图 + 情景分析。"""
+                  hold_days: int, trend: str = "中性") -> dict:
+    """成本相关测算 + 关键价位地图 + 情景分析。trend ∈ {上行,中性,下行}（影响基准情景漂移）。"""
     out = {}
     k = max(2.0, hold_days * 0.4)
     bull = round(max(price + k * atr, near_resist), 2)
     bear = round(min(price - k * atr, near_support), 2)
-    base = round(price + 0.15 * k * atr, 2)
+    # 基准情景漂移随趋势定方向（旧版恒为正漂移，下跌趋势里会误导）
+    drift = {"上行": 0.15, "中性": 0.0, "下行": -0.12}.get(trend, 0.0)
+    base = round(price + drift * k * atr, 2)
     out["scenario"] = {
         "bull": {"price": bull, "from_now": round(bull / price * 100 - 100, 1)},
         "base": {"price": base, "from_now": round(base / price * 100 - 100, 1)},
         "bear": {"price": bear, "from_now": round(bear / price * 100 - 100, 1)},
     }
-    # 止损：结构支撑与 ATR 取较紧者（但不高于价）
-    atr_stop = price - 1.8 * atr
+    # 止损：ATR 倍数随持有视野缩放（短视野没必要扛 1.8×ATR 的回撤）；
+    # 与结构支撑取较紧者；最少留 1.2×ATR 防噪（否则日内波动就打掉）。
+    atr_mult = 1.2 if hold_days <= 5 else (1.5 if hold_days <= 10 else 1.8)
+    atr_stop = price - atr_mult * atr
     stop = round(min(near_support * 0.99, atr_stop) if near_support < price else atr_stop, 2)
     stop = min(stop, round(price * 0.97, 2))
+    stop = max(stop, round(price - 3.0 * atr, 2))  # 不给离谱的超宽止损
+    add_zone = [round(min(near_support, ma20) * 0.995, 2), round(min(price, ma20), 2)]
+    # 自检：止损必须低于加仓区下沿（在加仓区里被止损=逻辑矛盾）
+    map_warnings = []
+    if stop >= add_zone[0]:
+        stop = round(add_zone[0] * 0.985, 2)
+        map_warnings.append("止损已下调至加仓区下沿之下(原ATR止损落在加仓区内)")
+    if round(ma20, 2) > near_resist:
+        map_warnings.append("MA20在压力位上方(价格被均线下压)，地图非单调，谨慎做多")
+    if add_zone[1] >= price * 0.995:
+        map_warnings.append("加仓区上沿≈现价：等于现价买入，不是回踩低吸")
+    # R:R（按看多目标/止损），<1.5 不值得在现价加仓
+    rr = round((bull - price) / max(price - stop, 1e-9), 2)
     out["price_map"] = {
         "key_support": near_support, "key_resist": near_resist,
-        "stop": stop, "ma20": round(ma20, 2),
-        "add_zone": [round(min(near_support, ma20) * 0.995, 2), round(min(price, ma20), 2)],
+        "stop": stop, "stop_atr_mult": atr_mult, "ma20": round(ma20, 2),
+        "add_zone": add_zone,
         "take_profit": [near_resist, bull],
+        "rr": rr,
+        "rr_note": ("现价R:R≥1.5,可持有/择机加" if rr >= 1.5 else "现价R:R<1.5,不宜现价加仓"),
     }
+    out["map_warnings"] = map_warnings
     if cost is None:
         out["cost"] = None
         return out
@@ -446,9 +674,9 @@ def cost_analysis(price: float, cost: float | None, atr: float,
 
 
 def engine_verdict(f: dict, q: dict, tech: dict, flow: dict, cost: dict | None,
-                   index_ctx: dict, peers: dict) -> dict:
-    """引擎基线裁决：多空 stance(0-100) + 持仓健康度 + 建议动作（结合成本）。
-    这是 Agent⑤ 的量化底座，可被基本面/消息面改写。"""
+                   index_ctx: dict, peers: dict, f10: dict | None = None) -> dict:
+    """引擎基线裁决：量价stance(0-100, 仅技术/资金/联动，不含基本面消息) + 持仓健康度
+    + 建议动作（结合成本）。这是 Agent⑤ 的量化底座，可被基本面/消息面改写。"""
     stance = 50.0
     notes = []
     # 趋势
@@ -470,17 +698,21 @@ def engine_verdict(f: dict, q: dict, tech: dict, flow: dict, cost: dict | None,
         stance += 5
     else:
         stance -= 3
-    # RSI 极值
+    # RSI：70 以上渐进降温（旧版 78 才扣分，70-78 的过热区一分不扣 → stance 虚高）
     rsi = tech.get("rsi14")
     if rsi is not None:
         if rsi > 78:
-            stance -= 6; notes.append(f"RSI{rsi:.0f}超买")
+            stance -= 6 + (rsi - 78) * 0.4; notes.append(f"RSI{rsi:.0f}超买")
+        elif rsi > 68:
+            stance -= (rsi - 68) * 0.6
         elif rsi < 30:
             stance += 6; notes.append(f"RSI{rsi:.0f}超卖(反弹)")
-    # 位置
+    # 位置：85 以上渐进降温
     p60 = tech.get("pos60", 50)
     if p60 > 92:
-        stance -= 8; notes.append("60日高位")
+        stance -= 8 + (p60 - 92) * 0.3; notes.append("60日高位")
+    elif p60 > 85:
+        stance -= (p60 - 85) * 0.5
     elif p60 < 18:
         stance += 4; notes.append("60日低位")
     # 资金流
@@ -506,8 +738,12 @@ def engine_verdict(f: dict, q: dict, tech: dict, flow: dict, cost: dict | None,
     stance -= (f.get("risk_score", 0)) * 0.08
     stance = max(0.0, min(100.0, stance))
 
-    # 持仓健康度（是否值得继续持有）：在 stance 上叠加成本/趋势情境
-    health = stance
+    # 持仓健康度 ≠ stance：stance 是量价多空，健康度还要吃风险分（技术+事件）
+    event_bump = (f10 or {}).get("risk_bump", 0)
+    total_risk = min(100, f.get("risk_score", 0) + event_bump)
+    health = 0.7 * stance + 0.3 * (100 - total_risk)
+    if event_bump:
+        notes.append(f"事件风险+{event_bump}({'/'.join((f10 or {}).get('event_risks', [])[:2])})")
     overheat = (p60 > 92) or (rsi is not None and rsi > 80)
     downtrend = (not f.get("bull")) and (price < f.get("ma20", price))
     pnl = cost["pnl_pct"] if cost else None
@@ -544,6 +780,7 @@ def engine_verdict(f: dict, q: dict, tech: dict, flow: dict, cost: dict | None,
     return {"stance": round(stance, 1), "health_score": round(max(0, min(100, health)), 1),
             "action": action, "avg_down_ok": avg_down_ok,
             "overheat": overheat, "downtrend": bool(downtrend),
+            "total_risk": total_risk, "event_risk_bump": event_bump,
             "drivers": notes[:8]}
 
 
@@ -638,9 +875,27 @@ def diagnose(code: str, cost: float | None, hold_days: int = 20,
     industry = (q.get("industry") or "").strip()
     log(f"  {name} | 行业={industry} | 板块={q.get('board')}")
 
-    h = eng.get_kline(code, bars=260)
+    session = _session_now()
+    data_warnings: list[str] = []
+    h = _fresh_kline(code, bars=260)
     if h is None or len(h) < 30:
         raise RuntimeError(f"取不到 {code} 足够K线（行情源不可用或代码无效）")
+    exp_date = _expected_last_kline_date()
+    kline_last = str(h["日期"].iloc[-1])[:10]
+    if exp_date and kline_last < exp_date:
+        data_warnings.append(f"K线最新仅到{kline_last}(应有{exp_date})，均线/RSI等指标滞后，结论需打折")
+    if session in ("盘前", "集合竞价"):
+        data_warnings.append("盘前生成：当日涨跌/量比/大盘涨跌为竞价或昨日数据")
+    elif session == "盘中":
+        data_warnings.append("盘中生成：最新K线为当日未完成bar，收盘后指标可能变化")
+    # 跨源价格校验（东财 vs 腾讯）
+    try:
+        txp = (eng._tx_quote([code]).get(code) or {}).get("price")
+        emp = q.get("price")
+        if txp and emp and abs(txp / emp - 1) > 0.015:
+            data_warnings.append(f"跨源价格不一致：东财{emp} vs 腾讯{txp}(差{abs(txp/emp-1)*100:.1f}%)")
+    except Exception:  # noqa: BLE001
+        pass
 
     f = eng.hist_factors(code, name)
     if f is None:
@@ -660,6 +915,7 @@ def diagnose(code: str, cost: float | None, hold_days: int = 20,
     tech = extra_technicals(h)
     price = q.get("price") or f["close"]
     flow = fetch_fund_flow(code, days=10)
+    f10 = fetch_f10_extras(code, hold_days, None)
     index_ctx = fetch_index_context()
     peers = fetch_peers(industry, q.get("board") or "", code, target_chg=q.get("chg_pct"))
     # 目标若非匹配板块成分，补回真实名称
@@ -667,10 +923,12 @@ def diagnose(code: str, cost: float | None, hold_days: int = 20,
         if p.get("is_target"):
             p["name"] = name
 
+    trend = ("上行" if (f.get("bull") or price > f.get("ma20", price)) else
+             ("下行" if price < f.get("ma20", price) else "中性"))
     ca = cost_analysis(price, cost, f.get("atr14") or price * 0.05,
                        tech["near_support"], tech["near_resist"],
-                       f.get("ma20", price), hold_days)
-    verdict = engine_verdict(f, q, tech, flow, ca.get("cost"), index_ctx, peers)
+                       f.get("ma20", price), hold_days, trend=trend)
+    verdict = engine_verdict(f, q, tech, flow, ca.get("cost"), index_ctx, peers, f10=f10)
 
     # 交易日历窗口（T → 评估日 T+N）
     win = eng._trade_window(f.get("last_date", dt.date.today().isoformat()), hold_days)
@@ -714,20 +972,61 @@ def diagnose(code: str, cost: float | None, hold_days: int = 20,
             "limit_streak": f.get("limit_streak"), "signals": eng._signal_tag(f),
         },
         "fund_flow": flow,
+        "f10": f10,
         "index_context": index_ctx,
         "sector_peers": peers,
         "cost_analysis": ca.get("cost"),
         "scenario": ca["scenario"],
         "price_map": ca["price_map"],
+        "map_warnings": ca.get("map_warnings", []),
+        "session": session,
+        "data_warnings": data_warnings,
         "engine_verdict": verdict,
         "operation_plan": op_plan,
     }
+    result["prev_diag"] = _load_prev_diag(code, result.get("cn_time", ""))
     if out_path:
         pathlib.Path(out_path).parent.mkdir(parents=True, exist_ok=True)
         pathlib.Path(out_path).write_text(json.dumps(result, ensure_ascii=False, indent=2),
                                           encoding="utf-8")
         log(f"已写出 JSON: {out_path}")
+    _save_sidecar(result)
     return result
+
+
+# ---------------------------------------------------------------- 历史诊断留痕与对比
+def _sidecar_path(code: str, ts: str) -> pathlib.Path:
+    return HERE / "reports" / f"diag_{code}_cn_{ts}.json"
+
+
+def _save_sidecar(r: dict) -> None:
+    """每次诊断在 reports/ 留一份 JSON（与 HTML 同名），供下次诊断对比与盘前复核。
+    make_diag_report 回填后会用富集版覆盖同名文件。"""
+    try:
+        p = _sidecar_path(r["code"], _report_ts(r))
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps(r, ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception as e:  # noqa: BLE001
+        log(f"  历史JSON留痕失败: {str(e)[:50]}")
+
+
+def _load_prev_diag(code: str, cur_cn_time: str) -> dict | None:
+    """找同一代码最近一次历史诊断 JSON，给「与上次对比」：当时价/分数/动作/止损。"""
+    try:
+        cur_ts = cur_cn_time.replace(" ", "_").replace(":", "-")
+        cands = sorted(p for p in (HERE / "reports").glob(f"diag_{code}_cn_*.json")
+                       if cur_ts not in p.name)
+        if not cands:
+            return None
+        obj = json.loads(cands[-1].read_text(encoding="utf-8"))
+        return {"cn_time": obj.get("cn_time"), "price": (obj.get("quote") or {}).get("price"),
+                "final_score": obj.get("final_score"),
+                "final_action": obj.get("final_action") or (obj.get("engine_verdict") or {}).get("action"),
+                "stance": (obj.get("engine_verdict") or {}).get("stance"),
+                "stop": (obj.get("price_map") or {}).get("stop"),
+                "agent_scores": obj.get("agent_scores")}
+    except Exception:  # noqa: BLE001
+        return None
 
 
 # ---------------------------------------------------------------- 终端打印
@@ -739,7 +1038,9 @@ def print_report(r: dict) -> None:
     auth = "" if r.get("calendar_authoritative") else " [日历未取到,仅跳周末]"
     print(f"\n## 个股诊断（Agent① 量化底座） — {r['name']}({r['code']})  行业:{r.get('industry') or '—'}")
     print(f"T(数据截止)={r.get('as_of')} {r.get('as_of_dow','')} → 评估视野 T+{r['hold_days']}="
-          f"{r.get('eval_by')} {r.get('eval_dow','')}{auth}  (生成 {r['cn_time']} CST)")
+          f"{r.get('eval_by')} {r.get('eval_dow','')}{auth}  (生成 {r['cn_time']} CST · {r.get('session','')})")
+    for w in r.get("data_warnings", []):
+        print(f"⚠ 数据提示: {w}")
     print(f"现价={q['price']}  今涨={q.get('chg_pct')}%  PE={q.get('pe')}  PB={q.get('pb')}  "
           f"流通市值={q.get('float_cap_yi')}亿  量比={q.get('vol_ratio')}  换手={q.get('turnover')}%")
     if ca:
@@ -749,8 +1050,13 @@ def print_report(r: dict) -> None:
                 if underwater else "")
         print(f"\n【成本】成本={ca['cost']}  盈亏={ca['pnl_pct']}%({ca['status']})  {ca['cost_vs_price']}{tail}")
 
-    print(f"\n【量化】量化买入分={r['quant_score']}/100(↑越高越好)  技术风险={r['risk_level']}({r['risk_score']}/100,↓越低越好)  "
-          f"持仓健康度={v['health_score']}/100(↑)  多空stance={v['stance']}/100")
+    erb = v.get("event_risk_bump", 0)
+    risk_s = (f"技术{r['risk_score']}+事件{erb}={v.get('total_risk', r['risk_score'])}"
+              if erb else f"{r['risk_score']}")
+    print(f"\n【量化】短线量化买入分={r['quant_score']}/100(↑,动量型,长线浮盈股低分正常)  "
+          f"风险={r['risk_level']}({risk_s}/100,↓越低越好)  "
+          f"持仓健康度={v['health_score']}/100(↑,=0.7×量价stance+0.3×(100−风险))  "
+          f"量价stance={v['stance']}/100(仅技术/资金,不含基本面消息)")
     fb = r["factor_breakdown"]
     print(f"  因子: 动量{fb['动量']} 量能{fb['量能']} 技术{fb['技术']} 盘口{fb['盘口']} 回调{fb['回调']} 惩罚-{fb['惩罚']}")
     print(f"\n【技术】收盘{t['close']} MA5/10/20/60={t['ma5']}/{t['ma10']}/{t['ma20']}/{t['ma60']}  "
@@ -765,6 +1071,33 @@ def print_report(r: dict) -> None:
         ratio = fl.get("main_ratio_avg5")
         ratio_s = f"  近5日均占比{ratio}%" if ratio is not None else ""
         print(f"\n【资金】主力近5日净{fl['main_net_5d_yi']}亿({fl['trend']}){ratio_s}  [{fl.get('source','')}]")
+
+    f10 = r.get("f10") or {}
+    if f10.get("available"):
+        parts = []
+        lift = f10.get("lift") or []
+        if lift:
+            nx = lift[0]
+            parts.append(f"解禁:{nx['date']}({_d(nx.get('ratio_pct'),'%')}·{nx.get('type','')})")
+        else:
+            parts.append("解禁:暂无未来批次")
+        pl = f10.get("pledge")
+        if pl and pl.get("ratio_pct") is not None:
+            parts.append(f"质押:{pl['ratio_pct']}%")
+        fc = f10.get("forecast")
+        if fc:
+            parts.append(f"业绩预告:{fc.get('type')}({fc.get('notice_date')},报告期{fc.get('report_date')})")
+        hd = f10.get("holders")
+        if hd:
+            parts.append(f"股东户数:{hd.get('num')}({_d(hd.get('chg_pct'),'%')})@{hd.get('end_date')}")
+        mg = f10.get("margin")
+        if mg:
+            parts.append(f"融资余额:{_d(mg.get('rzye_yi'),'亿')}(5日净{_d(mg.get('rz_net5d_yi'),'亿')})")
+        print("\n【事件面F10】" + "  ".join(parts))
+        if f10.get("event_risks"):
+            print(f"  ⚠ 事件风险(+{f10.get('risk_bump',0)}分): {'；'.join(f10['event_risks'])}")
+        if f10.get("event_notes"):
+            print(f"  注: {'；'.join(f10['event_notes'])}")
     sp = r["sector_peers"]
     if sp.get("available"):
         print(f"\n【同行】{sp['sector_name']}  板块均20日涨{sp.get('sect_avg_ret20')}%  "
@@ -785,8 +1118,16 @@ def print_report(r: dict) -> None:
           f"基准 {sc['base']['price']}({sc['base']['from_now']:+}%)  "
           f"看空 {sc['bear']['price']}({sc['bear']['from_now']:+}%)")
     pm = r["price_map"]
-    print(f"【价位地图】支撑{pm['key_support']} | 压力{pm['key_resist']} | 止损{pm['stop']} | "
+    print(f"【价位地图】支撑{pm['key_support']} | 压力{pm['key_resist']} | 止损{pm['stop']}({pm.get('stop_atr_mult','?')}×ATR与结构取紧) | "
           f"加仓区{pm['add_zone'][0]}–{pm['add_zone'][1]} | 止盈区{pm['take_profit'][0]}–{pm['take_profit'][1]}")
+    print(f"【R:R】现价做多 风险回报比={pm.get('rr')} → {pm.get('rr_note','')}")
+    for w in r.get("map_warnings", []):
+        print(f"  ⚠ 价位自检: {w}")
+
+    prev = r.get("prev_diag")
+    if prev:
+        print(f"\n【上次诊断对比】{prev.get('cn_time')}  当时价{prev.get('price')} → 现价{r['quote']['price']}  "
+              f"当时裁定:{prev.get('final_action')}(分{prev.get('final_score')})  当时止损{prev.get('stop')}")
 
     print(f"\n【引擎基线动作】{v['action']}")
     print(f"  依据: {' / '.join(v['drivers'])}")
@@ -963,9 +1304,68 @@ def render_html(r: dict, report_dir: str | None = None, is_final: bool = True) -
     agents_md = r.get("agents_md")  # Claude 回填五方辩论全文
     extra = ""
     if agents_md:
-        extra += f"<h2>五方辩论详情</h2><div class=md><pre>{_esc(agents_md)}</pre></div>"
+        extra += f"<h2>多方辩论详情</h2><div class=md><pre>{_esc(agents_md)}</pre></div>"
     if final_md:
         extra += f"<h2>⑤ 首席裁决官 · 综合裁定与操作</h2><div class=md><pre>{_esc(final_md)}</pre></div>"
+
+    # 数据/价位警示条（可信度：异常必须摆在明面上）
+    warn_html = ""
+    warns = list(r.get("data_warnings") or []) + list(r.get("map_warnings") or [])
+    if warns:
+        warn_html = ("<div class=warns>" + "".join(f"<div>⚠ {_esc(w)}</div>" for w in warns)
+                     + "</div>")
+
+    # 验证复核状态（Agent⑥ 回填 verification: {"passed":[...], "failed":[...], "notes":...}）
+    verif = r.get("verification")
+    verif_html = ""
+    if isinstance(verif, dict):
+        np_, nf = len(verif.get("passed") or []), len(verif.get("failed") or [])
+        color = "#2e7d32" if nf == 0 else "#c62828"
+        items = "；".join((verif.get("passed") or [])[:10])
+        fitems = "；".join(verif.get("failed") or [])
+        verif_html = (f"<div class=note style='border-color:{color}'>"
+                      f"<b style='color:{color}'>验证·复核官：{np_}项通过"
+                      f"{('，'+str(nf)+'项未过: '+_esc(fitems)) if nf else ''}</b>"
+                      f"<br><span style='color:#888'>{_esc(items)}</span></div>")
+
+    # 上次诊断对比
+    prev = r.get("prev_diag")
+    prev_html = ""
+    if prev and prev.get("price"):
+        chg_since = round((q["price"] / prev["price"] - 1) * 100, 1) if q.get("price") else None
+        prev_html = (f"<div class=note><b>与上次诊断对比</b>（{_esc(prev.get('cn_time'))}）："
+                     f"当时价 {prev['price']} → 现价 {q.get('price')}（{_d(chg_since,'%')}）；"
+                     f"当时裁定「{_esc(prev.get('final_action') or '—')}」"
+                     f"{('，分'+str(prev.get('final_score'))) if prev.get('final_score') is not None else ''}"
+                     f"，当时止损 {_d(prev.get('stop'))}</div>")
+
+    # F10 事件面卡片
+    def kv2(g, val):  # 行内已自行转义，不再二次转义
+        return f"<div><span class=g>{_esc(g)}</span><b>{val}</b></div>"
+
+    f10 = r.get("f10") or {}
+    f10_card = ""
+    if f10.get("available"):
+        lift = f10.get("lift") or []
+        lift_s = (f"{lift[0]['date']}（{_d(lift[0].get('ratio_pct'),'%')}·{_esc(lift[0].get('type') or '')}）"
+                  if lift else "暂无未来批次")
+        pl = f10.get("pledge") or {}
+        fc = f10.get("forecast") or {}
+        hd = f10.get("holders") or {}
+        mg = f10.get("margin") or {}
+        rows_kv = (
+            kv2("下次解禁", lift_s)
+            + kv2("质押比例", _d(pl.get("ratio_pct"), "%") + f"（{_esc(pl.get('date') or '')}）" if pl else "—")
+            + kv2("业绩预告", f"{_esc(fc.get('type') or '—')}（{_esc(fc.get('notice_date') or '')}·报告期{_esc(fc.get('report_date') or '')}）" if fc else "—")
+            + kv2("股东户数", f"{_d(hd.get('num'))}（{_d(hd.get('chg_pct'),'%')}）@{_esc(hd.get('end_date') or '')}" if hd else "—")
+            + kv2("融资余额", f"{_d(mg.get('rzye_yi'),'亿')} · 5日净{_d(mg.get('rz_net5d_yi'),'亿')} · 占流通{_d(mg.get('rzye_ratio_pct'),'%')}" if mg else "—"))
+        ev = ""
+        if f10.get("event_risks"):
+            ev = (f"<div style='color:#c62828;font-size:12px;margin-top:6px'>⚠ 事件风险+{f10.get('risk_bump',0)}分："
+                  f"{_esc('；'.join(f10['event_risks']))}</div>")
+        elif f10.get("event_notes"):
+            ev = f"<div style='color:#888;font-size:12px;margin-top:6px'>{_esc('；'.join(f10['event_notes']))}</div>"
+        f10_card = f"<div class=card><h3>事件面 F10（东财数据中心·客观）</h3><div class=kv>{rows_kv}</div>{ev}</div>"
 
     action = r.get("final_action") or v["action"]
     conf = r.get("final_confidence") or "引擎基线(待五方回填)"
@@ -996,6 +1396,7 @@ def render_html(r: dict, report_dir: str | None = None, is_final: bool = True) -
         "table.wt{table-layout:fixed}table.wt th,table.wt td{white-space:normal;word-break:break-word;vertical-align:top;line-height:1.5}"
         "table.wt td.keyc{text-align:left}"
         ".note{font-size:12px;color:#666;background:#fff;border:1px dashed #cfd6dd;border-radius:8px;padding:8px 11px;margin:8px 0}"
+        ".warns{background:#fff3f0;border:1px solid #ffab91;border-radius:8px;padding:8px 11px;margin:10px 0;font-size:12.5px;color:#b71c1c;line-height:1.7}"
         ".scroll{overflow-x:auto}.md pre{white-space:pre-wrap;background:#fff;border:1px solid #e0e4e8;border-radius:8px;padding:12px;font-size:13px}"
         ".foot{font-size:12px;color:#888;margin-top:18px;padding-top:10px;border-top:1px solid #e0e4e8}"
         ".map{display:flex;gap:10px;flex-wrap:wrap;font-size:13px}.map div{background:#f5f8fc;border-radius:8px;padding:7px 12px;text-align:center}"
@@ -1023,22 +1424,25 @@ def render_html(r: dict, report_dir: str | None = None, is_final: bool = True) -
         f"<meta name=viewport content='width=device-width,initial-scale=1'>"
         f"<title>个股诊断 {r['name']} {r['code']} {ts}</title><style>{css}</style></head><body><div class=wrap>"
         f"<h1>🔍 个股诊断报告 · {_esc(r['name'])} <span style='color:#888;font-family:monospace;font-size:15px'>{r['code']}</span></h1>"
-        f"<div class=meta><b>生成(中国时间)</b>：{r['cn_time']} CST &nbsp;|&nbsp; <b>T</b>：{r.get('as_of')} {r.get('as_of_dow','')}"
+        f"<div class=meta><b>生成(中国时间)</b>：{r['cn_time']} CST · {_esc(r.get('session') or '')} &nbsp;|&nbsp; <b>T</b>：{r.get('as_of')} {r.get('as_of_dow','')}"
         f" → <b>评估视野 T+{r['hold_days']}</b>：{r.get('eval_by')} {r.get('eval_dow','')}"
         f"<br>行业：{_esc(r.get('industry') or '—')} · {_esc(r.get('board') or '')} &nbsp;|&nbsp; 因子权重：{_esc(r.get('weights_meta',{}).get('note',''))}"
         f"{(' · '+_esc(r.get('note'))) if r.get('note') else ''}</div>"
+        + warn_html + verif_html + prev_html +
         f"<div class=banner><span class=act>{_esc(action)}</span><span class=conf>置信度 {_esc(conf)}</span>"
-        f"<span class=conf>持仓健康度 {v['health_score']}/100 ↑越高越好</span>"
-        f"<span class=conf>量化买入分 {r['quant_score']}/100 ↑越高越好</span>"
-        f"<span class=conf>技术风险 {rl}({r['risk_score']}/100 ↓越低越好)</span></div>"
+        f"<span class=conf>持仓健康度 {v['health_score']}/100 ↑（=0.7×量价stance+0.3×(100−总风险)）</span>"
+        f"<span class=conf>短线量化分 {r['quant_score']}/100 ↑（动量型，长线浮盈股低分正常）</span>"
+        f"<span class=conf>风险 {rl}（技术{r['risk_score']}"
+        f"{('+事件'+str(v.get('event_risk_bump'))+'='+str(v.get('total_risk'))) if v.get('event_risk_bump') else ''}/100 ↓）</span></div>"
         f"<div class=stats>"
         f"<div class=stat><span class=lab>现价</span><b>{q['price']}</b><span class=sub>{_d(q.get('chg_pct'),'%')}</span></div>"
         f"{pnl_html}"
         f"<div class=stat><span class=lab>PE / PB</span><b>{_d(q.get('pe'))} / {_d(q.get('pb'))}</b></div>"
         f"<div class=stat><span class=lab>流通市值</span><b>{_d(q.get('float_cap_yi'),'亿')}</b></div>"
-        f"<div class=stat><span class=lab>多空stance</span><b>{v['stance']}</b><span class=sub>/100</span></div></div>"
+        f"<div class=stat><span class=lab>量价stance</span><b>{v['stance']}</b><span class=sub>/100 仅技术·资金，≠综合裁定</span></div>"
+        f"<div class=stat><span class=lab>现价R:R</span><b>{_d(pm.get('rr'))}</b><span class=sub>{_esc(pm.get('rr_note',''))}</span></div></div>"
 
-        f"<h2>5-Agent 综合裁定</h2>"
+        f"<h2>6-Agent 综合裁定（⑤裁定 · ⑥复核）</h2>"
         f"<table class=wt><colgroup><col style='width:23%'><col style='width:13%'><col style='width:15%'><col style='width:49%'></colgroup>"
         f"<tr><th>维度</th><th>评分(0-100)</th><th>方向</th><th>关键依据</th></tr>{agent_tr}</table>"
         f"<div class=note>说明：①②③④ 为看多强度，<b>越高越偏多</b>；⑤风险为危险度，<b>越低越好</b>。"
@@ -1046,7 +1450,8 @@ def render_html(r: dict, report_dir: str | None = None, is_final: bool = True) -
 
         f"<h2>关键价位地图（T+{r['hold_days']} 视野）</h2>"
         f"<div class=note>给一只票的全部关键挂单价位：从下到上依次是 止损→支撑→加仓区→MA20→压力→止盈区。</div><div class=map>"
-        f"<div title='跌破即按纪律离场'><i>止损</i><b>{pm['stop']}</b><small>破位离场,不恋战</small></div>"
+        f"<div title='ATR倍数随持有视野缩放，与结构支撑取较紧者'><i>止损</i><b>{pm['stop']}</b>"
+        f"<small>{pm.get('stop_atr_mult','?')}×ATR/结构取紧,破位离场</small></div>"
         f"<div title='下方最近的强支撑(均线/近期低点)'><i>关键支撑</i><b>{pm['key_support']}</b><small>下方最近支撑</small></div>"
         f"<div title='趋势条件满足时分批低吸的区间'><i>加仓/补仓区</i><b>{pm['add_zone'][0]}–{pm['add_zone'][1]}</b><small>回踩低吸区</small></div>"
         f"<div title='20日均线,中期多空分界'><i>MA20</i><b>{pm['ma20']}</b><small>中期多空线</small></div>"
@@ -1075,10 +1480,11 @@ def render_html(r: dict, report_dir: str | None = None, is_final: bool = True) -
            f"<div class=scroll><table><tr><th>日期</th><th>主力净亿</th><th>占比%</th><th>涨跌%</th></tr>{flow_tr}</table></div>"
            if fl.get("available") else "<div class=kv>资金流数据暂不可用</div>")
         + "</div>"
+        + f10_card
         + f"<div class=card><h3>大盘环境</h3><div class=kv>{kv('regime', ic['regime'])}</div><div style='margin-top:6px'>{idx_html}</div></div>"
         + "</div>"
 
-        + (f"<h2>同行对比 · {_esc(sp.get('sector_name',''))}（20日强弱 {sp.get('target_rank')}/{sp.get('n')}，板块均+{sp.get('sect_avg_ret20')}%）</h2>"
+        + (f"<h2>同行对比 · {_esc(sp.get('sector_name',''))}（20日强弱 {_d(sp.get('target_rank'))}/{sp.get('n')}，板块均{_d(sp.get('sect_avg_ret20'),'%')}）</h2>"
            f"<div class=scroll><table><tr><th>代码</th><th>名称</th><th>现价</th><th>今涨%</th><th>5日%</th><th>20日%</th></tr>{peer_tr}</table></div>"
            if sp.get("available") else "")
 
