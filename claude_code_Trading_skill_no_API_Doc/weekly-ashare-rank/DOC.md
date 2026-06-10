@@ -23,6 +23,11 @@
 复核
 复核今天要买的票
 ```
+**持有几天后看战绩（自动按计划纪律仿真 + 累计 track record）：**
+```
+复盘
+上次推荐的票怎么样了
+```
 **重新校准因子权重（一般不用，换持有天数我会自动校准）：**
 ```
 重新校准 weekly-ashare-rank 的因子权重，持有天数5
@@ -44,15 +49,18 @@
 
 Vibe-Trading 自带 swarm（`agent/src/swarm/presets/`）每个 agent 都调外部 LLM，需 API key/Ollama。
 本 skill 反过来：**Claude Code 本身就是大脑**，读 `SKILL.md` 后亲自跑 Python 引擎（免费行情）+
-自带 WebSearch + 自己判断排名 + 自己回测验证。0 API、0 额外花费。四个 agent：①量化筛选 ②催化剂 ③风险定价 ④验证复核。
+自带 WebSearch + 自己判断排名 + 自己回测验证。0 API、0 额外花费。五个 agent：⓪市场环境·情绪闸门
+①量化筛选 ②催化剂 ③风险定价(含过热/主题逆风/独立催化硬规则) ④验证复核；另有复盘模式(review.py)闭环记录真实战绩。
 
 ## 2. 文件结构
 ```
 weekly-ashare-rank/
-├── SKILL.md                 # Claude Code 执行流程（四方辩论:量化/催化剂/风险/验证 + 参数解析 + 跳空规则）
+├── SKILL.md                 # Claude Code 执行流程（五方辩论:环境/量化/催化剂/风险/验证 + 参数解析 + 跳空规则）
 ├── DOC.md                   # 本文件
 ├── ashare_weekly_rank.py    # 量化引擎（Agent①）+ 因子IC回测 + HTML报告渲染
-├── recheck.py               # T+1 盘前复核（跳空/破位 → 可买/等回调/放弃）
+├── market_gate.py           # Agent⓪ 市场环境·情绪闸门（指数趋势+涨停/炸板/跌停 → 环境分/总仓上限/跳空预案）
+├── recheck.py               # T+1 盘前复核（跳空/破位/低于买入区 → 可买/等回调/放弃）
+├── review.py                # 复盘引擎（按计划纪律仿真上期战绩 → 胜率/超额 + track_record.json 累计）
 ├── make_report.py           # 由结果JSON渲染HTML报告（Agent③富集后出完整版）
 ├── universe_seed.txt        # 兜底种子universe（约100只龙头）
 ├── weights.json             # 回测产出的因子权重（--backtest 生成，--weights auto 调用）

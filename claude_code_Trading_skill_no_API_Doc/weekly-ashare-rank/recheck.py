@@ -8,6 +8,7 @@
 规则：
   - 高开 > +3%        → 等回调（追高摊薄盈亏比；冲高回落风险）
   - 现价 ≤ ATR止损位   → 放弃（已破位）
+  - 现价 < 买入区下沿 且 > 止损 → ★更优价可买（比计划更便宜；但离止损<1.5%时减半仓）
   - 低开 −2%~0 且未破位 → 较好低吸点
   - 其余               → 可按计划买入
 """
@@ -62,12 +63,17 @@ def main() -> None:
             continue
         gap = (cur / t_close - 1) * 100
         dist_stop = (cur / stop - 1) * 100 if stop else None
+        buy_low = c.get("buy_low")
         if stop and cur <= stop:
             advice = "放弃(已破位)"
         elif gap > 3:
             advice = "等回调(高开过多)"
         elif gap > 1.5:
             advice = "谨慎/小仓"
+        elif buy_low and cur < buy_low:
+            # 低于买入区下沿但没破止损 = 比计划更便宜；离止损太近说明缓冲薄，减半仓
+            near_stop = stop and (cur / stop - 1) * 100 < 1.5
+            advice = "★更优价可买(半仓,贴近止损)" if near_stop else "★更优价可买(低于区间下沿)"
         elif -2 <= gap <= 0:
             advice = "★低吸好点"
         else:
