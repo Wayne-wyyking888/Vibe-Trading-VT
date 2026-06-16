@@ -185,7 +185,8 @@ _FFLOW_HIS_HOSTS = [
 ]
 
 
-def _summarize_flow(rows: list[dict], source: str, partial: bool = False) -> dict:
+def _summarize_flow(rows: list[dict], source: str, partial: bool = False,
+                    caliber_warn: str | None = None) -> dict:
     main_5 = round(sum(r["main_yi"] for r in rows[-5:] if r["main_yi"] is not None), 2)
     main_all = round(sum(r["main_yi"] for r in rows if r["main_yi"] is not None), 2)
     ratios = [r["main_ratio"] for r in rows[-5:] if r.get("main_ratio") is not None]
@@ -195,16 +196,54 @@ def _summarize_flow(rows: list[dict], source: str, partial: bool = False) -> dic
         trend = ("净流入" if main_5 > 0 else "净流出") + "(仅最新日·历史源限流)"
     else:
         trend = ("净流入" if main_5 > 0 else "净流出") + f"(近{n5}日{pos_days}/{n5}天为正)"
+    if caliber_warn:
+        trend += f" ⚠{caliber_warn}"
     return {"available": True, "source": source, "partial": partial,
+            "caliber_warn": caliber_warn,
             "main_net_5d_yi": main_5, "main_net_all_yi": main_all,
             "main_ratio_avg5": round(float(np.mean(ratios)), 2) if ratios else None,
             "pos_days_5": pos_days, "trend": trend, "days": rows}
 
 
+def _sina_fund_flow(code: str, days: int = 10) -> list[dict] | None:
+    """新浪历史资金流(独立于东财, host=vip.stock.finance.sina.com.cn)。
+    ⚠ 新浪「主力净」的tick分类口径与东财不同：实测同票同日数值差均值~1.7亿、
+    个别日净流入/流出符号相反，**不可与东财数值或上次东财口径诊断直接比较**，
+    仅当东财历史源限流时用其『自洽5日序列』看资金趋势方向。"""
+    daima = ("sh" if code.startswith(("60", "68", "9", "5")) else "sz") + code
+    url = ("https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/"
+           f"MoneyFlow.ssl_qsfx_zjlrqs?page=1&num={max(days, 6)}&sort=opendate&asc=0&daima={daima}")
+    req = urllib.request.Request(url, headers={
+        "User-Agent": "Mozilla/5.0", "Referer": "https://vip.stock.finance.sina.com.cn/"})
+    try:
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            data = json.loads(resp.read().decode("utf-8", "ignore"))
+    except Exception:  # noqa: BLE001
+        return None
+    rows = []
+    for r in (data or []):
+        nv = _num(r.get("netamount"))
+        ra = _num(r.get("ratioamount"))
+        ch = _num(r.get("changeratio"))
+        rows.append({"date": r.get("opendate"),
+                     "main_yi": round(nv / 1e8, 3) if nv is not None else None,
+                     "main_ratio": round(ra * 100, 2) if ra is not None else None,
+                     "chg": round(ch * 100, 2) if ch is not None else None})
+    rows = [r for r in rows if r["date"]][::-1]  # 新浪降序→转升序(与东财一致:最新在末)
+    return rows[-days:] or None
+
+
 def fetch_fund_flow(code: str, days: int = 10) -> dict:
-    """个股主力资金流。主源东财历史日线(含占比, push2his)；限流时回退东财实时(push2, 仅最新日)。"""
+    """个股主力资金流。优先级：当日缓存 → 东财历史日线(含占比,push2his)
+    → 新浪历史(独立源,⚠口径异于东财,仅趋势参考) → 东财实时单日(仅当日)。
+    缓存当日东财历史结果(TTL 12h)以降低对 push2his 的重复打点、减少被软封概率。"""
     secid = eng._secid(code)
-    # 1) 历史日线（push2his）：完整 N 日 + 占比
+    ckey = f"{code}_{days}"
+    cached = eng._cache_get("fundflow", ckey, max_age_h=12)
+    if cached is not None and cached.get("source") == "东财历史日线":
+        log("  资金流命中当日缓存(东财历史)")
+        return cached
+    # 1) 历史日线（push2his）：完整 N 日 + 占比（主源，与上次诊断口径一致）
     try:
         data = eng._get(_FFLOW_HIS_HOSTS, "/api/qt/stock/fflow/daykline/get",
                         {"lmt": 90, "klt": 101, "secid": secid,
@@ -219,10 +258,18 @@ def fetch_fund_flow(code: str, days: int = 10) -> dict:
             rows.append({"date": a[0], "main_yi": round(mv / 1e8, 3) if mv is not None else None,
                          "main_ratio": _num(a[6]), "chg": _num(a[12])})
         if rows:
-            return _summarize_flow(rows, source="东财历史日线")
+            res = _summarize_flow(rows, source="东财历史日线")
+            eng._cache_put("fundflow", ckey, res)
+            return res
     except Exception as e:  # noqa: BLE001
-        log(f"  资金流历史源限流({str(e)[:40]})，回退实时单日源")
-    # 2) 实时单日（push2，不同主机，仅当日）
+        log(f"  资金流东财历史源限流({str(e)[:40]})，尝试新浪独立源")
+    # 2) 新浪历史（独立 host，完整 N 日 + 占比，但口径≠东财，强标注）
+    srows = _sina_fund_flow(code, days)
+    if srows:
+        log("  资金流回退新浪历史(口径异于东财,仅趋势参考)")
+        return _summarize_flow(srows, source="新浪历史(独立源)",
+                               caliber_warn="新浪口径≠东财,仅看5日趋势方向,勿与东财数值/上次诊断比较")
+    # 3) 实时单日（东财 push2，不同主机，仅当日）
     try:
         data = eng._get(eng._PUSH_HOSTS, "/api/qt/stock/fflow/kline/get",
                         {"lmt": 1, "klt": 101, "secid": secid,
@@ -715,13 +762,17 @@ def engine_verdict(f: dict, q: dict, tech: dict, flow: dict, cost: dict | None,
         stance -= (p60 - 85) * 0.5
     elif p60 < 18:
         stance += 4; notes.append("60日低位")
-    # 资金流
+    # 资金流（新浪兜底口径≠东财 或 仅当日partial → 降权为"方向参考"，幅度减半封顶±6）
     if flow.get("available"):
         m5 = flow.get("main_net_5d_yi") or 0
+        soft = bool(flow.get("caliber_warn")) or bool(flow.get("partial"))
+        cap, base = (6, 2) if soft else (12, 4)
+        tag = ("(新浪口径·方向参考)" if flow.get("caliber_warn")
+               else "(仅当日)" if flow.get("partial") else "")
         if m5 > 0:
-            stance += min(12, 4 + m5 * 0.8); notes.append(f"主力5日净流入{m5}亿")
+            stance += min(cap, base + m5 * 0.8); notes.append(f"主力5日净流入{m5}亿{tag}")
         else:
-            stance += max(-12, -4 + m5 * 0.8); notes.append(f"主力5日净流出{m5}亿")
+            stance += max(-cap, -base + m5 * 0.8); notes.append(f"主力5日净流出{m5}亿{tag}")
     # 同行相对强弱
     if peers.get("available") and peers.get("target_rank") and peers.get("n"):
         pr = peers["target_rank"] / peers["n"]

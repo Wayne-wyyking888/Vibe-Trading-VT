@@ -377,6 +377,42 @@ def _tx_kline(code: str, bars: int = 160) -> pd.DataFrame | None:
     return df
 
 
+def _sina_kline_close(code: str) -> float | None:
+    """新浪K线最新收盘（第三方交叉验证用，独立于东财/腾讯）。
+    新浪返回不复权价，但『最新交易日收盘』与前复权最新值一致，校验当日收盘足够。"""
+    sec = _tx_secid(code)  # 同 sh/sz 前缀规则
+    try:
+        r = _SESSION.get(
+            "https://money.finance.sina.com.cn/quotes_service/api/json_v2.php/"
+            "CN_MarketData.getKLineData",
+            params={"symbol": sec, "scale": 240, "datalen": 3},
+            headers={"Referer": "https://finance.sina.com.cn/"}, timeout=15,
+        )
+        data = r.json()
+        if data:
+            return round(float(data[-1]["close"]), 2)
+    except Exception:  # noqa: BLE001
+        return None
+    return None
+
+
+def _yahoo_close(code: str) -> float | None:
+    """雅虎财经最新收盘（外网独立源，沪市覆盖好/深市偶缺，作第4兜底）。"""
+    suf = ".SS" if code.startswith(("60", "68", "9", "5")) else ".SZ"
+    try:
+        r = _SESSION.get(
+            f"https://query1.finance.yahoo.com/v8/finance/chart/{code}{suf}",
+            params={"range": "5d", "interval": "1d"}, timeout=12,
+        )
+        res = r.json()["chart"]["result"][0]
+        closes = [c for c in res["indicators"]["quote"][0]["close"] if c is not None]
+        if closes:
+            return round(float(closes[-1]), 2)
+    except Exception:  # noqa: BLE001
+        return None
+    return None
+
+
 def get_kline(code: str, bars: int = 160) -> pd.DataFrame | None:
     """前复权日线（日期/开盘/收盘/最高/最低/成交量）。东财→腾讯，带当天缓存。"""
     cached = _cache_get("klines", code, max_age_h=60)  # 收盘后不变，TTL覆盖周末
@@ -815,9 +851,10 @@ def _trade_window(last_date: str, hold_days: int) -> dict:
 
 
 def verify_picks(cands: list[dict]) -> list[dict]:
-    """对最终候选做跨源收盘价校验：东财K线 vs 腾讯K线 的最新收盘。
-    两源都拿到且偏差≤1% → 一致；偏差大 → 标记存疑(可能除权未对齐/脏数据)；
-    只有一源 → 单源未校验。防止单一数据源错价误导买入价/止损。"""
+    """对最终候选做跨源收盘价校验：东财 / 腾讯 / 新浪 / 雅虎 四源最新收盘取共识。
+    ≥2 源齐备且最大偏差≤1% → 一致(标注参与源)；≥2源但偏差大 → 存疑(跨源偏差大)；
+    仅 1 源可用 → 单源未校验。多源兜底=东财被限流时仍能用 腾讯×新浪 完成交叉验证，
+    避免单源错价误导买入/止损。雅虎(外网)仅在国内源不足时才补，省网络开销。"""
     out = []
     for c in cands:
         code = c["code"]
@@ -825,15 +862,29 @@ def verify_picks(cands: list[dict]) -> list[dict]:
         tx = _tx_kline(code, bars=5)
         em_c = round(float(em["收盘"].iloc[-1]), 2) if em is not None and len(em) else None
         tx_c = round(float(tx["收盘"].iloc[-1]), 2) if tx is not None and len(tx) else None
+        sina_c = _sina_kline_close(code)
+        srcs = {"东财": em_c, "腾讯": tx_c, "新浪": sina_c}
+        # 国内源不足2个时，外网雅虎补位
+        yh_c = None
+        if sum(v is not None for v in srcs.values()) < 2:
+            yh_c = _yahoo_close(code)
+            srcs["雅虎"] = yh_c
+        avail = {k: v for k, v in srcs.items() if v is not None}
         dev = None
-        if em_c and tx_c:
-            dev = round(abs(em_c - tx_c) / max(em_c, tx_c) * 100, 2)
-            status = "一致" if dev <= 1.0 else "存疑(跨源偏差大)"
+        if len(avail) >= 2:
+            vals = list(avail.values())
+            dev = round((max(vals) - min(vals)) / max(vals) * 100, 2)
+            tag = "×".join(avail.keys())
+            status = f"一致({tag})" if dev <= 1.0 else f"存疑(跨源偏差大:{tag})"
+        elif len(avail) == 1:
+            status = f"单源未校验({next(iter(avail))})"
         else:
-            status = "单源未校验"
-        c["verify"] = {"em_close": em_c, "tx_close": tx_c, "dev_pct": dev, "status": status}
+            status = "无源"
+        c["verify"] = {"em_close": em_c, "tx_close": tx_c, "sina_close": sina_c,
+                       "yahoo_close": yh_c, "sources": avail, "dev_pct": dev, "status": status}
         out.append({"code": code, "name": c.get("name", ""),
-                    "em": em_c, "tx": tx_c, "dev": dev, "status": status})
+                    "em": em_c, "tx": tx_c, "sina": sina_c, "yahoo": yh_c,
+                    "dev": dev, "status": status})
         time.sleep(0.1)
     return out
 
@@ -984,13 +1035,15 @@ def print_table(result: dict) -> None:
     # 跨源价格校验结果（若已做）
     vrows = [c for c in result["candidates"] if c.get("verify")]
     if vrows:
-        print("\n### 跨源价格校验（东财K线 vs 腾讯K线 收盘）")
-        print("| 代码 | 名称 | 东财收盘 | 腾讯收盘 | 偏差% | 状态 |")
-        print("|---|---|---|---|---|---|")
+        print("\n### 跨源价格校验（东财 / 腾讯 / 新浪 / 雅虎 收盘取共识）")
+        print("| 代码 | 名称 | 东财 | 腾讯 | 新浪 | 雅虎 | 最大偏差% | 状态 |")
+        print("|---|---|---|---|---|---|---|---|")
         for c in vrows:
             v = c["verify"]
-            print(f"| {c['code']} | {c['name']} | {v.get('em_close','-')} | "
-                  f"{v.get('tx_close','-')} | {v.get('dev_pct','-')} | {v.get('status','')} |")
+            print(f"| {c['code']} | {c['name']} | {v.get('em_close') or '-'} | "
+                  f"{v.get('tx_close') or '-'} | {v.get('sina_close') or '-'} | "
+                  f"{v.get('yahoo_close') or '-'} | {v.get('dev_pct') if v.get('dev_pct') is not None else '-'} | "
+                  f"{v.get('status','')} |")
 
     # Agent③ 重点关注：买不进 / 追高风险
     oneword = [c["code"] for c in result["candidates"] if c.get("oneword")]
