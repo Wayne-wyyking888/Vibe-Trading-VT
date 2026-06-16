@@ -229,17 +229,21 @@ python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc
 
 ### 步骤 5 — 生成 HTML 报告（每次必做）
 引擎跑完已**自动**在 `reports/ashare_rank_cn_preview.html` 存一份量化预览报告（**固定文件名**，引擎跑几次都只覆盖这一个，不堆中间文件）。
-做完 Agent②/③ 后，把消息面/裁决结论**回填**进结果 JSON，再生成**完整版**报告（完整版用时间戳命名，并**自动删掉那个 preview 预览文件**，最终 reports/ 里每个 session 只留一份带时间戳的完整版）：
+做完 Agent②/③/④ 后，把消息面/裁决结论**回填**进结果 JSON，再生成**完整版**报告（完整版用时间戳命名，并**自动删掉那个 preview 预览文件**，最终 reports/ 里每个 session 只留一份带时间戳的完整版）：
+0. **⚠️ 必须先重排 `candidates[]` 数组顺序 = Agent③ 终排名次（最易漏，2026-06-16 就栽在这：文字按 Agent③ 重排了、JSON 没重排，HTML 名次还停在引擎量化分顺序，两者脱节）**。
+   原因：`render_html` 用 `enumerate(candidates, 1)` **按数组下标编号**、自身不排序——**JSON 里 candidates 的物理顺序 = HTML 的「排名1/2/3…」**。引擎默认按量化分降序输出，但 Agent③ 几乎总会因「过热上限/主题逆风/独立催化/基本面雷」硬规则重排，所以**回填前先把 `candidates[]` 物理重排成你文字最终表的名次**。
 1. 编辑 `C:\Trading_analysis\data\rank_latest.json`：给 `candidates[]` 每只补充
    `exp_return`(预期收益% 如"+8~12%")、`confidence`(置信度 如"中高(75)")、`target`(目标价)、
-   `rr`(如"2.5:1")、`catalyst`(核心催化剂一句话)、`risk_note`(基本面风险补充)；
-   **顶层加 `validation`**(把 `validate_latest.json` 整个对象塞进来 → 报告顶部显示策略验证裁定)；
+   `rr`(如"2.5:1")、`catalyst`(核心催化剂一句话)、`risk_note`(基本面风险补充)。
+   **⚠️ 核验标记要塞进会被渲染的字段**：`render_html` **不读任何独立的"核验"字段**（`verify_mark` 之类会被静默丢弃，HTML 上看不到 ✓/⚠），所以把 Agent④ 的 `✓已验证`/`⚠存疑:<原因>` **拼到该票 `risk_note` 的开头**（卡片会渲染 risk_note）。
+   **顶层加 `validation`**(把 `validate_latest.json` 整个对象塞进来 → 报告顶部显示策略验证裁定；render 读取 `verdict/excess_vs_market/top_win_rate/rank_ic/n_sections/top_k`，字段名勿改)；
    可选顶层加 `catalysts_md`/`final_md`(消息面/裁决全文)。
 2. 运行：
    ```powershell
    python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\weekly-ashare-rank\make_report.py" --in "C:\Trading_analysis\data\rank_latest.json"
    ```
-3. 把生成的 HTML 路径告诉用户（report 文件名里的时间戳是中国当地时间）。
+3. **渲染后 sanity check（必做）**：核对生成的 HTML 里「排名 1→N 的代码顺序」与你文字最终表**逐一一致**、`策略验证` 行正常显示、每张卡片的核验标记/置信度/催化剂都在。任一不一致 → 回第0/1步修正后**重新渲染**（旧的错序报告要删掉，每个 session 只留一份正确的）。
+4. 把生成的 HTML 路径告诉用户（report 文件名里的时间戳是中国当地时间）。
 
 ---
 
