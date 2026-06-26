@@ -472,7 +472,8 @@ def prefilter(
     max_chg: float = 21.0,
     min_chg: float = -7.0,
 ) -> pd.DataFrame:
-    """剔除 ST/退市/北交所/低流动性/大跌票。涨停票保留（后续按连板/一字板打标处理）。"""
+    """剔除 ST/退市/北交所/科创板(688/689,多数账户无权限)/低流动性/大跌票。
+    涨停票保留（后续按连板/一字板打标处理）。"""
     out = df.copy()
     n0 = len(out)
 
@@ -480,7 +481,8 @@ def prefilter(
     n1 = len(out)
 
     code = out["代码"].astype(str)
-    out = out[code.str.match(r"^(60|00|30|68)")]
+    # 仅留 沪市主板(60)/深市主板(00)/创业板(30)；剔除科创板 68(688/689,需单独开通权限,多数账户买不了)
+    out = out[code.str.match(r"^(60|00|30)")]
     n2 = len(out)
 
     out = out[pd.to_numeric(out["流通市值"], errors="coerce") >= min_float_cap]
@@ -503,7 +505,7 @@ def prefilter(
 
     log(
         "初筛漏斗: "
-        f"{n0} →非ST {n1} →主板/双创 {n2} →流通≥{min_float_cap/1e8:.0f}亿 {n3} "
+        f"{n0} →非ST {n1} →主板/创业板(剔科创688) {n2} →流通≥{min_float_cap/1e8:.0f}亿 {n3} "
         f"→成交额≥{min_amount/1e8:.1f}亿 {n4} →非涨跌停 {n5} →量比 {n6}"
     )
     return out
@@ -739,13 +741,48 @@ def buy_plan(f: dict) -> dict:
         pos, mode = (8 if rl in ("低", "中") else 5), "分批试探"
         tactic = "竞价试探半仓，看盘中转强再补仓"
 
-    stop = round(max(close - 1.3 * atr, close * 0.94), 2)
+    # ---- 止损：以买区下沿(最差成交价)为基准，留足噪音缓冲 ----
+    # 旧版止损贴近买区下沿(走样回测中 兴业/新宙邦/三孚 都被 ~2% 噪音扫损)。
+    # 新版要求止损至少在买区下沿之下 max(1×ATR, 4%)，并把单笔风险封顶在 8%。
+    if pos > 0 and not f.get("oneword"):
+        risk_buf = max(atr, lo * 0.04)
+        stop = round(lo - risk_buf, 2)
+        stop = round(max(stop, lo * 0.92), 2)          # 单笔风险≤8%(高波动封顶)
+    else:
+        stop = round(max(close - 1.3 * atr, close * 0.94), 2)
+
+    # ---- 过热硬剔除：极端高位 + 乖离/急涨 → 默认踢出买入池(0 仓观察)，不再"半仓" ----
+    # 走样回测中 新宙邦(60位98)/三孚(乖离+21) 标了"过热半仓"照买照亏；改为默认剔除，
+    # 仅当 Agent② 查到≤7天新鲜独立催化才可由裁决官改回轻仓。
+    ext = ((2 if f.get("rng_pos", 50) > 95 else (1 if f.get("rng_pos", 50) > 88 else 0))
+           + (2 if f.get("dist_ma10", 0) > 20 else (1 if f.get("dist_ma10", 0) > 12 else 0))
+           + (1 if (f.get("ret5") or 0) > 25 else 0))
+    overheat = ext >= 3
+    if overheat and pos > 0:
+        pos = 0
+        mode = "过热·默认剔除(观察)"
+        tactic = ("60位/乖离/急涨过热触发硬剔除：默认不买；仅当 Agent② 查到≤7天新鲜独立催化，"
+                  "裁决官方可改回轻仓(≤原仓位一半)只接深回踩，否则只观察")
+    f["overheat"] = overheat
+
     gap_lim = 2 if rl in ("中高", "高") else 3
     abort = f"竞价高开>{gap_lim}% 或 跌破{stop} 放弃"
 
+    # ---- 补仓区间(分批建仓第二档)：把已隐含的"首笔60%+回踩补40%"显式成价格带 ----
+    # 仅对"可买且不过热"的票给出；位于 买区下沿 与 止损 之间且高于止损。
+    # 总仓不变(=持仓上限)，只是把一次建仓拆两档摊低回踩成本；破止损全部止损、不再补。
+    add_zone, add_note = "", ""
+    if pos > 0 and not overheat and not f.get("oneword"):
+        add_hi = round(lo * 0.995, 2)
+        add_lo = round(stop * 1.015, 2)
+        if add_hi - add_lo >= max(0.01, lo * 0.008):    # 需有有效空间(否则止损太近不值得分档)
+            add_zone = f"{add_lo}–{add_hi}"
+            add_note = (f"首笔约60%在买区{lo}–{hi}；回踩到{add_lo}–{add_hi} 且企稳(不破{stop})再补40%；"
+                        f"合计≤持仓上限{pos}%，破{stop} 全部止损、不再补")
+
     f.update(buy_low=lo, buy_high=hi, buy_zone=(f"{lo}" if lo == hi else f"{lo}–{hi}"),
              position_pct=pos, entry_mode=mode, entry_tactic=tactic,
-             stop=stop, abort=abort)
+             stop=stop, abort=abort, add_zone=add_zone, add_note=add_note)
     return f
 
 
@@ -1024,11 +1061,12 @@ def print_table(result: dict) -> None:
         )
     # 买入方案表（可执行：区间/仓位/方式/止损/放弃）
     print("\n### 买入方案（T+1 执行）")
-    bh = ["排名", "代码", "名称", "买入区间", "建议仓位", "入场方式", "止损", "放弃条件"]
+    bh = ["排名", "代码", "名称", "买入区间", "补仓区间", "建议仓位", "入场方式", "止损", "放弃条件"]
     print("| " + " | ".join(bh) + " |")
     print("|" + "|".join(["---"] * len(bh)) + "|")
     for i, c in enumerate(result["candidates"], 1):
         print(f"| {i} | {c['code']} | {c['name']} | {c.get('buy_zone','')} | "
+              f"{c.get('add_zone','') or '—'} | "
               f"{c.get('position_pct','')}% | {c.get('entry_mode','')}：{c.get('entry_tactic','')} | "
               f"{c.get('stop','')} | {c.get('abort','')} |")
 
@@ -1428,7 +1466,9 @@ def render_html(result: dict, report_dir: str | None = None, preview: bool = Fal
             f"<div class=plan><span><i>买入</i><b>{_esc(c.get('buy_zone',''))}</b></span>"
             f"<span><i>目标</i><b>{c.get('target','')}</b></span>"
             f"<span><i>止损</i><b>{c.get('stop','')}</b></span></div>"
-            f"<div class=line><span class=k>入场</span>{_esc(c.get('entry_mode',''))}：{_esc(c.get('entry_tactic',''))}</div>"
+            + (f"<div class=line><span class='k'>补仓</span>{_esc(c.get('add_note',''))}</div>"
+               if c.get('add_zone') else "")
+            + f"<div class=line><span class=k>入场</span>{_esc(c.get('entry_mode',''))}：{_esc(c.get('entry_tactic',''))}</div>"
             f"<div class=line><span class='k red'>放弃</span>{_esc(c.get('abort',''))}</div>"
             f"<div class=line><span class='k green'>催化剂</span>{_esc(c.get('catalyst','—'))}</div>"
             f"{rnote_html}</div>"
