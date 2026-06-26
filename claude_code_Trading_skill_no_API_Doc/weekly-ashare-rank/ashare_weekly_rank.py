@@ -804,6 +804,77 @@ def derive_targets(f: dict, hold_days: int) -> dict:
     return f
 
 
+# ---------------------------------------------------------------- 环境闸门 → 仓位/状态
+
+def _load_market_env(out_path: str | None, as_of: str) -> dict | None:
+    """读 market_gate_latest.json（同 out_path 目录优先），只在与 T(as_of) 同日时采用。
+    返回 {regime, score, max_total_position_pct, plan, reasons}；缺失/过期则 None。"""
+    import os
+    cands = []
+    if out_path:
+        cands.append(os.path.join(os.path.dirname(out_path), "market_gate_latest.json"))
+    cands.append(r"C:\Trading_analysis\data\market_gate_latest.json")
+    for p in cands:
+        try:
+            with open(p, encoding="utf-8") as fh:
+                g = json.load(fh)
+        except Exception:  # noqa: BLE001
+            continue
+        gd = (g.get("sentiment") or {}).get("date") or ""
+        if gd and gd != as_of:
+            continue  # 环境数据非当日 → 不用，避免拿过期 regime 误压仓位
+        return {
+            "regime": g.get("regime", ""),
+            "score": g.get("score"),
+            "max_total_position_pct": g.get("max_total_position_pct"),
+            "plan": g.get("plan", ""),
+            "reasons": g.get("reasons", [])[:4],
+            "as_of": gd,
+        }
+    return None
+
+
+def _regime_single_cap(regime: str) -> int | None:
+    """按 regime 给单票仓位上限：观望→0(全员观察)、防守→6、中性→8、进攻→不压(None)。"""
+    if not regime:
+        return None
+    if "观望" in regime:
+        return 0
+    if "防守" in regime:
+        return 6
+    if "中性" in regime:
+        return 8
+    return None  # 进攻/未知：沿用 buy_plan 原仓位
+
+
+def _apply_regime_policy(picks: list[dict], market_env: dict | None) -> None:
+    """① 按 regime 压单票仓位上限；② 给每只打 entry_status（可买/观察·不入场/过热剔除/一字板/价格存疑），
+    让 HTML 卡片状态与文字结论天然一致。position 被压到 0 的票清掉补仓与目标(避免显示成可买)。"""
+    cap = _regime_single_cap(market_env.get("regime", "") if market_env else "")
+    for c in picks:
+        if cap is not None:
+            c["position_pct"] = min(c.get("position_pct", 0), cap)
+        # 状态判定（优先级：一字板 > 过热 > 价格存疑 > 仓位0观察 > 可买）
+        if c.get("oneword"):
+            c["entry_status"] = "一字板·难买入"
+        elif c.get("overheat"):
+            c["entry_status"] = "过热·默认剔除(观察)"
+        elif str(c.get("verify", {}).get("status", "")).startswith("存疑"):
+            c["entry_status"] = "价格存疑·待核"
+        elif c.get("position_pct", 0) <= 0:
+            c["entry_status"] = "观察·不入场"
+        else:
+            c["entry_status"] = "可买"
+        # 不可入场的票：清掉补仓/目标，避免卡片显示成可买方案
+        if c["entry_status"] != "可买":
+            c["add_zone"] = ""
+            c["add_note"] = ""
+            if c["entry_status"] in ("观察·不入场", "过热·默认剔除(观察)", "一字板·难买入"):
+                c["target"] = "—"
+                c["rr"] = "—"
+                c["exp_return"] = "—"
+
+
 # ---------------------------------------------------------------- 主流程
 
 def _auto_weights(hold_days: int) -> dict | None:
@@ -994,6 +1065,9 @@ def run(sector: str | None, pool: int, top: int, out_path: str | None,
     suspect = [c["code"] for c in picks if c.get("verify", {}).get("status", "").startswith("存疑")]
     if suspect:
         sanity.append(f"⚠跨源价格存疑(请人工复核): {', '.join(suspect)}")
+    # 市场环境闸门(Agent⓪)：读同目录 market_gate_latest.json，按 regime 给总仓闸门并标每只可买/观察状态
+    market_env = _load_market_env(out_path, as_of)
+    _apply_regime_policy(picks, market_env)
     result = {
         "generated_at": dt.datetime.now().isoformat(timespec="seconds"),
         "hold_days": hold_days,         # 最多持有交易日数
@@ -1004,6 +1078,7 @@ def run(sector: str | None, pool: int, top: int, out_path: str | None,
         "universe_after_filter": int(len(filt)),
         "scored": len(rows),
         "sanity_flags": sanity,
+        "market_env": market_env,        # Agent⓪ 环境闸门(供 HTML 顶部横幅 + 总仓上限)；无则 None
         "candidates": picks,
     }
     result.update(win)  # as_of/buy_date/sell_by + 各自星期 + note
@@ -1059,13 +1134,18 @@ def print_table(result: dict) -> None:
             f"{c.get('float_cap_yi','')} | {_signal_tag(c)} | "
             f"{'是' if c['bull'] else '否'} | {'是' if c['macd_gold'] else '否'} |"
         )
-    # 买入方案表（可执行：区间/仓位/方式/止损/放弃）
+    # 买入方案表（可执行：状态/区间/仓位/方式/止损/放弃）
+    env = result.get("market_env")
+    if isinstance(env, dict) and env.get("regime"):
+        print(f"\n🌡 市场环境：{env['regime']}（环境分 {env.get('score','?')}）· 总仓上限 "
+              f"{env.get('max_total_position_pct','?')}% · {env.get('plan','')}")
     print("\n### 买入方案（T+1 执行）")
-    bh = ["排名", "代码", "名称", "买入区间", "补仓区间", "建议仓位", "入场方式", "止损", "放弃条件"]
+    bh = ["排名", "代码", "名称", "状态", "买入/参考区间", "补仓区间", "建议仓位", "入场方式", "止损", "放弃条件"]
     print("| " + " | ".join(bh) + " |")
     print("|" + "|".join(["---"] * len(bh)) + "|")
     for i, c in enumerate(result["candidates"], 1):
-        print(f"| {i} | {c['code']} | {c['name']} | {c.get('buy_zone','')} | "
+        st = c.get("entry_status", "可买" if c.get("position_pct", 0) > 0 else "观察·不入场")
+        print(f"| {i} | {c['code']} | {c['name']} | {st} | {c.get('buy_zone','')} | "
               f"{c.get('add_zone','') or '—'} | "
               f"{c.get('position_pct','')}% | {c.get('entry_mode','')}：{c.get('entry_tactic','')} | "
               f"{c.get('stop','')} | {c.get('abort','')} |")
@@ -1440,6 +1520,26 @@ def render_html(result: dict, report_dir: str | None = None, preview: bool = Fal
     auth = "权威交易日历" if result.get("calendar_authoritative") else "⚠仅跳周末(日历未取到)"
     note = result.get("note", "")
 
+    # 市场环境横幅（Agent⓪ regime → 顶部醒目条；颜色随档位，并点明本期是否空仓观望）
+    env = result.get("market_env")
+    env_html = ""
+    if isinstance(env, dict) and env.get("regime"):
+        reg = env["regime"]
+        ec = ("#c62828" if "观望" in reg else "#ef6c00" if "防守" in reg
+              else "#1565c0" if "中性" in reg else "#2e7d32")
+        cap = env.get("max_total_position_pct")
+        buyable_n = sum(1 for c in cands if c.get("entry_status", "") == "可买")
+        concl = ("本期结论=空仓观望，下列全部为『观察·不入场』" if "观望" in reg
+                 else f"可买 {buyable_n} 只，其余为观察/剔除")
+        env_html = (
+            f"<div class=envbar style='border-color:{ec}'>"
+            f"<b style='color:{ec}'>🌡 市场环境：{_esc(reg)}（环境分 {env.get('score','?')}）</b>"
+            f" · 总仓上限 <b>{cap}%</b> · {_esc(concl)}"
+            + (f"<br><span class=envsub>" + _esc(' · '.join(env.get('reasons', []))) + "</span>" if env.get("reasons") else "")
+            + (f"<br><span class=envsub>预案：{_esc(env.get('plan',''))}</span>" if env.get("plan") else "")
+            + "</div>"
+        )
+
     # 主体：每只股一张卡片（长文本整行铺开，避免横向滚动）
     cards = ""
     for i, c in enumerate(cands, 1):
@@ -1450,12 +1550,19 @@ def render_html(result: dict, report_dir: str | None = None, preview: bool = Fal
         rnote = c.get("risk_note", "")
         rnote_html = (f"<div class=line><span class='k grey'>风险补充</span>{_esc(rnote)}</div>"
                       if rnote else "")
+        # 入场状态徽标（数据驱动：让卡片可买/观察与文字结论天然一致）
+        status = c.get("entry_status", "可买" if c.get("position_pct", 0) > 0 else "观察·不入场")
+        buyable = status == "可买"
+        st_color = "#2e7d32" if buyable else "#6b7280"   # 可买=绿，观察/剔除=灰
+        status_badge = f"<span class=badge style='background:{st_color}'>{_esc(status)}</span>"
+        buy_lab = "买入" if buyable else "参考价"
+        card_cls = "card" if buyable else "card obs"      # 观察卡片整体灰化
         cards += (
-            f"<div class=card><div class=ctop>"
+            f"<div class='{card_cls}'><div class=ctop>"
             f"<div class=rank>{i}</div>"
             f"<div class=tt><span class=title>{_esc(c.get('name',''))}</span>"
             f"<span class=tk>{_esc(c.get('code',''))}</span></div>"
-            f"<div class=tags><span class=qs>量化 {c.get('score','')}</span>"
+            f"<div class=tags>{status_badge}<span class=qs>量化 {c.get('score','')}</span>"
             f"<span class=badge style='background:{color}'>风险 {rl}({c.get('risk_score','')})</span>"
             f"{chips}</div></div>"
             f"<div class=stats>"
@@ -1463,7 +1570,7 @@ def render_html(result: dict, report_dir: str | None = None, preview: bool = Fal
             f"<div class=stat><span class=lab>置信度</span><b>{_esc(c.get('confidence','—'))}</b></div>"
             f"<div class=stat><span class=lab>R:R</span><b>{_esc(c.get('rr','—'))}</b></div>"
             f"<div class=stat><span class=lab>持仓上限</span><b>{c.get('position_pct','')}%</b></div></div>"
-            f"<div class=plan><span><i>买入</i><b>{_esc(c.get('buy_zone',''))}</b></span>"
+            f"<div class=plan><span><i>{buy_lab}</i><b>{_esc(c.get('buy_zone',''))}</b></span>"
             f"<span><i>目标</i><b>{c.get('target','')}</b></span>"
             f"<span><i>止损</i><b>{c.get('stop','')}</b></span></div>"
             + (f"<div class=line><span class='k'>补仓</span>{_esc(c.get('add_note',''))}</div>"
@@ -1489,7 +1596,7 @@ def render_html(result: dict, report_dir: str | None = None, preview: bool = Fal
 
     oneword = [c["code"] for c in cands if c.get("oneword")]
     hot = [f"{c['code']}({c['limit_streak']}板)" for c in cands if c.get("limit_streak", 0) >= 3]
-    warn = ""
+    warn = env_html  # 市场环境横幅置顶（若有）
     if preview:
         warn += ("<p class=warn>📝 量化预览版（仅引擎打分，未含消息面/裁决）——"
                  "生成完整版后本文件会被自动清除，请以带时间戳的完整版为准。</p>")
@@ -1521,9 +1628,13 @@ def render_html(result: dict, report_dir: str | None = None, preview: bool = Fal
         "h1{font-size:21px;margin:6px 0}h2{font-size:16px;margin:20px 0 8px;border-left:4px solid #1565c0;padding-left:8px}"
         ".meta{background:#fff;border:1px solid #e0e4e8;border-radius:10px;padding:12px 14px;font-size:13px;color:#333}"
         ".warn{background:#fff3e0;border-left:4px solid #ef6c00;padding:7px 11px;margin:8px 0;font-size:13px;border-radius:6px}"
+        ".envbar{background:#fff;border:1px solid #ddd;border-left:5px solid #c62828;border-radius:8px;"
+        "padding:10px 13px;margin:10px 0;font-size:14px}"
+        ".envsub{color:#666;font-size:12px}"
         # 卡片
         ".card{background:#fff;border:1px solid #e6e9ed;border-radius:12px;padding:14px 16px;margin:12px 0;"
         "box-shadow:0 1px 4px rgba(0,0,0,.06)}"
+        ".card.obs{background:#f7f8fa;opacity:.82}.card.obs .plan{background:#eceef1}"
         ".ctop{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid #eef1f4;padding-bottom:9px}"
         ".rank{width:26px;height:26px;border-radius:50%;background:#1565c0;color:#fff;display:flex;"
         "align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}"

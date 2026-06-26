@@ -234,6 +234,12 @@ python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc
 收尾声明：T 日期、数据源、本结果为研究分析非投资建议；A股 T+1 当日买入次日才能卖。
 
 ### 步骤 5 — 生成 HTML 报告（每次必做）
+> **2026-06-27 起 引擎已把"环境×状态"做进管线，HTML 与文字结论天然一致，不需再手工置 0 仓**：
+> 引擎在出结果前自动读同目录 `market_gate_latest.json`（须与 T 同日），按 regime 压**单票仓位上限**（观望→0 全员观察 / 防守→6 / 中性→8 / 进攻→不压），
+> 并给每只打 `entry_status`（`可买`/`观察·不入场`/`过热·默认剔除(观察)`/`一字板·难买入`/`价格存疑·待核`）。
+> HTML 顶部自动出**🌡 环境横幅**（regime/环境分/总仓上限/预案），每张卡自动出**状态徽标**（可买=绿、其余=灰且卡片灰化），不可买的票"买入"自动改"参考价"、目标/补仓清"—"。
+> 所以 Agent③ 只需**重排 + 回填催化剂/置信度**；观望档想点名"唯一观察标的"就把那一只的 `entry_status` 改成 `观察标的·价格待核` 之类（其余保持引擎给的 `观察·不入场`）。**严禁再出现"文字说空仓观望、HTML 却铺 8 只可买"的脱节**。
+
 引擎跑完已**自动**在 `reports/ashare_rank_cn_preview.html` 存一份量化预览报告（**固定文件名**，引擎跑几次都只覆盖这一个，不堆中间文件）。
 做完 Agent②/③/④ 后，把消息面/裁决结论**回填**进结果 JSON，再生成**完整版**报告（完整版用时间戳命名，并**自动删掉那个 preview 预览文件**，最终 reports/ 里每个 session 只留一份带时间戳的完整版）：
 0. **⚠️ 必须先重排 `candidates[]` 数组顺序 = Agent③ 终排名次（最易漏，2026-06-16 就栽在这：文字按 Agent③ 重排了、JSON 没重排，HTML 名次还停在引擎量化分顺序，两者脱节）**。
@@ -248,7 +254,7 @@ python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc
    ```powershell
    python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\weekly-ashare-rank\make_report.py" --in "C:\Trading_analysis\data\rank_latest.json"
    ```
-3. **渲染后 sanity check（必做）**：核对生成的 HTML 里「排名 1→N 的代码顺序」与你文字最终表**逐一一致**、`策略验证` 行正常显示、每张卡片的核验标记/置信度/催化剂都在。任一不一致 → 回第0/1步修正后**重新渲染**（旧的错序报告要删掉，每个 session 只留一份正确的）。
+3. **渲染后 sanity check（必做）**：核对生成的 HTML 里「排名 1→N 的代码顺序」与你文字最终表**逐一一致**、`策略验证` 行正常显示、`🌡 环境横幅`与每张卡的**状态徽标(可买/观察·不入场/过热剔除)**与你文字结论一致（观望档应全员"观察·不入场"、无任何"可买"绿标）、核验标记/置信度/催化剂都在。任一不一致 → 回第0/1步修正后**重新渲染**（旧的错序报告要删掉，每个 session 只留一份正确的）。
 4. 把生成的 HTML 路径告诉用户（report 文件名里的时间戳是中国当地时间）。
 
 ---
