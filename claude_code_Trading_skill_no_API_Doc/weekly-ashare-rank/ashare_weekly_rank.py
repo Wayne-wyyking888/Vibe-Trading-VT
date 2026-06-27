@@ -66,6 +66,7 @@ _LAST_SPOT_SRC = "?"
 # 给较长 TTL（覆盖周末）；快照盘中会变，给短 TTL。
 _USE_CACHE = True
 _REFRESH = False  # 强制重拉（绕过读缓存，但仍写回）
+_FETCH_NOTICES = True  # 给最终候选附近期公告/业绩预告(Agent②客观种子)；--no-notices 关闭
 _CACHE_DIR = pathlib.Path.home() / ".vibe-trading" / "cache" / "ashare_weekly"
 
 
@@ -829,6 +830,7 @@ def _load_market_env(out_path: str | None, as_of: str) -> dict | None:
             "max_total_position_pct": g.get("max_total_position_pct"),
             "plan": g.get("plan", ""),
             "reasons": g.get("reasons", [])[:4],
+            "t1_forecast": g.get("t1_forecast"),  # T+1 前瞻(展示+背离告警用,不改仓位/打分)
             "as_of": gd,
         }
     return None
@@ -997,6 +999,92 @@ def verify_picks(cands: list[dict]) -> list[dict]:
     return out
 
 
+# ---------------------------------------------------------------- Agent② 客观催化剂种子
+# 之前 Agent② 全靠盲搜 WebSearch，会漏掉 T 日盘后公告（如业绩预告），见 SKILL P8。
+# 这里给最终候选附"近期公告标题+日期 + 最新业绩预告"客观清单，让 Agent② 有据可查、
+# Agent④ 可比对漏查。免费、无 key、失败不抛（纯增量，不影响原有打分/回测）。
+
+def _dc_get(report: str, filt: str, sort: str = "", ps: int = 20) -> list[dict]:
+    """东财数据中心 datacenter-web 通用查询（免费、无 key）。失败返回 []。"""
+    p = {"reportName": report, "columns": "ALL", "filter": filt,
+         "pageSize": str(ps), "pageNumber": "1", "source": "WEB", "client": "WEB"}
+    if sort:
+        p["sortColumns"], p["sortTypes"] = sort.split(":")
+    try:
+        r = _SESSION.get("https://datacenter-web.eastmoney.com/api/data/v1/get",
+                         params=p, timeout=12,
+                         headers={"User-Agent": "Mozilla/5.0",
+                                  "Referer": "https://data.eastmoney.com/"})
+        obj = r.json()
+        return ((obj.get("result") or {}).get("data")) or []
+    except Exception as e:  # noqa: BLE001
+        log(f"  datacenter {report} 失败: {str(e)[:50]}")
+        return []
+
+
+def _em_announcements(code: str, as_of_d: dt.date, days: int = 14,
+                      limit: int = 8) -> list[dict]:
+    """东财个股公告列表（近 days 天，标题+日期+URL）。失败返回 []。"""
+    p = {"sr": "-1", "page_size": "20", "page_index": "1", "ann_type": "A",
+         "client_source": "web", "stock_list": code, "f_node": "0", "s_node": "0"}
+    out: list[dict] = []
+    try:
+        r = _SESSION.get("https://np-anotice-stock.eastmoney.com/api/security/ann",
+                         params=p, timeout=12, headers={"User-Agent": "Mozilla/5.0"})
+        rows = ((r.json().get("data") or {}).get("list")) or []
+    except Exception as e:  # noqa: BLE001
+        log(f"  公告抓取 {code} 失败: {str(e)[:50]}")
+        return []
+    cutoff = as_of_d - dt.timedelta(days=days)
+    for it in rows:
+        nd = str(it.get("notice_date", ""))[:10]
+        try:
+            ddate = dt.date.fromisoformat(nd)
+        except ValueError:
+            continue
+        if ddate < cutoff:
+            continue
+        art = str(it.get("art_code") or "")
+        out.append({"date": nd, "title": (it.get("title") or "").strip(),
+                    "fresh": 0 <= (as_of_d - ddate).days <= 10,
+                    "url": f"https://data.eastmoney.com/notices/detail/{code}/{art}.html" if art else ""})
+        if len(out) >= limit:
+            break
+    return out
+
+
+def fetch_recent_notices(code: str, as_of: str, fresh_days: int = 10) -> dict:
+    """Agent② 客观催化剂种子：最新业绩预告 + 近14天公告清单。失败不抛。
+    has_fresh_event=有≤fresh_days天的业绩预告或公告（供 Agent④ 比对漏查）。"""
+    res: dict = {"forecast": None, "notices": [], "has_fresh_event": False}
+    try:
+        as_of_d = dt.date.fromisoformat(as_of)
+    except (ValueError, TypeError):
+        as_of_d = dt.date.today()
+    # 1) 最新业绩预告（东财 datacenter，与 stock-diagnostic 同一已验证接口）
+    pf = _dc_get("RPT_PUBLIC_OP_NEWPREDICT", f'(SECURITY_CODE="{code}")',
+                 sort="NOTICE_DATE:-1", ps=1)
+    if pf:
+        r0 = pf[0]
+        nd = str(r0.get("NOTICE_DATE", ""))[:10]
+        fresh = False
+        try:
+            fresh = 0 <= (as_of_d - dt.date.fromisoformat(nd)).days <= fresh_days
+        except ValueError:
+            pass
+        res["forecast"] = {"notice_date": nd, "type": r0.get("PREDICT_TYPE"),
+                           "content": (r0.get("PREDICT_CONTENT") or "")[:80],
+                           "chg_lo": r0.get("ADD_AMP_LOWER"),
+                           "chg_hi": r0.get("ADD_AMP_UPPER"), "fresh": fresh}
+        if fresh:
+            res["has_fresh_event"] = True
+    # 2) 近期公告清单
+    res["notices"] = _em_announcements(code, as_of_d)
+    if any(n.get("fresh") for n in res["notices"]):
+        res["has_fresh_event"] = True
+    return res
+
+
 def run(sector: str | None, pool: int, top: int, out_path: str | None,
         weights: dict | None = None, hold_days: int = 5,
         verify: bool = True) -> dict:
@@ -1054,6 +1142,15 @@ def run(sector: str | None, pool: int, top: int, out_path: str | None,
     dates = [r.get("last_date") for r in rows if r.get("last_date")]
     as_of = max(dates) if dates else dt.date.today().isoformat()
     win = _trade_window(as_of, hold_days)
+    # Agent② 客观催化剂种子：给最终候选附近期公告+业绩预告(免费，失败不抛)
+    if _FETCH_NOTICES and picks:
+        log(f"抓取近期公告/业绩预告 Top{len(picks)} (Agent②客观种子) ...")
+        for c in picks:
+            nt = fetch_recent_notices(c["code"], as_of)
+            c["recent_notices"] = nt["notices"]
+            c["forecast"] = nt["forecast"]
+            c["has_fresh_event"] = nt["has_fresh_event"]
+            time.sleep(0.2)
     # 数据自检：universe 太小/兜底源/价格存疑 → 显式警示，避免"看着精准其实样本不足"
     sanity = []
     if _LAST_SPOT_SRC == "seed":
@@ -1139,6 +1236,14 @@ def print_table(result: dict) -> None:
     if isinstance(env, dict) and env.get("regime"):
         print(f"\n🌡 市场环境：{env['regime']}（环境分 {env.get('score','?')}）· 总仓上限 "
               f"{env.get('max_total_position_pct','?')}% · {env.get('plan','')}")
+        fc = env.get("t1_forecast")
+        if isinstance(fc, dict) and fc.get("direction"):
+            print(f"🔮 T+1 前瞻(展示用,不改仓位/打分)：{fc['direction']} · "
+                  f"P涨{fc.get('prob_up')}/P跌{fc.get('prob_down')} · 预计跳空{fc.get('exp_gap_range','')} · "
+                  f"情绪{fc.get('sentiment_continuation','')} · 置信度{fc.get('confidence','')} "
+                  f"(回测命中率{fc.get('hit_rate')}/MAE{fc.get('gap_mae')}%/样本{fc.get('n_eval')})")
+            if fc.get("divergence"):
+                print(f"   {fc['divergence']}")
     print("\n### 买入方案（T+1 执行）")
     bh = ["排名", "代码", "名称", "状态", "买入/参考区间", "补仓区间", "建议仓位", "入场方式", "止损", "放弃条件"]
     print("| " + " | ".join(bh) + " |")
@@ -1170,6 +1275,26 @@ def print_table(result: dict) -> None:
         print(f"\n⚠ 一字板(次日难买入): {', '.join(oneword)}")
     if hot:
         print(f"⚠ 高位连板(追高风险): {', '.join(hot)}")
+    # Agent② 客观催化剂种子：近期公告/业绩预告清单（⚡=≤10天新鲜，重点核验）
+    has_seed = any(c.get("recent_notices") or c.get("forecast") for c in result["candidates"])
+    if has_seed:
+        print("\n### 📋 近期公告/业绩预告（Agent② 客观种子 · ⚡=≤10天新鲜事件，必须专搜核验）")
+        for c in result["candidates"]:
+            fc = c.get("forecast"); ns = c.get("recent_notices") or []
+            if not fc and not ns:
+                continue
+            flag = "⚡" if c.get("has_fresh_event") else "  "
+            print(f"{flag}{c['code']} {c['name']}:")
+            if fc:
+                lo, hi = fc.get("chg_lo"), fc.get("chg_hi")
+                amp = (f" 净利变动{lo}~{hi}%" if (lo is not None or hi is not None) else "")
+                print(f"     {'⚡' if fc.get('fresh') else '·'} 业绩预告 {fc.get('notice_date')} "
+                      f"{fc.get('type') or ''}{amp}")
+            for n in ns[:5]:
+                print(f"     {'⚡' if n.get('fresh') else '·'} {n['date']} {n['title']}")
+        print("> Agent②须逐只比对此清单：有 ⚡ 新鲜事件的票，必须专搜该事件确认强度/price-in，"
+              "不得只凭泛搜下结论；引擎列了⚡却未被Agent②提及=漏查，Agent④打回。")
+
     print("\n候选股代码（供 Agent 2 查催化剂）:", ", ".join(c["code"] for c in result["candidates"]))
 
 
@@ -1539,6 +1664,25 @@ def render_html(result: dict, report_dir: str | None = None, preview: bool = Fal
             + (f"<br><span class=envsub>预案：{_esc(env.get('plan',''))}</span>" if env.get("plan") else "")
             + "</div>"
         )
+        # T+1 前瞻子横幅（展示+背离告警用，绝不改仓位/打分）
+        fc = env.get("t1_forecast")
+        if isinstance(fc, dict) and fc.get("direction"):
+            dc = ("#2e7d32" if "多" in fc["direction"]
+                  else "#c62828" if "空" in fc["direction"] else "#6b7280")
+            env_html += (
+                f"<div class=envbar style='border-color:{dc};margin-top:6px'>"
+                f"<b style='color:{dc}'>🔮 T+1 前瞻（展示用·不改仓位/打分）：{_esc(fc['direction'])}</b>"
+                f" · P涨 <b>{fc.get('prob_up')}</b>/P跌 <b>{fc.get('prob_down')}</b>"
+                f" · 预计跳空 <b>{_esc(fc.get('exp_gap_range',''))}</b>"
+                f" · 情绪{_esc(fc.get('sentiment_continuation',''))} · 置信度 <b>{_esc(fc.get('confidence',''))}</b>"
+                f"<br><span class=envsub>回测命中率 {fc.get('hit_rate')} · 跳空MAE {fc.get('gap_mae')}% · "
+                f"评估样本 {fc.get('n_eval')}（扩张窗口·无前视） · "
+                + _esc(' · '.join(fc.get('drivers', []))) + "</span>"
+                + (f"<br><span class=envsub style='color:#c62828'><b>{_esc(fc.get('divergence',''))}</b></span>"
+                   if fc.get("divergence") else "")
+                + f"<br><span class=envsub>{_esc(fc.get('note',''))}</span>"
+                + "</div>"
+            )
 
     # 主体：每只股一张卡片（长文本整行铺开，避免横向滚动）
     cards = ""
@@ -1711,14 +1855,17 @@ def main() -> None:
     ap.add_argument("--refresh", action="store_true", help="强制重拉(绕过读缓存)")
     ap.add_argument("--no-report", action="store_true", help="不生成HTML报告")
     ap.add_argument("--no-verify", action="store_true", help="跳过最终候选的跨源价格校验")
+    ap.add_argument("--no-notices", action="store_true", help="跳过近期公告/业绩预告抓取(Agent②客观种子)")
     ap.add_argument("--report-dir", default=None, help="HTML报告目录(默认 skill下 reports/)")
     args = ap.parse_args()
 
-    global _USE_CACHE, _REFRESH
+    global _USE_CACHE, _REFRESH, _FETCH_NOTICES
     if args.no_cache:
         _USE_CACHE = False
     if args.refresh:
         _REFRESH = True
+    if args.no_notices:
+        _FETCH_NOTICES = False
 
     here = pathlib.Path(__file__).resolve().parent
     if args.backtest:

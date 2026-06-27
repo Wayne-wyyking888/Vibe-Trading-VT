@@ -22,6 +22,8 @@ import json
 import pathlib
 import time
 
+import numpy as np
+
 HERE = pathlib.Path(__file__).resolve().parent
 _spec = importlib.util.spec_from_file_location("eng", HERE / "ashare_weekly_rank.py")
 eng = importlib.util.module_from_spec(_spec)
@@ -177,6 +179,164 @@ def assess(idx: dict[str, dict], senti: dict | None) -> dict:
             "reasons": reasons, "plan": plan}
 
 
+# ---------------------------------------------------------------- T+1 前瞻 nowcast
+# 设计原则（与本 skill 的诚实校准文化一致）：
+# - 次日指数方向的真实样本外天花板只有 ~52-56%，绝不吹"预测涨跌"。这里只做透明的
+#   概率化 nowcast = ① 历史类比基准率(无未来函数) + ② 情绪延续/退潮微调；外盘(美股/SOX/
+#   富时A50/汇率)由 Claude 在 Agent⓪ 用 WebSearch 叠加（引擎无法联网搜）。
+# - **展示 + 背离告警用，绝不自动改仓位/综合打分**。下行风险闸门(assess)永远独占仓位上限，
+#   一个"偏多"的前瞻不许松开它（守住 SKILL.md P5：别靠预测择时去赌 V 反）。
+# - 置信度由"回测命中率(扩张窗口、无前视)"诚实封顶；命中率≈50% 就明说"≈随机·仅供参考"。
+
+_FEAT_W = np.array([1.3, 1.0, 1.1, 1.2, 0.8, 0.9])  # chg, chg5, vol_ratio, dist_ma20, down_streak, rng_pos20
+
+
+def _feat_matrix(k: list[dict]):
+    """每根K的状态特征矩阵 F 及其 T+1 收益/跳空（最后一根的 T+1 未知=nan）。无未来函数。"""
+    c = np.array([x["c"] for x in k], float)
+    o = np.array([x["o"] for x in k], float)
+    v = np.array([x["v"] for x in k], float)
+    n = len(c)
+    F = np.full((n, 6), np.nan)
+    for i in range(20, n):
+        vavg = v[i - 5:i].mean()
+        ma20 = c[i - 19:i + 1].mean()
+        win = c[i - 19:i + 1]
+        ds = 0
+        for j in range(i, 0, -1):
+            if c[j] < c[j - 1]:
+                ds += 1
+            else:
+                break
+        rng = (c[i] - win.min()) / (win.max() - win.min()) if win.max() > win.min() else 0.5
+        F[i] = [(c[i] / c[i - 1] - 1) * 100, (c[i] / c[i - 5] - 1) * 100,
+                v[i] / vavg if vavg > 0 else 1.0, (c[i] / ma20 - 1) * 100,
+                min(ds, 6), rng * 100]
+    nxt_ret = np.full(n, np.nan)
+    nxt_gap = np.full(n, np.nan)
+    nxt_ret[:-1] = (c[1:] / c[:-1] - 1) * 100
+    nxt_gap[:-1] = (o[1:] / c[:-1] - 1) * 100
+    return F, nxt_ret, nxt_gap
+
+
+def _analog_predict(F, nxt_ret, nxt_gap, target: int, hist_hi: int) -> dict | None:
+    """用历史行 [20, hist_hi) 中与 target 状态最像的 K 个邻居的 T+1 分布预测 target 的 T+1。
+    邻居严格早于 hist_hi，预测目标的实现值不参与 → 无前视。"""
+    tv = F[target]
+    if np.isnan(tv).any():
+        return None
+    rows = np.arange(20, hist_hi)
+    rows = rows[~np.isnan(F[rows]).any(axis=1) & ~np.isnan(nxt_ret[rows])]
+    if len(rows) < 30:
+        return None
+    M = F[rows]
+    sd = M.std(axis=0)
+    sd[sd == 0] = 1.0
+    diff = ((M - tv) / sd) * _FEAT_W
+    dist = np.sqrt((diff * diff).sum(axis=1))
+    k_neigh = max(20, len(rows) // 12)
+    nn = rows[np.argsort(dist)[:k_neigh]]
+    r, g = nxt_ret[nn], nxt_gap[nn]
+    p_up = float((r > 0.1).mean())
+    p_dn = float((r < -0.1).mean())
+    return {"p_up": round(p_up, 3), "p_down": round(p_dn, 3),
+            "exp_ret": round(float(np.median(r)), 2),
+            "gap_lo": round(float(np.percentile(g, 25)), 2),
+            "gap_hi": round(float(np.percentile(g, 75)), 2),
+            "gap_med": round(float(np.median(g)), 2), "n": int(k_neigh)}
+
+
+def _analog_backtest(F, nxt_ret, nxt_gap, warmup: int = 120) -> dict:
+    """扩张窗口回测：在每个历史日只用更早的数据预测它的 T+1，统计方向命中率 + 跳空 MAE。
+    只在模型有明确倾向(|p_up-p_down|≥0.10)时计入命中率，避免拿 50/50 灌水。"""
+    n = len(F)
+    hits = tot = 0
+    gerr = []
+    for i in range(warmup, n - 1):
+        pr = _analog_predict(F, nxt_ret, nxt_gap, i, i)
+        if not pr or np.isnan(nxt_ret[i]):
+            continue
+        if abs(pr["p_up"] - pr["p_down"]) >= 0.10:
+            tot += 1
+            hits += int((pr["p_up"] >= pr["p_down"]) == (nxt_ret[i] > 0))
+        gerr.append(abs(pr["gap_med"] - nxt_gap[i]))
+    return {"hit_rate": round(hits / tot, 3) if tot else None, "n_eval": tot,
+            "gap_mae": round(float(np.mean(gerr)), 2) if gerr else None}
+
+
+def _sentiment_lean(senti: dict | None):
+    """情绪延续/退潮 → 对 p_up 的小幅微调(有界)。返回 (label, lean, tags)。"""
+    if not senti:
+        return "中性(无情绪数据)", 0.0, []
+    lean, tags = 0.0, []
+    zt, zbr = senti.get("zt_count", 0), senti.get("zb_rate", 0)
+    if senti.get("zt_shrink"):
+        lean -= 0.06
+        tags.append("涨停腰斩→退潮")
+    if zbr > 40:
+        lean -= 0.05
+        tags.append(f"炸板率{zbr}%→分歧")
+    elif zbr < 20 and zt >= 40:
+        lean += 0.04
+        tags.append("低炸板高涨停→延续")
+    if senti.get("max_streak", 0) >= 6 and zbr > 35:
+        lean -= 0.04
+        tags.append("高潮+高炸板→防退潮")
+    label = "退潮" if lean <= -0.05 else "延续偏强" if lean >= 0.04 else "中性"
+    return label, lean, tags
+
+
+def forecast(idx: dict[str, dict], senti: dict | None, regime: str) -> dict | None:
+    """T+1 前瞻 nowcast（展示 + 背离告警用，不改仓位/打分）。失败返回 None（降级）。"""
+    klong = _idx_kline("sh000001", 800)
+    if not klong or len(klong) < 150:
+        return None
+    F, nr, ng = _feat_matrix(klong)
+    base = _analog_predict(F, nr, ng, len(klong) - 1, len(klong))
+    if not base:
+        return None
+    bt = _analog_backtest(F, nr, ng)
+    slabel, slean, stags = _sentiment_lean(senti)
+    p_up = base["p_up"] + slean
+    p_dn = base["p_down"] - slean
+    s = p_up + p_dn
+    if s > 0.98:  # 给"平"留余量，避免显示成 >100%
+        p_up, p_dn = p_up * 0.98 / s, p_dn * 0.98 / s
+    p_up, p_dn = round(min(0.9, max(0.1, p_up)), 2), round(min(0.9, max(0.1, p_dn)), 2)
+    edge = abs(p_up - p_dn)
+    hr = bt["hit_rate"]
+    if hr is None or hr < 0.52 or edge < 0.10:
+        conf = "低(≈随机)"
+    elif hr < 0.55:
+        conf = "中低"
+    elif hr < 0.58:
+        conf = "中" if edge < 0.15 else "中高"
+    else:
+        conf = "中高" if edge >= 0.15 else "中"
+    direction = "偏多" if p_up - p_dn >= 0.08 else "偏空" if p_dn - p_up >= 0.08 else "中性"
+    # 背离告警：滞后闸门 vs 前瞻方向不一致时点名（只提示、不自动改仓）
+    gate_def = ("观望" in regime) or ("防守" in regime)
+    diverge = ""
+    if conf != "低(≈随机)":
+        if gate_def and direction == "偏多":
+            diverge = ("⚠背离：滞后闸门偏防守，但前瞻(历史类比+情绪)偏多——闸门是反应型指标，"
+                       "底部 V 反前一天最易误杀；是否小仓试探请结合外盘自行定夺，本预测不自动改仓位/打分。")
+        elif (not gate_def) and direction == "偏空":
+            diverge = "⚠背离：闸门尚友好，但前瞻偏空——次日提防高开走弱/低开，控制追高。"
+    drivers = [f"历史类比{base['n']}个相似日：涨{int(base['p_up'] * 100)}%/跌{int(base['p_down'] * 100)}%"
+               f"(中位T+1 {base['exp_ret']:+.2f}%)"]
+    if stags:
+        drivers.append("情绪：" + "，".join(stags))
+    return {"direction": direction, "prob_up": p_up, "prob_down": p_dn,
+            "exp_gap_range": f"{base['gap_lo']:+.2f}~{base['gap_hi']:+.2f}%",
+            "gap_median": base["gap_med"], "sentiment_continuation": slabel,
+            "confidence": conf, "hit_rate": hr, "gap_mae": bt["gap_mae"],
+            "n_eval": bt["n_eval"], "n_analogs": base["n"], "drivers": drivers,
+            "divergence": diverge,
+            "note": "外盘(美股/SOX/富时A50/汇率)由 Claude WebSearch 叠加；本块=历史类比+情绪，"
+                    "展示+背离告警用，不自动改仓位/综合打分。"}
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="市场环境·情绪闸门（Agent⓪）")
     ap.add_argument("--out", default=r"C:\Trading_analysis\data\market_gate_latest.json")
@@ -198,6 +358,7 @@ def main() -> None:
     senti = _sentiment(idx["sh000001"]["date"],
                        sh_dates[-2] if len(sh_dates) >= 2 else None)
     verdict = assess(idx, senti)
+    fc = forecast(idx, senti, verdict["regime"])
 
     print(f"\n## 市场环境·情绪闸门  (T={idx['sh000001']['date']})")
     print("| 指数 | 收盘 | T日% | 5日% | MA20上方 | 量比 | 连跌 | 放量下跌 |")
@@ -220,12 +381,26 @@ def main() -> None:
     for r in verdict["reasons"]:
         print(f"- ⚠ {r}")
     print(f"\n预案：{verdict['plan']}")
+
+    if fc:
+        print(f"\n🔮 **T+1 前瞻（展示用·不改仓位/打分）：{fc['direction']}** · "
+              f"P涨 {fc['prob_up']}/P跌 {fc['prob_down']} · 预计跳空 {fc['exp_gap_range']} · "
+              f"情绪{fc['sentiment_continuation']} · 置信度 {fc['confidence']}")
+        print(f"   回测命中率 {fc['hit_rate']} · 跳空MAE {fc['gap_mae']}% · 评估样本 {fc['n_eval']}（扩张窗口·无前视）")
+        for d in fc["drivers"]:
+            print(f"   - {d}")
+        if fc["divergence"]:
+            print(f"   {fc['divergence']}")
+        print("   注：外盘(美股/SOX/富时A50/汇率)请由 Claude 用 WebSearch 叠加确认方向；本块仅历史类比+情绪。")
+    else:
+        print("\n🔮 T+1 前瞻：指数长历史拉取不足，本次跳过前瞻（不影响环境闸门）。")
+
     print("\n注：若在A股交易时段(9:30-15:00)运行，最后一根K线为盘中数据——"
           "量比/涨停家数是盘中值会偏低，环境分仅供盘中参考；收盘后/盘前跑最准。")
 
     out = {"generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
            "indices": idx, "sentiment": senti, **verdict,
-           "degraded": senti is None}
+           "t1_forecast": fc, "degraded": senti is None}
     p = pathlib.Path(args.out)
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
