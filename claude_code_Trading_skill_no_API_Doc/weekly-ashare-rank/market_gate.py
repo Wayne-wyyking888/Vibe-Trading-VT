@@ -160,6 +160,12 @@ def assess(idx: dict[str, dict], senti: dict | None) -> dict:
         if senti.get("zt_shrink"):
             score -= 8
             reasons.append(f"涨停家数环比腰斩({senti.get('zt_prev')}→{senti['zt_count']})")
+        # M5 情绪高潮亢奋降档：涨停环比激增(≥1.7倍)+绝对高(≥80)+炸板已现(≥22%) → 见顶回吐风险
+        # (2026-06-29 医药政策涨停107 vs 前日60、炸板26%却给进攻80，次日 CRO 集体回吐的教训)
+        ztp = senti.get("zt_prev")
+        if ztp and zt >= 80 and zt >= ztp * 1.7 and zbr >= 22:
+            score -= 10
+            reasons.append(f"涨停环比激增({ztp}→{zt})+炸板{zbr}%(情绪高潮亢奋,次日追高易兑现回吐)")
     score = max(0.0, min(100.0, round(score, 1)))
     if score >= 70:
         regime, pos = "进攻(risk-on)", 60

@@ -112,12 +112,15 @@ _SESSION.headers.update(
 # 全市场A股: 深市主板+创业板 / 沪市主板+科创板
 _FS_ALL_A = "m:0 t:6,m:0 t:80,m:1 t:2,m:1 t:23,m:0 t:81 s:2048"
 # 行情字段（fltt=2 → 已是小数，无需再缩放）
-_SPOT_FIELDS = "f12,f14,f2,f3,f5,f6,f8,f10,f20,f21"
+_SPOT_FIELDS = "f12,f14,f2,f3,f5,f6,f8,f9,f10,f20,f21,f100"
 _COL_MAP = {
     "f12": "代码", "f14": "名称", "f2": "最新价", "f3": "涨跌幅",
-    "f5": "成交量", "f6": "成交额", "f8": "换手率", "f10": "量比",
-    "f20": "总市值", "f21": "流通市值",
+    "f5": "成交量", "f6": "成交额", "f8": "换手率", "f9": "市盈率", "f10": "量比",
+    "f20": "总市值", "f21": "流通市值", "f100": "行业",
 }
+
+import os as _os
+_M2_CHG1_PEN = _os.environ.get("M2_CHG1_PEN", "1") != "0"   # M2 当天暴涨惩罚开关(对照实验/回滚用；默认启用)
 
 
 def log(msg: str) -> None:
@@ -306,8 +309,11 @@ def _seed_spot(top: int) -> pd.DataFrame | None:
 def get_spot(top_by_amount: int = 600) -> pd.DataFrame:
     """全市场A股快照：按成交额降序取前 top_by_amount 只。东财→新浪→种子 自动回退。"""
     global _LAST_SPOT_SRC
+    import zlib
     log(f"拉取全市场成交额前 {top_by_amount} 只 ...")
-    cached = _cache_get("spot", f"all_{top_by_amount}", max_age_h=6)
+    # 缓存 key 含字段签名(crc32)：_SPOT_FIELDS 变更(加 PE/行业等)后旧缓存自动失效，避免命中缺列旧数据
+    _spot_key = f"all_{top_by_amount}_v{zlib.crc32(_SPOT_FIELDS.encode()) & 0xffff}"
+    cached = _cache_get("spot", _spot_key, max_age_h=6)
     if cached is not None:
         df = pd.DataFrame(cached)  # cached 是 列→list 的 dict，行数取重建后的 DataFrame
         log(f"  命中缓存，{len(df)} 行")
@@ -318,7 +324,7 @@ def get_spot(top_by_amount: int = 600) -> pd.DataFrame:
         if df is not None and len(df) > 0:
             log(f"  数据源={name}，收到 {len(df)} 行")
             _LAST_SPOT_SRC = name
-            _cache_put("spot", f"all_{top_by_amount}", df.to_dict("list"))
+            _cache_put("spot", _spot_key, df.to_dict("list"))
             return df
     raise RuntimeError("所有行情源均不可用（eastmoney + sina + seed 都失败）")
 
@@ -616,6 +622,7 @@ def hist_factors(code: str, name: str) -> dict | None:
         vol_today=round(vol_today, 2) if vol_today == vol_today else None,
         limit_up_today=limit_up_today, limit_streak=streak, oneword=oneword,
         pullback=pullback,
+        chg1=round(chg_last, 2) if chg_last == chg_last else None,  # M2 当天涨幅(暴涨惩罚/剔除用)
     )
 
 
@@ -647,10 +654,13 @@ def composite(f: dict, weights: dict | None = None) -> dict:
     # 回调买点 0~10
     pull = 10 if f.get("pullback") else 0
 
-    # 惩罚：过度乖离 / 极端高位 / 高位连板（追高风险）
+    # 惩罚：过度乖离 / 极端高位 / 高位连板（追高风险）+ 当天暴涨(M2：消息/板块高潮拉起，次日易回吐)
+    chg1 = f.get("chg1")
+    chg1 = chg1 if isinstance(chg1, (int, float)) and chg1 == chg1 else 0.0
     pen = ((10 if dist > 15 else (5 if dist > 10 else 0))
            + (8 if f["rng_pos"] > 95 else 0)
-           + (10 if f.get("limit_streak", 0) >= 3 else 0))
+           + (10 if f.get("limit_streak", 0) >= 3 else 0)
+           + ((20 if chg1 >= 9.5 else (12 if chg1 >= 7 else 0)) if _M2_CHG1_PEN else 0))
 
     mom, vol, tech, tape, pull = (mom * w["mom"], vol * w["vol"], tech * w["tech"],
                                   tape * w["tape"], pull * w["pull"])
@@ -765,6 +775,17 @@ def buy_plan(f: dict) -> dict:
         tactic = ("60位/乖离/急涨过热触发硬剔除：默认不买；仅当 Agent② 查到≤7天新鲜独立催化，"
                   "裁决官方可改回轻仓(≤原仓位一半)只接深回踩，否则只观察")
     f["overheat"] = overheat
+
+    # ---- M2 当天暴涨兑现硬剔除：T日涨幅≥7%(多为消息/板块高潮拉起) → 踢出买入池，宁错过 ----
+    # 次日利好兑现/见光死回吐风险大(2026-06-29 医药政策涨停、次日 CRO 集体回吐、泰格T+1亏最多的教训)。
+    chg1_val = f.get("chg1") or 0
+    cashout = chg1_val >= 7 and not f.get("oneword")
+    if cashout and pos > 0:
+        pos = 0
+        mode = "暴涨兑现·默认剔除(观察)"
+        tactic = (f"T日大涨{chg1_val:.0f}%≥7%(多为消息/板块高潮拉起)，次日易利好兑现回吐/见光死；"
+                  "默认不进买入池，仅观察是否有独立于板块的新鲜催化再议")
+    f["cashout"] = cashout
 
     # 放弃条件：高开追高 + 向下跳空见光死(P9 2026-06-29 恒逸教训) + 破止损。
     # 低开击穿买区下沿/直奔止损 = 催化失败见光死，放弃不低吸，绝不把跳空跳水当"打折抄底"。
@@ -1088,6 +1109,39 @@ def fetch_recent_notices(code: str, as_of: str, fresh_days: int = 10) -> dict:
     return res
 
 
+def _secucode(code: str) -> str:
+    """A股代码 → 东财 SECUCODE(带交易所后缀)。6/9=沪, 4/8=北, 其余=深。"""
+    c = str(code)
+    if c.startswith(("6", "9")):
+        return f"{c}.SH"
+    if c.startswith(("4", "8")):
+        return f"{c}.BJ"
+    return f"{c}.SZ"
+
+
+def fetch_fundamentals(codes: list[str]) -> dict[str, dict]:
+    """M1 基本面地基：批量取每只『最新报告期扣非归母净利同比』+ 报告期名。
+    免费东财 datacenter(RPT_F10_FINANCE_MAINFINADATA)，与 forecast 同源、无 key、失败不抛。
+    注：这是"当前时点最新财报"、无历史 PIT，故只用于 M4 实盘头部排序 gate，不进回测。"""
+    out: dict[str, dict] = {}
+    for code in codes:
+        rows = _dc_get("RPT_F10_FINANCE_MAINFINADATA",
+                       f'(SECUCODE="{_secucode(code)}")',
+                       sort="REPORT_DATE:-1", ps=1)
+        if not rows:
+            continue
+        r0 = rows[0]
+        kcfj = r0.get("KCFJCXSYJLRTZ")   # 扣非归母净利润同比增长率(%)
+        try:
+            kcfj = round(float(kcfj), 2) if kcfj is not None else None
+        except (TypeError, ValueError):
+            kcfj = None
+        out[str(code)] = {"kcfj_yoy": kcfj,
+                          "report_name": str(r0.get("REPORT_DATE_NAME") or "")[:12]}
+        time.sleep(0.15)
+    return out
+
+
 def run(sector: str | None, pool: int, top: int, out_path: str | None,
         weights: dict | None = None, hold_days: int = 5,
         verify: bool = True) -> dict:
@@ -1128,6 +1182,10 @@ def run(sector: str | None, pool: int, top: int, out_path: str | None,
         f["amount_yi"] = (round(float(spot_amt) / 1e8, 2) if pd.notna(spot_amt) and spot_amt > 0
                            else f.get("amt_yi_kline"))
         f["float_cap_yi"] = round(float(spot_fcap) / 1e8, 1) if pd.notna(spot_fcap) and spot_fcap > 0 else None
+        pe_v = pd.to_numeric(r.get("市盈率"), errors="coerce")
+        f["pe"] = round(float(pe_v), 1) if pd.notna(pe_v) else None          # M1 市盈率(f9)
+        ind = r.get("行业")
+        f["industry"] = str(ind) if ind is not None and str(ind) not in ("nan", "None", "-") else None  # M1 所属行业(f100，为M3预留)
         f = risk_assess(f)  # 客观技术风险分(spot字段就绪后算)
         f = buy_plan(f)     # 买入方案
         f = derive_targets(f, hold_days)  # 基线目标价/预期收益/盈亏比
@@ -1136,7 +1194,24 @@ def run(sector: str | None, pool: int, top: int, out_path: str | None,
             log(f"  已处理 {i}/{len(ranked_pre)}")
 
     rows.sort(key=lambda x: x["score"], reverse=True)
+    # M2: 不可买票(pos=0：过热/暴涨兑现/一字板)沉出头部，可买票优先进 top(宁错过)
+    rows.sort(key=lambda x: 0 if x.get("position_pct", 0) > 0 else 1)
     picks = rows[:top]
+    # ---- M4 基本面 gate：给头部附最新扣非同比，扣非负增长/PE过高/亏损 → 沉出头部(仅实盘,不进回测) ----
+    if picks:
+        fund = fetch_fundamentals([c["code"] for c in picks])
+        for c in picks:
+            c.update(fund.get(c["code"], {}))
+
+        def _bad_fund(c):
+            k, pe = c.get("kcfj_yoy"), c.get("pe")
+            neg = (k is not None and k < 0)                     # 扣非负增长=主营下滑(泰格2025全年式)
+            pe_bad = (pe is not None and (pe < 0 or pe > 120))  # 亏损 / 估值过高
+            return 1 if (neg or pe_bad) else 0
+
+        # 三档稳定排序：①可买+基本面好 ②可买+基本面差(扣非负/PE高) ③不可买(pos=0) → 头部第1必为可买优质票
+        picks.sort(key=lambda c: (0 if (c.get("position_pct", 0) > 0 and not _bad_fund(c))
+                                  else (1 if c.get("position_pct", 0) > 0 else 2)))
     # 跨源价格校验：只对最终候选做（防脏数据误导买入/止损价）
     if verify and picks:
         log(f"跨源价格校验 Top{len(picks)} ...")
@@ -1497,6 +1572,7 @@ def _score_factors_at(o, c, h, l, v, code: str, t: int) -> dict | None:
         tail_strength=tail, dist_ma10=dist_ma10 * 100, bull=bull, macd_gold=macd_gold,
         rng_pos=rng_pos * 100, is_yang=is_yang, body_ratio=body_ratio,
         pullback=pullback, limit_streak=streak,
+        chg1=(last / float(c[t - 1]) - 1) * 100 if c[t - 1] > 0 else np.nan,  # M2 当天涨幅(回测同实盘)
     )
 
 
@@ -1725,7 +1801,12 @@ def render_html(result: dict, report_dir: str | None = None, preview: bool = Fal
             + f"<div class=line><span class=k>入场</span>{_esc(c.get('entry_mode',''))}：{_esc(c.get('entry_tactic',''))}</div>"
             f"<div class=line><span class='k red'>放弃</span>{_esc(c.get('abort',''))}</div>"
             f"<div class=line><span class='k green'>催化剂</span>{_esc(c.get('catalyst','—'))}</div>"
-            f"{rnote_html}</div>"
+            + ((f"<div class=line><span class=k>基本面</span>扣非同比 <b>{c.get('kcfj_yoy')}%</b>"
+                + (f" · PE {c.get('pe')}" if c.get('pe') is not None else "")
+                + (f" · {_esc(c.get('industry'))}" if c.get('industry') else "")
+                + (f"（{_esc(c.get('report_name'))}）" if c.get('report_name') else "")
+                + "</div>") if c.get('kcfj_yoy') is not None else "")
+            + f"{rnote_html}</div>"
         )
 
     # 量化明细（透明附录，可折叠）
