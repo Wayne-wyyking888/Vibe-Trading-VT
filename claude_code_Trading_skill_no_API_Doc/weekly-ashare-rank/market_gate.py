@@ -218,13 +218,25 @@ def assess(idx: dict[str, dict], senti: dict | None) -> dict:
             score -= 10
             reasons.append(f"涨停环比激增({ztp}→{zt})+炸板{zbr}%(情绪高潮亢奋,次日追高易兑现回吐)")
     score = max(0.0, min(100.0, round(score, 1)))
-    if score >= 70:
+    # ---- U4 临界带降档(2026-07-07)：环境分是噪声量表，踩在档位下边界±3分内按低一档执行 ----
+    # 教训：07-03收盘环境分=40.0踩在防守/观望线上，按防守出了5只可买表；次日盘中31/收盘29,
+    # 高能环境买入日跌停。风险闸门的边界误差应向下取整(保守)，不向上给"能买"的暗示。
+    eff = score
+    boundary_note = None
+    for b in (40.0, 55.0, 70.0):
+        if b <= score < b + 3:
+            eff = b - 0.1     # 压到低一档
+            boundary_note = f"环境分{score}踩临界带[{b},{b+3})，按低一档执行(U4保守取整)"
+            break
+    if boundary_note:
+        reasons.append(boundary_note)
+    if eff >= 70:
         regime, pos = "进攻(risk-on)", 60
         plan = "正常按计划执行；竞价高开>3%仍等回调。"
-    elif score >= 55:
+    elif eff >= 55:
         regime, pos = "中性", 50
         plan = "按计划执行但不满仓；优先位置低+独立催化的票。"
-    elif score >= 40:
+    elif eff >= 40:
         regime, pos = "防守(risk-off)", 30
         plan = ("防守期预案：① 总仓≤30%、单票≤6%；② 竞价大盘低开>1% → 首30分钟只看不买，"
                 "只在买入区下半段挂单接回调；③ 只买独立催化票，回避前一日被集中抛售主题；"

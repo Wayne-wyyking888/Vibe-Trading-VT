@@ -641,6 +641,10 @@ def hist_factors(code: str, name: str) -> dict | None:
     pullback = bool(bull and ret20 == ret20 and ret20 > 0.05
                     and -3 <= dist_ma10 * 100 <= 5 and is_yang)
 
+    # === U2/U3 陷阱前兆原料(2026-07-07 面板校准)：T日上影幅度 + 前一日涨跌 ===
+    upsh = (h1 - max(o1, c1)) / c1 * 100 if c1 > 0 else 0.0   # 上影占收盘价%(顶部抛压实证)
+    chg_prev = float(daily_chg.iloc[-2]) if len(close) > 2 and daily_chg.iloc[-2] == daily_chg.iloc[-2] else 0.0
+
     return dict(
         code=code, name=name, close=round(last, 2), bull=bull,
         ret5=round(ret5 * 100, 2), ret20=round(ret20 * 100, 2),
@@ -658,6 +662,7 @@ def hist_factors(code: str, name: str) -> dict | None:
         limit_up_today=limit_up_today, limit_streak=streak, oneword=oneword,
         pullback=pullback,
         chg1=round(chg_last, 2) if chg_last == chg_last else None,  # M2 当天涨幅(暴涨惩罚/剔除用)
+        upsh=round(upsh, 2), chg_prev=round(chg_prev, 2),           # U2/U3 陷阱前兆原料
     )
 
 
@@ -842,9 +847,23 @@ def buy_plan(f: dict) -> dict:
                   "竞价高开>2%放弃，低开击穿买区下沿=兑现失败立即放弃")
     f["cashout_soft"] = cashout_soft
 
+    # ---- U2 高位长上影·软gate(2026-07-07 面板校准：6152股票日中最强陷阱前兆) ----
+    # T日上影≥3%且高位 → 次日"开盘正常盘中崩"陷阱率4.11% vs 基准1.22%(lift 3.4x)——上影是
+    # "有人在顶部真实出货"的盘口实证(高能07-03摸20.70被砸回19.80上影4.5%、600596上影3.3%,
+    # 次日双双跌停且均非跳空型、recheck拦不住)。软gate=仓位减半+最终排名-6；≥2弱信号叠加由U3升级剔除。
+    upsh_soft = ((f.get("upsh") or 0) >= 3 and hi_pos and not f.get("oneword"))
+    if upsh_soft and pos > 0 and not cashout_soft:      # 与兑现带同触发时留给U3叠加升级,不重复减
+        pos = max(3, pos // 2)
+        mode = "顶部抛压·轻仓"
+        tactic = (f"T日高位长上影{f.get('upsh'):.1f}%(摸高被砸回=顶部有人出货)：回测该形态次日盘中崩"
+                  "概率是基准3.4倍；仓位减半只接回踩，竞价高开>2%放弃，低开击穿买区下沿立即放弃")
+    f["upsh_soft"] = upsh_soft
+    # U3 计数用：高位大阴后大阳(剧烈换手,lift 2.3x)——不单独降仓,只参与弱信号叠加
+    f["churn_sig"] = bool((f.get("chg_prev") or 0) <= -3 and chg1_val >= 4 and hi_pos)
+
     # 放弃条件：高开追高 + 向下跳空见光死(P9 2026-06-29 恒逸教训) + 破止损。
     # 低开击穿买区下沿/直奔止损 = 催化失败见光死，放弃不低吸，绝不把跳空跳水当"打折抄底"。
-    gap_lim = 2 if (rl in ("中高", "高") or f.get("cashout_soft")) else 3
+    gap_lim = 2 if (rl in ("中高", "高") or f.get("cashout_soft") or f.get("upsh_soft")) else 3
     abort = (f"竞价高开>{gap_lim}% 或 低开击穿买区下沿{lo}(向下跳空/见光死,不低吸) "
              f"或 跌破{stop} → 放弃")
 
@@ -935,22 +954,26 @@ def _apply_regime_policy(picks: list[dict], market_env: dict | None) -> None:
     defensive = any(k in regime for k in ("防守", "观望"))
     cap = _regime_single_cap(regime)
     for c in picks:
-        # M2' 兑现风险带 × 防守/观望环境 → 升级为剔除(左尾肥×亏钱效应叠加，高能07-06教训)
+        # M2'/U2 软gate × 防守/观望环境 → 升级为剔除(左尾肥×亏钱效应叠加，高能07-06教训)
         # 须在 regime cap 归零之前判定，否则观望档(cap=0)会跳过本分支、只改状态不改入场文案
-        if defensive and c.get("cashout_soft") and c.get("position_pct", 0) > 0:
+        if defensive and (c.get("cashout_soft") or c.get("upsh_soft")) and c.get("position_pct", 0) > 0:
             c["position_pct"] = 0
-            c["entry_mode"] = "暴涨兑现·默认剔除(观察)"
-            c["entry_tactic"] = ("兑现风险带(T日7~9.5%，或4.5~7%且高位)在防守/观望环境下升级为剔除："
-                                 "左尾风险叠加亏钱效应，不接兑现棒")
+            c["entry_mode"] = "暴涨兑现·默认剔除(观察)" if c.get("cashout_soft") else "顶部抛压·默认剔除(观察)"
+            c["entry_tactic"] = ("兑现风险带/高位长上影软gate在防守/观望环境下升级为剔除："
+                                 "左尾风险叠加亏钱效应，不接兑现棒/出货棒")
         if cap is not None:
             c["position_pct"] = min(c.get("position_pct", 0), cap)
-        # 状态判定（优先级：一字板 > 过热 > 兑现 > 主力流出 > 价格存疑 > 仓位0观察 > 可买）
+        # 状态判定（优先级：一字板 > 过热 > 叠加 > 兑现 > 抛压 > 主力流出 > 价格存疑 > 仓位0观察 > 可买）
         if c.get("oneword"):
             c["entry_status"] = "一字板·难买入"
         elif c.get("overheat"):
             c["entry_status"] = "过热·默认剔除(观察)"
+        elif c.get("risk_stack_out"):
+            c["entry_status"] = "风险叠加·剔除(观察)"
         elif c.get("cashout") or (c.get("cashout_soft") and c.get("position_pct", 0) <= 0):
             c["entry_status"] = "暴涨兑现·剔除(观察)"
+        elif c.get("upsh_soft") and c.get("position_pct", 0) <= 0:
+            c["entry_status"] = "顶部抛压·剔除(观察)"
         elif c.get("flow_out"):
             c["entry_status"] = "主力流出·剔除(观察)"
         elif str(c.get("verify", {}).get("status", "")).startswith("存疑"):
@@ -964,7 +987,8 @@ def _apply_regime_policy(picks: list[dict], market_env: dict | None) -> None:
             c["add_zone"] = ""
             c["add_note"] = ""
             if c["entry_status"] in ("观察·不入场", "过热·默认剔除(观察)", "一字板·难买入",
-                                     "暴涨兑现·剔除(观察)", "主力流出·剔除(观察)"):
+                                     "暴涨兑现·剔除(观察)", "主力流出·剔除(观察)",
+                                     "风险叠加·剔除(观察)", "顶部抛压·剔除(观察)"):
                 c["target"] = "—"
                 c["rr"] = "—"
                 c["exp_return"] = "—"
@@ -1547,9 +1571,33 @@ def run(sector: str | None, pool: int, top: int, out_path: str | None,
     for c in picks:
         c["event_adj"] = int(c.get("event_adj", 0)) + _forecast_event_adj(c)
         c["event_adj"] = max(-25, min(8, c["event_adj"]))
+        # ---- U3 证据叠加升级(2026-07-07)：单个弱信号=降档/半仓，≥2个同时触发=剔除 ----
+        # 依据：每个前兆信号单独看都只是2~3.4x的弱lift(触发后~96%不崩)，一刀切会大量误伤；
+        # 但高能07-06是 兑现带+长上影4.5%+大阴后大阳+主力5日流出+户数激增 五重叠加→跌停。
+        # 证据叠加=陷阱概率非线性上升，≥2项就不值得再赌。
+        weak = []
+        if c.get("cashout_soft"):
+            weak.append("兑现带")
+        if c.get("upsh_soft"):
+            weak.append("长上影")
+        if c.get("churn_sig"):
+            weak.append("剧烈换手")
+        if c.get("flow_x", 0) >= 1:
+            weak.append("主力流出")
+        if c["event_adj"] <= -6:
+            weak.append("事件负面")
+        c["weak_signals"] = weak
+        c["weak_n"] = len(weak)
+        if len(weak) >= 2 and c.get("position_pct", 0) > 0:
+            c["position_pct"] = 0
+            c["entry_mode"] = "风险信号叠加·默认剔除(观察)"
+            c["entry_tactic"] = (f"弱风险信号≥2项叠加({'+'.join(weak)})：单项只降档，叠加即剔除"
+                                 "(高能环境07-06五重信号叠加→买入日跌停的教训)")
+            c["risk_stack_out"] = True
         c["rank_score"] = round(c["score"] + c["event_adj"]
                                 - (6 if c.get("flow_x") == 1 else 0)
-                                - (8 if c.get("cashout_soft") else 0), 1)
+                                - (8 if c.get("cashout_soft") else 0)
+                                - (6 if c.get("upsh_soft") else 0), 1)
     picks.sort(key=lambda c: c.get("rank_score", c["score"]), reverse=True)
     picks.sort(key=lambda c: (0 if (c.get("position_pct", 0) > 0 and not _bad_fund(c) and c.get("flow_x", 0) == 0)
                               else (1 if (c.get("position_pct", 0) > 0 and not _bad_fund(c))
@@ -1674,20 +1722,26 @@ def print_table(result: dict) -> None:
     # M6 资金流 + F10 事件面（负向gate·不进回测；参与最终排名 rank_score=score+event_adj−流出降档）
     frows = [c for c in result["candidates"] if c.get("flow_src") is not None or c.get("event_notes")]
     if frows:
-        print("\n### 💰 资金流(M6·双口径) × 事件面(F10)  → 最终排名分 = 量化分 + 事件调整 − 资金降档")
-        print("| 代码 | 名称 | 主力5日净(亿) | 5日占比% | 正天数 | 口径 | 资金gate | 事件调整 | 最终排名分 | 事件要点 |")
-        print("|---|---|---|---|---|---|---|---|---|---|")
+        print("\n### 💰 资金流(M6·双口径) × 事件面(F10) × 弱信号叠加(U3)  → 最终排名分 = 量化分 + 事件调整 − 降档扣分")
+        print("| 代码 | 名称 | 主力5日净(亿) | 5日占比% | 正天数 | 口径 | 资金gate | 事件调整 | 叠加信号 | 最终排名分 | 事件要点 |")
+        print("|---|---|---|---|---|---|---|---|---|---|---|")
         for c in result["candidates"]:
             gate = {2: "⛔剔除", 1: "⚠降档", 0: "—"}.get(c.get("flow_x", 0), "—")
             if c.get("flow_src") is None:
                 gate = "无数据(中性)"
+            ws = c.get("weak_signals") or []
+            ws_s = (f"{'⛔' if len(ws) >= 2 else '⚠'}{len(ws)}项:" + "+".join(ws)) if ws else "—"
             print(f"| {c['code']} | {c['name']} | {c.get('flow_main5','-')} | {c.get('flow_ratio5','-')} | "
                   f"{c.get('flow_pos5','-')}/{c.get('flow_n5','-')} | {c.get('flow_src') or '-'} | {gate} | "
-                  f"{c.get('event_adj',0):+d} | {c.get('rank_score', c.get('score'))} | "
+                  f"{c.get('event_adj',0):+d} | {ws_s} | {c.get('rank_score', c.get('score'))} | "
                   f"{'; '.join((c.get('event_notes') or [])[:3]) or '—'} |")
         flow_out = [f"{c['code']}({c.get('flow_note','')})" for c in result["candidates"] if c.get("flow_out")]
         if flow_out:
             print(f"⛔ 主力流出剔除: {'; '.join(flow_out)}")
+        stack_out = [f"{c['code']}({'+'.join(c.get('weak_signals') or [])})"
+                     for c in result["candidates"] if c.get("risk_stack_out")]
+        if stack_out:
+            print(f"⛔ 弱信号≥2叠加剔除(U3): {'; '.join(stack_out)}")
 
     # Agent③ 重点关注：买不进 / 追高风险
     oneword = [c["code"] for c in result["candidates"] if c.get("oneword")]
