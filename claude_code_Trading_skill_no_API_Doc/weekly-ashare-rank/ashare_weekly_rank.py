@@ -70,6 +70,18 @@ _FETCH_NOTICES = True  # 给最终候选附近期公告/业绩预告(Agent②客
 _CACHE_DIR = pathlib.Path.home() / ".vibe-trading" / "cache" / "ashare_weekly"
 
 
+# ---- 时间纪律(P12)：全引擎统一北京时间，杜绝本机时区污染 ----
+# 本机时钟可能在任意时区(实测这台机器是UTC-6，比北京慢14小时)。A股的 T/T+1/缓存龄/
+# 公告新鲜度/解禁天数 全部是北京口径 → 一律用 UTC+8 换算(中国无夏令时)，绝不用裸 now()/today()。
+def _cn_now() -> dt.datetime:
+    """中国当地时间(UTC+8)。即时取系统UTC再换算，不受机器时区影响。"""
+    return dt.datetime.now(dt.timezone.utc).astimezone(dt.timezone(dt.timedelta(hours=8)))
+
+
+def _cn_today() -> dt.date:
+    return _cn_now().date()
+
+
 def _cache_get(kind: str, key: str, max_age_h: float):
     if not _USE_CACHE or _REFRESH:
         return None
@@ -79,7 +91,9 @@ def _cache_get(kind: str, key: str, max_age_h: float):
     try:
         obj = json.loads(p.read_text(encoding="utf-8"))
         ts = dt.datetime.fromisoformat(obj["_ts"])
-        if (dt.datetime.now() - ts).total_seconds() > max_age_h * 3600:
+        if ts.tzinfo is None:                 # 旧缓存是裸本机时钟写的：按本机时区补齐再比较
+            ts = ts.astimezone()
+        if (_cn_now() - ts).total_seconds() > max_age_h * 3600:
             return None
         return obj["data"]
     except Exception:  # noqa: BLE001
@@ -92,7 +106,7 @@ def _cache_put(kind: str, key: str, data) -> None:
     p = _CACHE_DIR / kind / f"{key}.json"
     try:
         p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text(json.dumps({"_ts": dt.datetime.now().isoformat(), "data": data},
+        p.write_text(json.dumps({"_ts": _cn_now().isoformat(), "data": data},
                                 ensure_ascii=False), encoding="utf-8")
     except Exception:  # noqa: BLE001
         pass
@@ -129,19 +143,23 @@ def log(msg: str) -> None:
     sys.stderr.flush()
 
 
-def _get(hosts: list[str], path: str, params: dict, retries: int = 8) -> dict:
+def _get(hosts: list[str], path: str, params: dict, retries: int = 8,
+         fast: bool = False) -> dict:
     """带主机轮换 + 指数退避(含抖动)的 GET，返回 JSON dict。
 
     东财对高频访问会软封 IP（返回 502 / 空响应 / 断连），通常数十秒到数分钟
     自动解除。这里用较长的指数退避(最长单次≈15s，总计≈70s)+ 多镜像主机轮换
     扛过临时限流；周度运行只发 ~30 个请求，正常不会触发。
+
+    fast=True（批量场景，如逐只拉资金流）：短超时+短退避+严格按 retries 次数，
+    快速认输交给调用方回退备用源/熔断——限流时每只票只损失几秒而不是几十秒。
     """
     last = None
-    attempts = max(retries, len(hosts))
+    attempts = retries if fast else max(retries, len(hosts))
     for i in range(attempts):
         host = hosts[i % len(hosts)]
         try:
-            r = _SESSION.get(host + path, params=params, timeout=15)
+            r = _SESSION.get(host + path, params=params, timeout=(6 if fast else 15))
             r.raise_for_status()
             txt = r.text.strip()
             if not txt:  # 空响应也是限流信号
@@ -149,8 +167,25 @@ def _get(hosts: list[str], path: str, params: dict, retries: int = 8) -> dict:
             return r.json()
         except Exception as e:  # noqa: BLE001
             last = e
-            time.sleep(min(15.0, 0.8 * (2 ** i)) + random.uniform(0, 0.5))
+            if fast:
+                time.sleep(min(1.5, 0.3 * (2 ** i)) + random.uniform(0, 0.2))
+            else:
+                time.sleep(min(15.0, 0.8 * (2 ** i)) + random.uniform(0, 0.5))
     raise RuntimeError(f"请求失败 {path}: {last}")
+
+
+# ---- 全局限流熔断器（批量场景）：某接口组连续失败→一段时间内直接走备用源，不再逐只死磕 ----
+_BREAKERS: dict[str, float] = {}   # group -> 熔断解除的unix时间戳
+
+
+def _breaker_open(group: str) -> bool:
+    return time.time() < _BREAKERS.get(group, 0.0)
+
+
+def _breaker_trip(group: str, ttl_sec: float = 600.0) -> None:
+    if not _breaker_open(group):
+        log(f"  ⛔ {group} 限流熔断：{int(ttl_sec/60)}分钟内跳过该源直接走备用")
+    _BREAKERS[group] = time.time() + ttl_sec
 
 
 _CLIST_PER_PAGE = 100  # 东财 clist 单页硬上限 100 行（pz>100 会被截断），必须翻页累计
@@ -776,20 +811,40 @@ def buy_plan(f: dict) -> dict:
                   "裁决官方可改回轻仓(≤原仓位一半)只接深回踩，否则只观察")
     f["overheat"] = overheat
 
-    # ---- M2 当天暴涨兑现硬剔除：T日涨幅≥7%(多为消息/板块高潮拉起) → 踢出买入池，宁错过 ----
-    # 次日利好兑现/见光死回吐风险大(2026-06-29 医药政策涨停、次日 CRO 集体回吐、泰格T+1亏最多的教训)。
+    # ---- M2 当天暴涨兑现硬剔除(2026-07-07 阈值重校准 7%→9.5%)：T日涨停级(≥9.5%) → 踢出买入池 ----
+    # 分档研究(47只×160日, T+1开盘买入口径)：9.5~15%档 次日平均高开+1.33%(溢价买入)、开盘买入后
+    # 当日仅+0.58%≈基准、3日≤-8%概率10.2%(基准5.2%) → 剔除机会成本低、防的正是涨停兑现/见光死
+    # (2026-06-29 医药政策涨停、次日 CRO 集体回吐、泰格T+1亏最多的教训)。
+    # 而 7~9.5%档 次日平均低开-0.42%后收+1.13%/胜率64% 为全场最佳 → 不再硬剔，降入下方软gate。
     chg1_val = f.get("chg1") or 0
-    cashout = chg1_val >= 7 and not f.get("oneword")
+    cashout = chg1_val >= 9.5 and not f.get("oneword")
     if cashout and pos > 0:
         pos = 0
         mode = "暴涨兑现·默认剔除(观察)"
-        tactic = (f"T日大涨{chg1_val:.0f}%≥7%(多为消息/板块高潮拉起)，次日易利好兑现回吐/见光死；"
-                  "默认不进买入池，仅观察是否有独立于板块的新鲜催化再议")
+        tactic = (f"T日大涨{chg1_val:.1f}%≥9.5%(涨停级，多为消息/板块高潮拉起)，次日平均高开~1.3%"
+                  "溢价买入后收益仅基准水平且3日尾部风险翻倍；默认不进买入池，仅观察是否有独立新鲜催化再议")
     f["cashout"] = cashout
+
+    # ---- M2' 兑现风险带·软gate(2026-07-07 数据校准)：T日 7~9.5%，或 4.5~7% 且高位(60日位>85/20日涨>30%) ----
+    # 走样本验证：4.5-7%高位带 次日均值+0.68%但3日≤-8%概率13.4%(基准5.2%)；7-9.5%带 开盘买入均值最佳
+    # 但当日≤-5%概率7.4%(基准4.9%)仍偏肥。一刀切剔除会错过赢家(动量市) → 软gate=仓位减半+最终排名
+    # 降8分+放弃线收紧到高开>2%；防守/观望 regime 由 _apply_regime_policy 升级为剔除
+    # (高能环境+5.04%/60位89.6、火炬+5.18%/60位90.4 → 07-06双双跌停发生在观望期的教训)。
+    hi_pos = (f.get("rng_pos", 50) > 85) or ((f.get("ret20") or 0) > 30)
+    cashout_soft = ((not cashout) and (chg1_val >= 7 or (chg1_val >= 4.5 and hi_pos))
+                    and not f.get("oneword"))
+    if cashout_soft and pos > 0:
+        pos = max(3, pos // 2)
+        mode = "兑现风险带·轻仓"
+        why = (f"T日+{chg1_val:.1f}%(7~9.5%兑现带,次日常先低开挤泡沫)" if chg1_val >= 7
+               else f"T日+{chg1_val:.1f}%且高位(60日位{f.get('rng_pos',0):.0f}/20日{f.get('ret20',0):.0f}%)")
+        tactic = (f"{why}：回测显示此形态开盘买入均值为正但大跌概率高于基准(左尾肥)；仓位减半只接回踩，"
+                  "竞价高开>2%放弃，低开击穿买区下沿=兑现失败立即放弃")
+    f["cashout_soft"] = cashout_soft
 
     # 放弃条件：高开追高 + 向下跳空见光死(P9 2026-06-29 恒逸教训) + 破止损。
     # 低开击穿买区下沿/直奔止损 = 催化失败见光死，放弃不低吸，绝不把跳空跳水当"打折抄底"。
-    gap_lim = 2 if rl in ("中高", "高") else 3
+    gap_lim = 2 if (rl in ("中高", "高") or f.get("cashout_soft")) else 3
     abort = (f"竞价高开>{gap_lim}% 或 低开击穿买区下沿{lo}(向下跳空/见光死,不低吸) "
              f"或 跌破{stop} → 放弃")
 
@@ -876,15 +931,28 @@ def _regime_single_cap(regime: str) -> int | None:
 def _apply_regime_policy(picks: list[dict], market_env: dict | None) -> None:
     """① 按 regime 压单票仓位上限；② 给每只打 entry_status（可买/观察·不入场/过热剔除/一字板/价格存疑），
     让 HTML 卡片状态与文字结论天然一致。position 被压到 0 的票清掉补仓与目标(避免显示成可买)。"""
-    cap = _regime_single_cap(market_env.get("regime", "") if market_env else "")
+    regime = str(market_env.get("regime", "")) if market_env else ""
+    defensive = any(k in regime for k in ("防守", "观望"))
+    cap = _regime_single_cap(regime)
     for c in picks:
+        # M2' 兑现风险带 × 防守/观望环境 → 升级为剔除(左尾肥×亏钱效应叠加，高能07-06教训)
+        # 须在 regime cap 归零之前判定，否则观望档(cap=0)会跳过本分支、只改状态不改入场文案
+        if defensive and c.get("cashout_soft") and c.get("position_pct", 0) > 0:
+            c["position_pct"] = 0
+            c["entry_mode"] = "暴涨兑现·默认剔除(观察)"
+            c["entry_tactic"] = ("兑现风险带(T日7~9.5%，或4.5~7%且高位)在防守/观望环境下升级为剔除："
+                                 "左尾风险叠加亏钱效应，不接兑现棒")
         if cap is not None:
             c["position_pct"] = min(c.get("position_pct", 0), cap)
-        # 状态判定（优先级：一字板 > 过热 > 价格存疑 > 仓位0观察 > 可买）
+        # 状态判定（优先级：一字板 > 过热 > 兑现 > 主力流出 > 价格存疑 > 仓位0观察 > 可买）
         if c.get("oneword"):
             c["entry_status"] = "一字板·难买入"
         elif c.get("overheat"):
             c["entry_status"] = "过热·默认剔除(观察)"
+        elif c.get("cashout") or (c.get("cashout_soft") and c.get("position_pct", 0) <= 0):
+            c["entry_status"] = "暴涨兑现·剔除(观察)"
+        elif c.get("flow_out"):
+            c["entry_status"] = "主力流出·剔除(观察)"
         elif str(c.get("verify", {}).get("status", "")).startswith("存疑"):
             c["entry_status"] = "价格存疑·待核"
         elif c.get("position_pct", 0) <= 0:
@@ -895,7 +963,8 @@ def _apply_regime_policy(picks: list[dict], market_env: dict | None) -> None:
         if c["entry_status"] != "可买":
             c["add_zone"] = ""
             c["add_note"] = ""
-            if c["entry_status"] in ("观察·不入场", "过热·默认剔除(观察)", "一字板·难买入"):
+            if c["entry_status"] in ("观察·不入场", "过热·默认剔除(观察)", "一字板·难买入",
+                                     "暴涨兑现·剔除(观察)", "主力流出·剔除(观察)"):
                 c["target"] = "—"
                 c["rr"] = "—"
                 c["exp_return"] = "—"
@@ -1084,7 +1153,7 @@ def fetch_recent_notices(code: str, as_of: str, fresh_days: int = 10) -> dict:
     try:
         as_of_d = dt.date.fromisoformat(as_of)
     except (ValueError, TypeError):
-        as_of_d = dt.date.today()
+        as_of_d = _cn_today()
     # 1) 最新业绩预告（东财 datacenter，与 stock-diagnostic 同一已验证接口）
     pf = _dc_get("RPT_PUBLIC_OP_NEWPREDICT", f'(SECURITY_CODE="{code}")',
                  sort="NOTICE_DATE:-1", ps=1)
@@ -1140,6 +1209,232 @@ def fetch_fundamentals(codes: list[str]) -> dict[str, dict]:
                           "report_name": str(r0.get("REPORT_DATE_NAME") or "")[:12]}
         time.sleep(0.15)
     return out
+
+
+# ---------------------------------------------------------------- M6 主力资金流负向过滤(双口径:东财→新浪)
+# 依据 2026-07-07 双口径走样本回测(82截面)：5日主力净占比→次日IC +0.048(新浪32只)/+0.066(东财12只)，
+# →3日IC 更高；分组多空差 +0.9~+1.7%/日，且预测力主要来自"Bottom组特别差"。实例：高能环境 T前5日
+# 主力净流出1.48亿(1/5天正)→T+1跌停；宏景科技净流出6.19亿→-4.6%；而流入票(和而泰5/5正)照样能跌。
+# 结论：只做【负向 gate】（流出票沉底/剔除），不做正向加分追涨。仅实盘头部排序用，不进回测。
+_FFLOW_HIS_HOSTS = [
+    "https://push2his.eastmoney.com", "https://13.push2his.eastmoney.com",
+    "https://7.push2his.eastmoney.com",
+]
+_FFLOW_F2 = "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61,f62,f63"
+
+
+def _em_fflow_rows(code: str, days: int = 10) -> list[dict] | None:
+    """东财主力资金流历史日线(含主力净占比)。批量场景：fast+熔断，失败快速交给新浪。"""
+    if _breaker_open("em_fflow"):
+        return None
+    try:
+        data = _get(_FFLOW_HIS_HOSTS, "/api/qt/stock/fflow/daykline/get",
+                    {"lmt": 90, "klt": 101, "secid": _secid(code),
+                     "fields1": "f1,f2,f3,f7", "fields2": _FFLOW_F2},
+                    retries=2, fast=True).get("data")
+    except Exception:  # noqa: BLE001
+        _breaker_trip("em_fflow")
+        return None
+    rows = []
+    for ln in ((data or {}).get("klines") or [])[-days:]:
+        a = ln.split(",")
+        if len(a) < 13:
+            continue
+        try:
+            rows.append({"date": a[0], "main_yi": round(float(a[1]) / 1e8, 3),
+                         "main_ratio": float(a[6]), "chg": float(a[12])})
+        except (TypeError, ValueError):
+            continue
+    return rows or None
+
+
+def _sina_fflow_rows(code: str, days: int = 10) -> list[dict] | None:
+    """新浪历史资金流(独立host)。⚠口径≠东财(同日主力净额差可达亿级、个别日符号相反)，
+    仅取其『自洽的5日趋势方向』做gate，阈值按1.5倍收严。"""
+    daima = ("sh" if code.startswith(("60", "68", "9", "5")) else "sz") + code
+    url = ("https://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/"
+           "MoneyFlow.ssl_qsfx_zjlrqs?page=1&num=%d&sort=opendate&asc=0&daima=%s"
+           % (max(days, 6), daima))
+    try:
+        resp = _SESSION.get(url, timeout=10,
+                            headers={"Referer": "https://vip.stock.finance.sina.com.cn/"})
+        resp.raise_for_status()
+        data = json.loads(resp.content.decode("utf-8", "ignore"))
+    except Exception:  # noqa: BLE001
+        return None
+    rows = []
+    for r in (data or []):
+        try:
+            rows.append({"date": r.get("opendate"),
+                         "main_yi": round(float(r["netamount"]) / 1e8, 3),
+                         "main_ratio": round(float(r["ratioamount"]) * 100, 2),
+                         "chg": round(float(r["changeratio"]) * 100, 2)})
+        except (TypeError, ValueError, KeyError):
+            continue
+    rows = [r for r in rows if r.get("date")][::-1]   # 新浪降序→升序(最新在末)
+    return rows[-days:] or None
+
+
+def fetch_fund_flows(codes: list[str], days: int = 10) -> dict[str, dict]:
+    """批量取头部候选的主力资金流摘要(近5日净额/净占比均值/正天数)。
+    口径链：当日缓存(与诊断skill共用) → 东财(fast+熔断) → 新浪(独立口径,标注)。失败不抛。"""
+    out: dict[str, dict] = {}
+    for code in codes:
+        ckey = f"{code}_{days}"
+        cached = _cache_get("fundflow", ckey, max_age_h=12)
+        rows, src = None, None
+        if cached is not None and cached.get("source") == "东财历史日线" and cached.get("days"):
+            rows, src = cached["days"], "东财"
+        if rows is None:
+            rows = _em_fflow_rows(code, days)
+            if rows:
+                src = "东财"
+                # 写共享缓存(与 stock-diagnostic 的 fetch_fund_flow 同 shape/键，互通复用)
+                r5 = [r for r in rows[-5:] if r.get("main_yi") is not None]
+                _cache_put("fundflow", ckey, {
+                    "available": True, "source": "东财历史日线", "partial": False,
+                    "caliber_warn": None,
+                    "main_net_5d_yi": round(sum(r["main_yi"] for r in r5), 2),
+                    "main_net_all_yi": round(sum(r["main_yi"] for r in rows), 2),
+                    "main_ratio_avg5": round(float(np.mean([r["main_ratio"] for r in r5])), 2) if r5 else None,
+                    "pos_days_5": sum(1 for r in r5 if r["main_yi"] > 0),
+                    "trend": "", "days": rows})
+        if rows is None:
+            rows = _sina_fflow_rows(code, days)
+            if rows:
+                src = "新浪"
+        if not rows:
+            out[code] = {"flow_src": None}
+            continue
+        r5 = [r for r in rows[-5:] if r.get("main_yi") is not None and r.get("main_ratio") is not None]
+        if not r5:
+            out[code] = {"flow_src": None}
+            continue
+        out[code] = {
+            "flow_src": src,
+            "flow_main5": round(sum(r["main_yi"] for r in r5), 2),
+            "flow_ratio5": round(float(np.mean([r["main_ratio"] for r in r5])), 2),
+            "flow_pos5": sum(1 for r in r5 if r["main_yi"] > 0),
+            "flow_n5": len(r5),
+        }
+        time.sleep(0.12)
+    return out
+
+
+def _flow_gate(c: dict) -> None:
+    """M6 负向gate分级(写 flow_x/flow_note)：
+    flow_x=2 剔除：5日净占比≤-2% 且 净额<0 且 正天数≤2 （高能/宏景式聪明钱撤退）
+    flow_x=1 降档：5日净占比≤-1% 且 净额<0，或 5日净额≤-1亿 （沉出头部第一档）
+    新浪口径阈值×1.5收严(口径噪音大)；无数据=中性(flow_x=0)并注明。"""
+    src = c.get("flow_src")
+    if not src:
+        c["flow_x"] = 0
+        c["flow_note"] = "资金流不可用(限流)"
+        return
+    k = 1.5 if src == "新浪" else 1.0
+    r5, m5, p5 = c.get("flow_ratio5") or 0.0, c.get("flow_main5") or 0.0, c.get("flow_pos5", 5)
+    if r5 <= -2.0 * k and m5 < 0 and p5 <= 2:
+        c["flow_x"] = 2
+        c["flow_note"] = f"主力5日净流出{m5}亿/占比{r5}%/仅{p5}天为正→剔除"
+    elif (r5 <= -1.0 * k and m5 < 0) or m5 <= -1.0 * k:
+        c["flow_x"] = 1
+        c["flow_note"] = f"主力5日净流出{m5}亿(占比{r5}%)→降档"
+    else:
+        c["flow_x"] = 0
+        c["flow_note"] = f"主力5日净{'流入' if m5 >= 0 else '流出'}{m5}亿(占比{r5}%)"
+
+
+# ---------------------------------------------------------------- F10 事件面评分(参与最终排名,权重≈15%)
+def fetch_event_scores(codes: list[str]) -> dict[str, dict]:
+    """每只头部候选的客观事件面：未来解禁/质押/股东户数/两融5日净 → event_adj(加减分)。
+    与诊断skill同源(东财datacenter)。无历史PIT→不进回测，只做实盘最终排名的加减层：
+    final_rank_score = score + event_adj(+业绩预告项在run()里并入)，event_adj∈[-25,+8]，
+    对典型60-75分的量化分影响≈15%权重。数据缺失=0分中性，绝不因接口失败误伤。"""
+    out: dict[str, dict] = {}
+    for code in codes:
+        adj, notes = 0, []
+        info: dict = {}
+        flt = f'(SECURITY_CODE="{code}")'
+        today = _cn_today()
+        # 1) 未来30日解禁
+        try:
+            fut = []
+            for r in _dc_get("RPT_LIFT_STAGE", flt, sort="FREE_DATE:-1", ps=40):
+                d = str(r.get("FREE_DATE", ""))[:10]
+                try:
+                    dd = dt.date.fromisoformat(d)
+                except ValueError:
+                    continue
+                if dd >= today:
+                    ratio = r.get("TOTAL_RATIO") or r.get("FREE_RATIO") or 0
+                    fut.append((dd, float(ratio)))
+            fut.sort()
+            if fut and (fut[0][0] - today).days <= 30:
+                rt = round(fut[0][1], 2)
+                a = -18 if rt >= 5 else (-10 if rt >= 1 else -4)
+                adj += a
+                notes.append(f"{fut[0][0].isoformat()}解禁{rt}%({a})")
+                info["unlock_30d"] = rt
+        except Exception:  # noqa: BLE001
+            pass
+        # 2) 质押比例
+        try:
+            pl = _dc_get("RPT_CSDC_LIST", flt, sort="TRADE_DATE:-1", ps=1)
+            if pl and pl[0].get("PLEDGE_RATIO") is not None:
+                pr = float(pl[0]["PLEDGE_RATIO"])
+                info["pledge_ratio"] = round(pr, 1)
+                if pr >= 50:
+                    adj -= 10; notes.append(f"质押{pr:.0f}%(-10)")
+                elif pr >= 30:
+                    adj -= 5; notes.append(f"质押{pr:.0f}%(-5)")
+        except Exception:  # noqa: BLE001
+            pass
+        # 3) 股东户数环比(筹码集中/分散；高能环境Q1 +10.1%筹码散化的教训)
+        try:
+            hn = _dc_get("RPT_HOLDERNUM_DET", flt, sort="END_DATE:-1", ps=1)
+            if hn and hn[0].get("HOLDER_NUM_RATIO") is not None:
+                hc = float(hn[0]["HOLDER_NUM_RATIO"])
+                info["holder_chg"] = round(hc, 1)
+                if hc >= 15:
+                    adj -= 12; notes.append(f"股东户数+{hc:.0f}%筹码大幅散化(-12)")
+                elif hc >= 8:
+                    adj -= 6; notes.append(f"股东户数+{hc:.0f}%筹码散化(-6)")
+                elif hc <= -5:
+                    adj += 4; notes.append(f"股东户数{hc:.0f}%筹码集中(+4)")
+        except Exception:  # noqa: BLE001
+            pass
+        # 4) 两融：融资5日净买入(杠杆资金态度，与主力口径互补)
+        try:
+            mg = _dc_get("RPTA_WEB_RZRQ_GGMX", f'(scode="{code}")', sort="date:-1", ps=1)
+            if mg and mg[0].get("RZJME5D") is not None:
+                n5 = round(float(mg[0]["RZJME5D"]) / 1e8, 2)
+                info["rz_net5d"] = n5
+                if n5 <= -0.5:
+                    adj -= 5; notes.append(f"融资5日净偿还{abs(n5)}亿(-5)")
+                elif n5 >= 0.5:
+                    adj += 3; notes.append(f"融资5日净买入{n5}亿(+3)")
+        except Exception:  # noqa: BLE001
+            pass
+        info["event_adj"] = adj
+        info["event_notes"] = notes
+        out[code] = info
+        time.sleep(0.12)
+    return out
+
+
+def _forecast_event_adj(c: dict) -> int:
+    """业绩预告项并入事件调整(fetch_recent_notices 已取到 forecast)。"""
+    fc = c.get("forecast") or {}
+    tp = str(fc.get("type") or "")
+    if not tp:
+        return 0
+    if any(kk in tp for kk in ("预亏", "首亏", "续亏")):
+        return -12
+    if any(kk in tp for kk in ("预减", "略减", "增亏")):
+        return -6
+    if any(kk in tp for kk in ("预增", "扭亏", "略增", "续盈")):
+        return 5 if fc.get("fresh") else 2
+    return 0
 
 
 def run(sector: str | None, pool: int, top: int, out_path: str | None,
@@ -1203,22 +1498,40 @@ def run(sector: str | None, pool: int, top: int, out_path: str | None,
         for c in picks:
             c.update(fund.get(c["code"], {}))
 
-        def _bad_fund(c):
-            k, pe = c.get("kcfj_yoy"), c.get("pe")
-            neg = (k is not None and k < 0)                     # 扣非负增长=主营下滑(泰格2025全年式)
-            pe_bad = (pe is not None and (pe < 0 or pe > 120))  # 亏损 / 估值过高
-            return 1 if (neg or pe_bad) else 0
+    def _bad_fund(c):
+        k, pe = c.get("kcfj_yoy"), c.get("pe")
+        neg = (k is not None and k < 0)                     # 扣非负增长=主营下滑(泰格2025全年式)
+        pe_bad = (pe is not None and (pe < 0 or pe > 120))  # 亏损 / 估值过高
+        return 1 if (neg or pe_bad) else 0
 
-        # 三档稳定排序：①可买+基本面好 ②可买+基本面差(扣非负/PE高) ③不可买(pos=0) → 头部第1必为可买优质票
-        picks.sort(key=lambda c: (0 if (c.get("position_pct", 0) > 0 and not _bad_fund(c))
-                                  else (1 if c.get("position_pct", 0) > 0 else 2)))
+    # ---- M6 资金流负向 gate：主力5日净流出的票剔除/降档(仅实盘,不进回测) ----
+    if picks:
+        log(f"主力资金流(M6双口径) Top{len(picks)} ...")
+        flows = fetch_fund_flows([c["code"] for c in picks])
+        for c in picks:
+            c.update(flows.get(c["code"], {"flow_src": None}))
+            _flow_gate(c)
+            if c["flow_x"] == 2 and c.get("position_pct", 0) > 0:
+                c["position_pct"] = 0
+                c["entry_mode"] = "主力流出·默认剔除(观察)"
+                c["entry_tactic"] = (f"{c['flow_note']}：聪明钱在撤(高能环境07-06跌停教训)，默认不进买入池；"
+                                     "仅当 Agent② 查到≤7天新鲜独立催化且当日资金已转流入才可由裁决官改回轻仓")
+                c["flow_out"] = True
+            elif c["flow_x"] == 1:
+                c.setdefault("risk_reasons", []).append("主力5日净流出")
+    # ---- F10 事件面(参与最终排名,权重≈15%)：解禁/质押/股东户数/两融 ----
+    if picks:
+        log(f"F10事件面评分 Top{len(picks)} ...")
+        events = fetch_event_scores([c["code"] for c in picks])
+        for c in picks:
+            c.update(events.get(c["code"], {"event_adj": 0, "event_notes": []}))
     # 跨源价格校验：只对最终候选做（防脏数据误导买入/止损价）
     if verify and picks:
         log(f"跨源价格校验 Top{len(picks)} ...")
         verify_picks(picks)
     # T = 最新交易日；用权威交易日历算 T+1(买入)、T+N(最晚卖出)
     dates = [r.get("last_date") for r in rows if r.get("last_date")]
-    as_of = max(dates) if dates else dt.date.today().isoformat()
+    as_of = max(dates) if dates else _cn_today().isoformat()
     win = _trade_window(as_of, hold_days)
     # Agent② 客观催化剂种子：给最终候选附近期公告+业绩预告(免费，失败不抛)
     if _FETCH_NOTICES and picks:
@@ -1229,6 +1542,18 @@ def run(sector: str | None, pool: int, top: int, out_path: str | None,
             c["forecast"] = nt["forecast"]
             c["has_fresh_event"] = nt["has_fresh_event"]
             time.sleep(0.2)
+    # ---- 最终排名：rank_score = 量化score + 事件调整(F10+业绩预告) − 资金流降档扣分，
+    #      再按四档稳定排序：①可买+基本面好+资金不差 ②可买+资金降档 ③可买+基本面差 ④不可买(pos=0) ----
+    for c in picks:
+        c["event_adj"] = int(c.get("event_adj", 0)) + _forecast_event_adj(c)
+        c["event_adj"] = max(-25, min(8, c["event_adj"]))
+        c["rank_score"] = round(c["score"] + c["event_adj"]
+                                - (6 if c.get("flow_x") == 1 else 0)
+                                - (8 if c.get("cashout_soft") else 0), 1)
+    picks.sort(key=lambda c: c.get("rank_score", c["score"]), reverse=True)
+    picks.sort(key=lambda c: (0 if (c.get("position_pct", 0) > 0 and not _bad_fund(c) and c.get("flow_x", 0) == 0)
+                              else (1 if (c.get("position_pct", 0) > 0 and not _bad_fund(c))
+                                    else (2 if c.get("position_pct", 0) > 0 else 3))))
     # 数据自检：universe 太小/兜底源/价格存疑 → 显式警示，避免"看着精准其实样本不足"
     sanity = []
     if _LAST_SPOT_SRC == "seed":
@@ -1244,7 +1569,7 @@ def run(sector: str | None, pool: int, top: int, out_path: str | None,
     market_env = _load_market_env(out_path, as_of)
     _apply_regime_policy(picks, market_env)
     result = {
-        "generated_at": dt.datetime.now().isoformat(timespec="seconds"),
+        "generated_at": _cn_now().isoformat(timespec="seconds"),
         "hold_days": hold_days,         # 最多持有交易日数
         "sector": sector or "全市场",
         "weights": weights or "默认均衡",
@@ -1345,6 +1670,24 @@ def print_table(result: dict) -> None:
                   f"{v.get('tx_close') or '-'} | {v.get('sina_close') or '-'} | "
                   f"{v.get('yahoo_close') or '-'} | {v.get('dev_pct') if v.get('dev_pct') is not None else '-'} | "
                   f"{v.get('status','')} |")
+
+    # M6 资金流 + F10 事件面（负向gate·不进回测；参与最终排名 rank_score=score+event_adj−流出降档）
+    frows = [c for c in result["candidates"] if c.get("flow_src") is not None or c.get("event_notes")]
+    if frows:
+        print("\n### 💰 资金流(M6·双口径) × 事件面(F10)  → 最终排名分 = 量化分 + 事件调整 − 资金降档")
+        print("| 代码 | 名称 | 主力5日净(亿) | 5日占比% | 正天数 | 口径 | 资金gate | 事件调整 | 最终排名分 | 事件要点 |")
+        print("|---|---|---|---|---|---|---|---|---|---|")
+        for c in result["candidates"]:
+            gate = {2: "⛔剔除", 1: "⚠降档", 0: "—"}.get(c.get("flow_x", 0), "—")
+            if c.get("flow_src") is None:
+                gate = "无数据(中性)"
+            print(f"| {c['code']} | {c['name']} | {c.get('flow_main5','-')} | {c.get('flow_ratio5','-')} | "
+                  f"{c.get('flow_pos5','-')}/{c.get('flow_n5','-')} | {c.get('flow_src') or '-'} | {gate} | "
+                  f"{c.get('event_adj',0):+d} | {c.get('rank_score', c.get('score'))} | "
+                  f"{'; '.join((c.get('event_notes') or [])[:3]) or '—'} |")
+        flow_out = [f"{c['code']}({c.get('flow_note','')})" for c in result["candidates"] if c.get("flow_out")]
+        if flow_out:
+            print(f"⛔ 主力流出剔除: {'; '.join(flow_out)}")
 
     # Agent③ 重点关注：买不进 / 追高风险
     oneword = [c["code"] for c in result["candidates"] if c.get("oneword")]
@@ -1494,7 +1837,7 @@ def backtest(sector: str | None, sample: int, fwd: int = 5, step: int = 5,
     weights_raw = {b: round(v / base, 2) if v > 0 else 0.6 for b, v in bw.items()}
     weights = _shrink_weights(weights_raw, shrink)  # 收缩后才是引擎实际使用的权重
 
-    return {"generated_at": dt.datetime.now().isoformat(timespec="seconds"),
+    return {"generated_at": _cn_now().isoformat(timespec="seconds"),
             "fwd_days": fwd, "n_records": len(df), "n_dates": int(df["_date"].nunique()),
             "n_stocks": len(codes), "ic": ic_rows,
             "shrink": shrink, "weights_raw": weights_raw, "weights": weights}
@@ -1657,7 +2000,7 @@ def validate(sector: str | None, sample: int, fwd: int = 5, top_k: int = 5,
     else:
         verdict = "未通过：Top组未跑赢市场，本期慎用排名/调低仓位"
 
-    return {"generated_at": dt.datetime.now().isoformat(timespec="seconds"),
+    return {"generated_at": _cn_now().isoformat(timespec="seconds"),
             "fwd_days": fwd, "top_k": top_k, "n_stocks": len(codes),
             "n_sections": n_sections, "n_records": len(df),
             "weights": weights or "默认均衡",
@@ -1686,11 +2029,6 @@ def print_validation(v: dict) -> None:
 
 
 # ---------------------------------------------------------------- HTML 报告
-def _cn_now() -> dt.datetime:
-    """中国当地时间(UTC+8，中国无夏令时)。即时取系统UTC再换算，不受机器时区影响。"""
-    return dt.datetime.now(dt.timezone.utc).astimezone(dt.timezone(dt.timedelta(hours=8)))
-
-
 _RISK_COLOR = {"低": "#2e7d32", "中": "#1565c0", "中高": "#ef6c00", "高": "#c62828"}
 
 
@@ -1806,6 +2144,13 @@ def render_html(result: dict, report_dir: str | None = None, preview: bool = Fal
                 + (f" · {_esc(c.get('industry'))}" if c.get('industry') else "")
                 + (f"（{_esc(c.get('report_name'))}）" if c.get('report_name') else "")
                 + "</div>") if c.get('kcfj_yoy') is not None else "")
+            + ((f"<div class=line><span class=k>资金/事件</span>"
+                f"主力5日 <b>{c.get('flow_main5')}亿</b>(占比{c.get('flow_ratio5')}%·{_esc(c.get('flow_src') or '')}口径)"
+                + (f" ⛔{_esc(c.get('flow_note',''))}" if c.get('flow_x') == 2
+                   else (f" ⚠{_esc(c.get('flow_note',''))}" if c.get('flow_x') == 1 else ""))
+                + f" · 事件调整 {c.get('event_adj',0):+d}"
+                + (f"（{_esc('; '.join((c.get('event_notes') or [])[:2]))}）" if c.get('event_notes') else "")
+                + "</div>") if c.get('flow_src') is not None else "")
             + f"{rnote_html}</div>"
         )
 
@@ -1997,7 +2342,9 @@ def main() -> None:
             try:
                 obj = json.loads(wp.read_text(encoding="utf-8"))
                 ts = dt.datetime.fromisoformat(obj.get("generated_at", "2000-01-01"))
-                age_d = (dt.datetime.now() - ts).days
+                if ts.tzinfo is None:         # 旧权重文件是裸本机时钟写的：补齐本机时区再比较
+                    ts = ts.astimezone()
+                age_d = (_cn_now() - ts).days
                 if obj.get("fwd_days") == args.hold_days and age_d <= 7:
                     weights = obj.get("weights")
                     log(f"自动使用回测权重(fwd={args.hold_days}, {age_d}天前): {weights}")

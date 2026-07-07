@@ -244,25 +244,34 @@ def fetch_fund_flow(code: str, days: int = 10) -> dict:
         log("  资金流命中当日缓存(东财历史)")
         return cached
     # 1) 历史日线（push2his）：完整 N 日 + 占比（主源，与上次诊断口径一致）
-    try:
-        data = eng._get(_FFLOW_HIS_HOSTS, "/api/qt/stock/fflow/daykline/get",
-                        {"lmt": 90, "klt": 101, "secid": secid,
-                         "fields1": "f1,f2,f3,f7", "fields2": _FFLOW_F2}, retries=4).get("data")
-        kl = (data or {}).get("klines") or []
-        rows = []
-        for ln in kl[-days:]:
-            a = ln.split(",")
-            if len(a) < 13:
-                continue
-            mv = _num(a[1])
-            rows.append({"date": a[0], "main_yi": round(mv / 1e8, 3) if mv is not None else None,
-                         "main_ratio": _num(a[6]), "chg": _num(a[12])})
-        if rows:
-            res = _summarize_flow(rows, source="东财历史日线")
-            eng._cache_put("fundflow", ckey, res)
-            return res
-    except Exception as e:  # noqa: BLE001
-        log(f"  资金流东财历史源限流({str(e)[:40]})，尝试新浪独立源")
+    # 批量场景优化(2026-07-07)：走引擎全局熔断器——东财一旦限流，后续标的直接跳到新浪，
+    # 不再每只死磕整套指数退避(旧版限流时每只白等~25秒)。fast=True 短超时短退避。
+    _brk_open = getattr(eng, "_breaker_open", None)
+    if _brk_open and _brk_open("em_fflow"):
+        log("  资金流东财源熔断中，直接走新浪独立源")
+    else:
+        try:
+            data = eng._get(_FFLOW_HIS_HOSTS, "/api/qt/stock/fflow/daykline/get",
+                            {"lmt": 90, "klt": 101, "secid": secid,
+                             "fields1": "f1,f2,f3,f7", "fields2": _FFLOW_F2},
+                            retries=3, fast=True).get("data")
+            kl = (data or {}).get("klines") or []
+            rows = []
+            for ln in kl[-days:]:
+                a = ln.split(",")
+                if len(a) < 13:
+                    continue
+                mv = _num(a[1])
+                rows.append({"date": a[0], "main_yi": round(mv / 1e8, 3) if mv is not None else None,
+                             "main_ratio": _num(a[6]), "chg": _num(a[12])})
+            if rows:
+                res = _summarize_flow(rows, source="东财历史日线")
+                eng._cache_put("fundflow", ckey, res)
+                return res
+        except Exception as e:  # noqa: BLE001
+            if getattr(eng, "_breaker_trip", None):
+                eng._breaker_trip("em_fflow")
+            log(f"  资金流东财历史源限流({str(e)[:40]})，尝试新浪独立源")
     # 2) 新浪历史（独立 host，完整 N 日 + 占比，但口径≠东财，强标注）
     srows = _sina_fund_flow(code, days)
     if srows:
@@ -313,7 +322,7 @@ def fetch_f10_extras(code: str, hold_days: int, float_cap_yi: float | None) -> d
     """客观事件面数据（替代 WebSearch 记忆）：未来解禁、质押比例、最近业绩预告、
     股东户数变化、两融余额。每项独立容错；并产出 事件风险加点(risk_bump) + 理由。"""
     out: dict = {"available": True}
-    today = dt.date.today()
+    today = eng._cn_now().date()   # 北京日期(本机时区不可信,P12)
     risks: list[str] = []
     notes: list[str] = []
     bump = 0
@@ -627,7 +636,9 @@ def ensure_weights(sector: str | None, fwd: int, sample: int = 50,
         try:
             obj = json.loads(wp.read_text(encoding="utf-8"))
             ts = dt.datetime.fromisoformat(obj.get("generated_at", "2000-01-01"))
-            age_h = (dt.datetime.now() - ts).total_seconds() / 3600
+            if ts.tzinfo is None:             # 旧权重文件是裸本机时钟写的：补齐本机时区再比较
+                ts = ts.astimezone()
+            age_h = (eng._cn_now() - ts).total_seconds() / 3600
             meta["age_h"] = round(age_h, 1)
             if obj.get("fwd_days") == fwd and age_h <= max_age_h:
                 w, sn = _sign_adjust_weights(obj.get("weights"), obj.get("ic") or [])
@@ -982,14 +993,14 @@ def diagnose(code: str, cost: float | None, hold_days: int = 20,
     verdict = engine_verdict(f, q, tech, flow, ca.get("cost"), index_ctx, peers, f10=f10)
 
     # 交易日历窗口（T → 评估日 T+N）
-    win = eng._trade_window(f.get("last_date", dt.date.today().isoformat()), hold_days)
+    win = eng._trade_window(f.get("last_date", eng._cn_now().date().isoformat()), hold_days)
     op_plan = build_operation_plan(price, ca.get("cost"), ca["price_map"], ca["scenario"],
                                    verdict, hold_days, win.get("sell_by", "?"),
                                    win.get("sell_dow", ""))
 
     result = {
         "schema": "stock-diagnostic/v1",
-        "generated_at": dt.datetime.now().isoformat(timespec="seconds"),
+        "generated_at": eng._cn_now().isoformat(timespec="seconds"),
         "cn_time": eng._cn_now().strftime("%Y-%m-%d %H:%M:%S"),
         "code": code, "name": name, "industry": industry, "board": q.get("board"),
         "hold_days": hold_days,

@@ -214,7 +214,7 @@ def main() -> None:
     track = [t for t in track if t.get("key") != key]
     track.append({"key": key, "as_of": res.get("as_of"), "buy_date": buy_date,
                   "sell_by": sell_by, "hold_days": res.get("hold_days"),
-                  "reviewed_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+                  "reviewed_at": eng._cn_now().strftime("%Y-%m-%d %H:%M:%S") + " (北京时间)",
                   "summary": summary, "picks": rows})
     tp.parent.mkdir(parents=True, exist_ok=True)
     tp.write_text(json.dumps(track, ensure_ascii=False, indent=1), encoding="utf-8")

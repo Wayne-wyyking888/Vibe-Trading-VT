@@ -35,6 +35,57 @@ INDICES = [
     ("sz399006", "创业板指", 1.0),
     ("sh000688", "科创50", 0.5),
 ]
+
+# ---- P12 隔夜/外盘引擎直拉（新浪全球行情，报价自带北京时间戳，与本机时钟/时区无关）----
+# 教训 2026-07-07：本机时区是UTC-6，跑skill的LLM按本机日期拼出"美股 收盘 7月3日"（该日美股
+# 还休市），把大涨的美股周一时段判成偏空。外盘指数类信息一律由本函数直出，WebSearch只补新闻。
+_OVERNIGHT_SYMS = [
+    ("gb_ixic", "纳斯达克"),
+    ("gb_sox", "费城半导体SOX"),
+    ("gb_dji", "道琼斯"),
+    ("gb_inx", "标普500"),
+    ("hf_CHA50CFD", "富时中国A50期货"),
+]
+
+
+def fetch_overnight() -> list[dict]:
+    """新浪 hq.sinajs 全球指数/期货最新报价。gb_*=美股指数(字段3=北京时间戳)；
+    hf_*=环球期货(字段6=时间,12=日期)。失败返回[]，绝不抛。"""
+    try:
+        url = "https://hq.sinajs.cn/list=" + ",".join(s for s, _ in _OVERNIGHT_SYMS)
+        r = eng._SESSION.get(url, timeout=10,
+                             headers={"Referer": "https://finance.sina.com.cn"})
+        r.raise_for_status()
+        txt = r.content.decode("gbk", errors="ignore")
+    except Exception:  # noqa: BLE001
+        return []
+    import datetime as dt
+    cn_now = eng._cn_now()
+    tz8 = dt.timezone(dt.timedelta(hours=8))
+    out = []
+    for line in txt.splitlines():
+        if "=\"" not in line:
+            continue
+        sym = line.split("=")[0].replace("var hq_str_", "").strip()
+        name = dict(_OVERNIGHT_SYMS).get(sym)
+        if not name:
+            continue
+        f = line.split("\"")[1].split(",")
+        try:
+            if sym.startswith("gb_"):
+                price, pct, ts_s = float(f[1]), float(f[2]), f[3]
+                ts = dt.datetime.fromisoformat(ts_s).replace(tzinfo=tz8)
+            else:  # hf_：0=最新价 7=昨结 6=时间 12=日期
+                price = float(f[0])
+                prev = float(f[7]) if f[7] else None
+                pct = round((price / prev - 1) * 100, 2) if prev else None
+                ts = dt.datetime.fromisoformat(f"{f[12]} {f[6]}").replace(tzinfo=tz8)
+        except (ValueError, IndexError, TypeError):
+            continue
+        age_h = round((cn_now - ts).total_seconds() / 3600, 1)
+        out.append({"sym": sym, "name": name, "price": price, "pct": pct,
+                    "quote_time_cn": ts.strftime("%Y-%m-%d %H:%M"), "age_h": age_h})
+    return out
 _ZT_HOSTS = ["https://push2ex.eastmoney.com"]
 _UT = "7eea3edcaed734bea9cbfc24409ed989"
 
@@ -397,15 +448,39 @@ def main() -> None:
             print(f"   - {d}")
         if fc["divergence"]:
             print(f"   {fc['divergence']}")
-        print("   注：外盘(美股/SOX/富时A50/汇率)请由 Claude 用 WebSearch 叠加确认方向；本块仅历史类比+情绪。")
     else:
         print("\n🔮 T+1 前瞻：指数长历史拉取不足，本次跳过前瞻（不影响环境闸门）。")
 
-    print("\n注：若在A股交易时段(9:30-15:00)运行，最后一根K线为盘中数据——"
-          "量比/涨停家数是盘中值会偏低，环境分仅供盘中参考；收盘后/盘前跑最准。")
+    # ---- P12 隔夜/外盘（引擎直拉，报价自带北京时间戳；LLM禁止再按本机日期拼搜索词）----
+    ov = fetch_overnight()
+    if ov:
+        print("\n### 🌍 隔夜/外盘（新浪直拉 · 报价时间=北京时间 · 与本机时钟无关）")
+        print("| 市场 | 最新 | 涨跌% | 报价时间(北京) | 距今 |")
+        print("|---|---|---|---|---|")
+        for o in ov:
+            print(f"| {o['name']} | {o['price']} | {o['pct'] if o['pct'] is not None else '-'} | "
+                  f"{o['quote_time_cn']} | {o['age_h']}h |")
+        print("> 指数类外盘以上表为准（时间戳新鲜度自查）；WebSearch 仅补政策/新闻/个股类信息，"
+              "**禁止在搜索词里拼日期**（本机时区不可信，2026-07-07 拼出'7月3日'查到美股休市日的教训）。")
+    else:
+        print("\n🌍 隔夜/外盘：新浪接口不可用，请 WebSearch 补外盘（用'最新/收盘'措辞，勿拼日期，"
+              "并核对结果里的日期与时间戳）。")
 
-    out = {"generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+    cn_now = eng._cn_now()
+    wd, hm = cn_now.weekday(), cn_now.strftime("%H:%M")
+    in_session = wd < 5 and "09:15" <= hm <= "15:05"
+    if in_session:
+        print(f"\n注：当前北京时间 {cn_now.strftime('%Y-%m-%d %H:%M')}（A股交易时段）——最后一根K线为盘中"
+              "未完成数据，量比/涨停家数是盘中值会偏低，环境分仅供盘中参考；收盘后/盘前跑最准。")
+    else:
+        print(f"\n注：当前北京时间 {cn_now.strftime('%Y-%m-%d %H:%M %a')}（盘前/盘后/休市），"
+              "数据为最近完整交易日口径。")
+
+    out = {"generated_at": cn_now.strftime("%Y-%m-%d %H:%M:%S") + " (北京时间)",
+           "cn_time": cn_now.isoformat(timespec="seconds"),
+           "in_session": in_session,
            "indices": idx, "sentiment": senti, **verdict,
+           "overnight": ov,
            "t1_forecast": fc, "degraded": senti is None}
     p = pathlib.Path(args.out)
     p.parent.mkdir(parents=True, exist_ok=True)
