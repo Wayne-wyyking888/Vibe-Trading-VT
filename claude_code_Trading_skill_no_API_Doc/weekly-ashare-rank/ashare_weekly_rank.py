@@ -2321,8 +2321,11 @@ def render_html(result: dict, report_dir: str | None = None, preview: bool = Fal
 def main() -> None:
     ap = argparse.ArgumentParser(description="Weekly A-share quant screener (Agent 1 engine, 0-API)")
     ap.add_argument("--sector", default=None, help="行业/概念板块名，如 光通信；省略=全市场")
-    ap.add_argument("--pool", type=int, default=40, help="进入历史因子计算的候选数")
-    ap.add_argument("--top", type=int, default=15, help="最终输出候选数")
+    ap.add_argument("--pool", type=int, default=400,
+                    help="进入历史因子计算的候选数(2026-07-10 由40→200→400：三组A/B证明粗排prescore"
+                         "对综合分≈噪声——40vs200重合1/20、200vs400仍有9/20头部来自200名开外；"
+                         "400≈初筛后全宇宙覆盖，粗排降级为排队顺序)")
+    ap.add_argument("--top", type=int, default=20, help="最终输出候选数(详细层：基本面/资金流/事件/验价)")
     ap.add_argument("--out", default=None, help="把结果 JSON 写到此路径")
     ap.add_argument("--hold-days", type=int, default=5, help="最多持有交易日数N(T+1买入,持有≤N)；驱动权重与回测窗口")
     ap.add_argument("--backtest", action="store_true", help="运行因子IC回测并产出建议权重")

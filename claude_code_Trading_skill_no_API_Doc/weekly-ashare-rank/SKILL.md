@@ -29,7 +29,7 @@ Agent④（验证·复核官）是为了"分析更精准、建议都 verify 过"
 |---|---|---|---|
 | 天数 / 持有 / days / hold / N | 最多持有交易日数 | `--hold-days N` | 5 |
 | 板块 / 行业 / sector | 限定板块（模糊匹配） | `--sector X` | 全市场 |
-| top / 数量 / 几只 | 最终输出数量 | `--top K` | 8 |
+| top / 数量 / 几只 | 最终输出数量 | `--top K` | 20（2026-07-10定案；引擎默认 **pool=400/top=20**——三组A/B证明粗排对综合分≈噪声(40vs200重合仅1/20、200vs400仍有9/20头部来自200名开外)，400≈初筛后全宇宙；top=20经gate剔除后最坏样本仍剩6只干净票，够出8只表；**Agent②深查预算保持前~10只不变，不随top扩大**；最终报告表与HTML只呈现头部8只） |
 
 解析不到就用默认值。解析后**复述一遍**给用户确认口径（T、T+1、N、板块、top）。
 
@@ -139,7 +139,10 @@ python "...\review.py" --in C:/.../某期历史.json   # 复盘任一期
 ### 步骤 1 — Agent ①「量化筛选者」：跑引擎
 ```powershell
 $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH","User")
-python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\weekly-ashare-rank\ashare_weekly_rank.py" --hold-days 5 --top 8 --out "C:\Trading_analysis\data\rank_latest.json"
+python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\weekly-ashare-rank\ashare_weekly_rank.py" --hold-days 5 --out "C:\Trading_analysis\data\rank_latest.json"
+# 2026-07-10 起默认 pool=400/top=20(粗排≈噪声已被三组A/B证实,400≈全宇宙覆盖)；引擎输出20只供②③④详细分析,最终表只呈现头部(默认前8)
+# ⚠ 弹性安全阀：若本期 top20 经 gate 剔除后『零信号干净票』(weak_n=0 且无硬gate标记) < 3 只 →
+#   当期临时加 --top 30 重跑一次；若重跑后干净票仍然稀少=市场自己在喊空仓，按观望结论处理，不再扩。
 # 指定板块再加 --sector 光通信 ；想用回测权重再加 --weights auto
 ```
 引擎输出每只候选：综合分 + 5个分项（动量/量能/技术/盘口/回调）+ 5日%/20日%涨幅 + 量比/当日量 +
@@ -292,6 +295,7 @@ python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc
 引擎跑完已**自动**在 `reports/ashare_rank_cn_preview.html` 存一份量化预览报告（**固定文件名**，引擎跑几次都只覆盖这一个，不堆中间文件）。
 做完 Agent②/③/④ 后，把消息面/裁决结论**回填**进结果 JSON，再生成**完整版**报告（完整版用时间戳命名，并**自动删掉那个 preview 预览文件**，最终 reports/ 里每个 session 只留一份带时间戳的完整版）：
 0. **⚠️ 必须先重排 `candidates[]` 数组顺序 = Agent③ 终排名次（最易漏，2026-06-16 就栽在这：文字按 Agent③ 重排了、JSON 没重排，HTML 名次还停在引擎量化分顺序，两者脱节）**。
+   **⚠️ 且必须裁剪到最终呈现的头部 8 只（2026-07-10 起 top 默认 20）**：`render_html` 渲染 candidates[] 里的每一只——不裁剪 HTML 会出 20 张卡。回填时把 Agent③ 终排的**前 8 只**（含其中被 gate 剔除的灰卡，保留"为什么剔"的信息价值）留在 `candidates[]`，第 9-20 名从数组删掉、只在文字报告的「观察池」段落列代码+一句原因。
    原因：`render_html` 用 `enumerate(candidates, 1)` **按数组下标编号**、自身不排序——**JSON 里 candidates 的物理顺序 = HTML 的「排名1/2/3…」**。引擎默认按量化分降序输出，但 Agent③ 几乎总会因「过热上限/主题逆风/独立催化/基本面雷」硬规则重排，所以**回填前先把 `candidates[]` 物理重排成你文字最终表的名次**。
 1. 编辑 `C:\Trading_analysis\data\rank_latest.json`：给 `candidates[]` 每只补充
    `exp_return`(预期收益% 如"+8~12%")、`confidence`(置信度 如"中高(75)")、`target`(目标价)、
