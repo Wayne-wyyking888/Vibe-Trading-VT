@@ -22,6 +22,7 @@ import datetime as dt
 import json
 import pathlib
 import random
+import re
 import sys
 import time
 import warnings
@@ -947,6 +948,40 @@ def _regime_single_cap(regime: str) -> int | None:
     return None  # 进攻/未知：沿用 buy_plan 原仓位
 
 
+# P13-1 新鲜催化客观代理：≤7天正面实质事件的标题关键词（routine/负面公告不算催化）
+_P13_POS_RE = re.compile(r"中标|中选|合同|订单|签约|框架协议|预增|扭亏|业绩预告|批件|批复|批准|"
+                         r"同意注册|过会|许可|专利|重组|收购|合并|增持|涨价|提价")
+
+
+def _fresh_catalyst7(c: dict, as_of: str) -> str:
+    """P13-1 双门槛之②的客观代理：该票是否有 ≤7天 的正面新鲜催化。
+    命中返回描述串(真值)，未命中返回 ''。判定源=引擎自己抓的业绩预告/近14天公告种子；
+    Agent②/③ 若 WebSearch 拿到引擎种子外的带日期新鲜催化，可回填 c['fresh_override']=描述 覆盖。"""
+    try:
+        d0 = dt.date.fromisoformat(as_of)
+    except (TypeError, ValueError):
+        return ""
+    fc = c.get("forecast") or {}
+    nd = str(fc.get("notice_date") or "")
+    if nd:
+        try:
+            if 0 <= (d0 - dt.date.fromisoformat(nd)).days <= 7 and \
+               not any(k in str(fc.get("type") or "") for k in ("亏", "减")):
+                return f"业绩预告({nd})"
+        except ValueError:
+            pass
+    for n in c.get("recent_notices") or []:
+        ndt = str(n.get("date") or "")
+        try:
+            if not (0 <= (d0 - dt.date.fromisoformat(ndt)).days <= 7):
+                continue
+        except ValueError:
+            continue
+        if _P13_POS_RE.search(str(n.get("title") or "")):
+            return f"{ndt}公告:{str(n.get('title'))[:24]}"
+    return ""
+
+
 def _apply_regime_policy(picks: list[dict], market_env: dict | None) -> None:
     """① 按 regime 压单票仓位上限；② 给每只打 entry_status（可买/观察·不入场/过热剔除/一字板/价格存疑），
     让 HTML 卡片状态与文字结论天然一致。position 被压到 0 的票清掉补仓与目标(避免显示成可买)。"""
@@ -992,6 +1027,38 @@ def _apply_regime_policy(picks: list[dict], market_env: dict | None) -> None:
                 c["target"] = "—"
                 c["rr"] = "—"
                 c["exp_return"] = "—"
+    # ---- P13-1 可买双门槛（2026-07-13 催化剂诅咒实证，非进攻档生效）----
+    # 可买须同时满足：①最终排名≤3 ②有≤7天正面新鲜催化（客观代理，Agent可 fresh_override 覆盖）。
+    # 依据(17期56笔存档实测)：历史"可买"篮子 T+1开→收 -0.81%，按本门槛重算保留组 +1.00%/胜率56%、
+    # 被砍组 -2.06%；"可买×无新鲜催化"3日 -7.53% 全表最惨(高能环境/和而泰模式)；
+    # "可买×无新鲜 vs 可买×新鲜"3日 Welch t=-2.06。纯收紧型gate：错误成本=踏空≠亏损。
+    # 进攻档(≥70)未验证不外推；回滚条款：连续2期被砍组均值反超保留组 → 降回影子标注。
+    if regime and "进攻" not in regime:
+        have_seed = any(c.get("recent_notices") or c.get("forecast") for c in picks)
+        if have_seed:  # 公告接口全挂时跳过，数据缺失=中性不误伤(与F10同源原则)
+            as_of_env = str((market_env or {}).get("as_of") or "")
+            for i, c in enumerate(picks):
+                if c.get("entry_status") != "可买":
+                    continue
+                fresh = c.get("fresh_override") or _fresh_catalyst7(c, as_of_env)
+                c["p13_fresh7"] = fresh
+                lack = []
+                if i >= 3:
+                    lack.append(f"终排第{i + 1}(>3)")
+                if not fresh:
+                    lack.append("无≤7天正面新鲜催化")
+                if lack:
+                    c["position_pct"] = 0
+                    c["entry_status"] = "双门槛未过·观察(P13-1)"
+                    c["entry_mode"] = "可买双门槛未过·观察(P13-1)"
+                    c["entry_tactic"] = ("非进攻档『可买』须 终排≤3 且 有≤7天新鲜催化 双满足，本票缺: "
+                                         + " + ".join(lack)
+                                         + "（实证：防守期无新鲜催化的可买票3日均值-7.53%）")
+                    c["add_zone"] = ""
+                    c["add_note"] = ""
+                    c["target"] = "—"
+                    c["rr"] = "—"
+                    c["exp_return"] = "—"
 
 
 # ---------------------------------------------------------------- 主流程
@@ -2054,6 +2121,19 @@ def validate(sector: str | None, sample: int, fwd: int = 5, top_k: int = 5,
     else:
         verdict = "未通过：Top组未跑赢市场，本期慎用排名/调低仓位"
 
+    # P13-4/5 市况口径：验证窗口的市场平均收益 → 上涨/震荡/下跌段标签，
+    # 防止把"顺风市测出的 edge"默认外推到退潮市（动量因子退潮期会反向）
+    if mkt_avg is None:
+        val_regime, val_regime_note = "未知", ""
+    elif mkt_avg > 1:
+        val_regime = "上涨段"
+        val_regime_note = "⚠ 本edge测自上涨截面，未在退潮市验证；环境分<55时建议动量降权或 --weights none"
+    elif mkt_avg < -1:
+        val_regime = "下跌段"
+        val_regime_note = "本edge测自下跌截面，与退潮市口径一致"
+    else:
+        val_regime = "震荡段"
+        val_regime_note = ""
     return {"generated_at": _cn_now().isoformat(timespec="seconds"),
             "fwd_days": fwd, "top_k": top_k, "n_stocks": len(codes),
             "n_sections": n_sections, "n_records": len(df),
@@ -2061,6 +2141,7 @@ def validate(sector: str | None, sample: int, fwd: int = 5, top_k: int = 5,
             "top_avg_ret": top_avg, "market_avg_ret": mkt_avg, "bottom_avg_ret": bot_avg,
             "excess_vs_market": excess, "top_minus_bottom": spread,
             "top_win_rate": win_rate, "rank_ic": ic_mean, "rank_icir": ic_ir,
+            "val_market_regime": val_regime, "val_market_regime_note": val_regime_note,
             "verdict": verdict}
 
 
@@ -2078,6 +2159,10 @@ def print_validation(v: dict) -> None:
     print(f"| Top组胜率 | {v['top_win_rate']}% | 前{v['top_k']}只里收正的比例 |")
     print(f"| 排名IC(Spearman) | {v['rank_ic']}  ICIR={v['rank_icir']} | 综合分与未来收益的秩相关 |")
     print(f"\n**裁定**：{v['verdict']}")
+    if v.get("val_market_regime"):
+        print(f"**验证窗口市况(P13-4)**：{v['val_market_regime']}"
+              f"（样本市场平均 {v.get('market_avg_ret')}%/{v['fwd_days']}日）"
+              + (f"  {v['val_market_regime_note']}" if v.get("val_market_regime_note") else ""))
     print("> 说明：样本取自当前高流动性股票回溯历史，存在幸存者偏差，绝对收益偏乐观；")
     print("> 应重点看『超额/多空价差/胜率』等相对指标是否稳定为正，而非绝对收益数字。")
 
@@ -2125,7 +2210,7 @@ def render_html(result: dict, report_dir: str | None = None, preview: bool = Fal
               else "#1565c0" if "中性" in reg else "#2e7d32")
         cap = env.get("max_total_position_pct")
         buyable_n = sum(1 for c in cands if c.get("entry_status", "") == "可买")
-        concl = ("本期结论=空仓观望，下列全部为『观察·不入场』" if "观望" in reg
+        concl = ("本期结论=空仓观望，下列全部为『观察·不入场』，且按 P13-3 不展示任何操作价位" if "观望" in reg
                  else f"可买 {buyable_n} 只，其余为观察/剔除")
         env_html = (
             f"<div class=envbar style='border-color:{ec}'>"
@@ -2156,6 +2241,9 @@ def render_html(result: dict, report_dir: str | None = None, preview: bool = Fal
             )
 
     # 主体：每只股一张卡片（长文本整行铺开，避免横向滚动）
+    # P13-3：观望档不展示任何操作价位（买入/目标/止损/补仓/入场/放弃）——
+    # "观察标的+具体价位"=递刀诱导入场(2026-07-13 环境分4分点名观察标的、用户据此入场遇-6%的教训)
+    hide_px = isinstance(env, dict) and "观望" in str(env.get("regime", ""))
     cards = ""
     for i, c in enumerate(cands, 1):
         rl = c.get("risk_level", "")
@@ -2185,14 +2273,16 @@ def render_html(result: dict, report_dir: str | None = None, preview: bool = Fal
             f"<div class=stat><span class=lab>置信度</span><b>{_esc(c.get('confidence','—'))}</b></div>"
             f"<div class=stat><span class=lab>R:R</span><b>{_esc(c.get('rr','—'))}</b></div>"
             f"<div class=stat><span class=lab>持仓上限</span><b>{c.get('position_pct','')}%</b></div></div>"
-            f"<div class=plan><span><i>{buy_lab}</i><b>{_esc(c.get('buy_zone',''))}</b></span>"
-            f"<span><i>目标</i><b>{c.get('target','')}</b></span>"
-            f"<span><i>止损</i><b>{c.get('stop','')}</b></span></div>"
-            + (f"<div class=line><span class='k'>补仓</span>{_esc(c.get('add_note',''))}</div>"
-               if c.get('add_zone') else "")
-            + f"<div class=line><span class=k>入场</span>{_esc(c.get('entry_mode',''))}：{_esc(c.get('entry_tactic',''))}</div>"
-            f"<div class=line><span class='k red'>放弃</span>{_esc(c.get('abort',''))}</div>"
-            f"<div class=line><span class='k green'>催化剂</span>{_esc(c.get('catalyst','—'))}</div>"
+            + ((f"<div class=plan><span><i>操作价位</i><b>—（P13-3 观望档不给价位，等环境回升后重跑选股取价）</b></span></div>")
+               if hide_px else
+               (f"<div class=plan><span><i>{buy_lab}</i><b>{_esc(c.get('buy_zone',''))}</b></span>"
+                f"<span><i>目标</i><b>{c.get('target','')}</b></span>"
+                f"<span><i>止损</i><b>{c.get('stop','')}</b></span></div>"
+                + (f"<div class=line><span class='k'>补仓</span>{_esc(c.get('add_note',''))}</div>"
+                   if c.get('add_zone') else "")
+                + f"<div class=line><span class=k>入场</span>{_esc(c.get('entry_mode',''))}：{_esc(c.get('entry_tactic',''))}</div>"
+                f"<div class=line><span class='k red'>放弃</span>{_esc(c.get('abort',''))}</div>"))
+            + f"<div class=line><span class='k green'>催化剂</span>{_esc(c.get('catalyst','—'))}</div>"
             + ((f"<div class=line><span class=k>基本面</span>扣非同比 <b>{c.get('kcfj_yoy')}%</b>"
                 + (f" · PE {c.get('pe')}" if c.get('pe') is not None else "")
                 + (f" · {_esc(c.get('industry'))}" if c.get('industry') else "")
@@ -2240,7 +2330,13 @@ def render_html(result: dict, report_dir: str | None = None, preview: bool = Fal
         warn += (f"<p class=warn>📐 策略验证：{_esc(val['verdict'])}　"
                  f"(Top{val.get('top_k','')}超额 {val.get('excess_vs_market','?')}% · "
                  f"胜率 {val.get('top_win_rate','?')}% · 排名IC {val.get('rank_ic','?')} · "
-                 f"有效截面 {val.get('n_sections','?')})</p>")
+                 f"有效截面 {val.get('n_sections','?')})"
+                 # P13-5：验证窗口市况口径强制披露——顺风市IC不得默认外推到退潮市
+                 + (f"<br>验证窗口市况：<b>{_esc(val['val_market_regime'])}</b>"
+                    f"（样本市场平均 {val.get('market_avg_ret','?')}%/{val.get('fwd_days','?')}日）"
+                    + (f" · {_esc(val['val_market_regime_note'])}" if val.get("val_market_regime_note") else "")
+                    if val.get("val_market_regime") else "")
+                 + "</p>")
 
     extra = ""
     if result.get("catalysts_md"):
