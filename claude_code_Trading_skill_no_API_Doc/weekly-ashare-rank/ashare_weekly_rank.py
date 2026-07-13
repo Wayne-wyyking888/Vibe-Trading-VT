@@ -989,6 +989,17 @@ def _apply_regime_policy(picks: list[dict], market_env: dict | None) -> None:
     defensive = any(k in regime for k in ("防守", "观望"))
     cap = _regime_single_cap(regime)
     for c in picks:
+        # P14 稳健线(2026-07-14 爆雷率研究)：ATR≤4 + 5日≤10% + 量比≤2 + 60日位≤85 + 0弱信号。
+        # 面板实测(高动量+非防守): 单只爆雷率1.7%(3/174, 95%CI 0.6–4.9%)、同日两只至少一雷2.1%、双雷0；
+        # 覆盖187日中仅48日有合格票=频繁空仓是本线的本体。字段仅展示+两票优选用，30笔滚动复验中。
+        try:
+            c["steady_ok"] = bool(int(c.get("weak_n", 0) or 0) == 0
+                                  and float(c.get("atr_pct") or 99) <= 4
+                                  and float(c.get("ret5") or 99) <= 10
+                                  and float(c.get("vr") or 99) <= 2
+                                  and float(c.get("rng_pos") or 99) <= 85)
+        except (TypeError, ValueError):
+            c["steady_ok"] = False
         # M2'/U2 软gate × 防守/观望环境 → 升级为剔除(左尾肥×亏钱效应叠加，高能07-06教训)
         # 须在 regime cap 归零之前判定，否则观望档(cap=0)会跳过本分支、只改状态不改入场文案
         if defensive and (c.get("cashout_soft") or c.get("upsh_soft")) and c.get("position_pct", 0) > 0:
@@ -1017,6 +1028,10 @@ def _apply_regime_policy(picks: list[dict], market_env: dict | None) -> None:
             c["entry_status"] = "观察·不入场"
         else:
             c["entry_status"] = "可买"
+            # P14-3 崩盘快刀(全体可买票通用)：崩后10日真·涨回率仅9-11%，等回来是输面8成的赌
+            if "次日无条件离场" not in str(c.get("abort") or ""):
+                c["abort"] = (str(c.get("abort") or "")
+                              + "；买入日收盘≤-5% → 次日无条件离场(P14-3崩盘快刀)")
         # 不可入场的票：清掉补仓/目标，避免卡片显示成可买方案
         if c["entry_status"] != "可买":
             c["add_zone"] = ""
@@ -1037,11 +1052,47 @@ def _apply_regime_policy(picks: list[dict], market_env: dict | None) -> None:
         have_seed = any(c.get("recent_notices") or c.get("forecast") for c in picks)
         if have_seed:  # 公告接口全挂时跳过，数据缺失=中性不误伤(与F10同源原则)
             as_of_env = str((market_env or {}).get("as_of") or "")
+            for c in picks:   # 先算新鲜催化(P13-1条件② / P14提升条件)
+                if c.get("entry_status") == "可买":
+                    c["p13_fresh7"] = c.get("fresh_override") or _fresh_catalyst7(c, as_of_env)
+            # ---- P14 稳健两票(2026-07-14)：把「稳健线合格 ∧ 有≤7天新鲜催化 ∧ 可买」的
+            #      最高 rank_score 两只(强制不同行业)物理提为终排第1/2 —— 让 HTML 前两名
+            #      天然=全场最不易爆雷的两只。稳健但无新鲜催化的票不提升(会被P13-1双门槛降级)。
+            promoted: list[dict] = []
+            used_ind: set[str] = set()
+            for c in picks:
+                if len(promoted) >= 2:
+                    break
+                if c.get("entry_status") != "可买" or not c.get("steady_ok") or not c.get("p13_fresh7"):
+                    continue
+                ind = str(c.get("industry") or c.get("code"))
+                if ind in used_ind:
+                    continue
+                promoted.append(c)
+                used_ind.add(ind)
+            if promoted:
+                rest = [c for c in picks if c not in promoted]
+                picks[:] = promoted + rest
+                for i2, c in enumerate(promoted, 1):
+                    c["p14_pick"] = i2
+                    c["entry_mode"] = f"🛡P14稳健两票·第{i2}选：" + str(c.get("entry_mode") or "")
+                    if "次日无条件离场" not in str(c.get("abort") or ""):
+                        c["abort"] = (str(c.get("abort") or "")
+                                      + "；买入日收盘≤-5% → 次日无条件离场(P14-3崩盘快刀)")
+                    # P14-2 损失限幅(只限损失、不降爆雷概率): 单雷伤账户 = 仓位×止损距
+                    try:
+                        dist = (1 - float(c.get("stop")) / float(c.get("close"))) * 100
+                        pos = float(c.get("position_pct") or 0)
+                        c["p14_risk_note"] = (f"仓位{pos:.0f}%×止损距{dist:.1f}%≈单雷伤账户-{pos * dist / 100:.2f}%"
+                                              f"（损失限幅≠降低爆雷概率）· 稳健线爆雷率1.7%(CI 0.6–4.9%·30笔复验中)"
+                                              f" · 两只至少一雷2.1%/双雷样本内0")
+                    except (TypeError, ValueError, ZeroDivisionError):
+                        c["p14_risk_note"] = "稳健线爆雷率1.7%(CI 0.6–4.9%·30笔复验中)"
+            # P13-1 双门槛按(P14重排后的)最终名次执行
             for i, c in enumerate(picks):
                 if c.get("entry_status") != "可买":
                     continue
-                fresh = c.get("fresh_override") or _fresh_catalyst7(c, as_of_env)
-                c["p13_fresh7"] = fresh
+                fresh = c.get("p13_fresh7") or ""
                 lack = []
                 if i >= 3:
                     lack.append(f"终排第{i + 1}(>3)")
@@ -1762,6 +1813,12 @@ def print_table(result: dict) -> None:
                   f"(回测命中率{fc.get('hit_rate')}/MAE{fc.get('gap_mae')}%/样本{fc.get('n_eval')})")
             if fc.get("divergence"):
                 print(f"   {fc['divergence']}")
+    # P14 稳健线披露（爆雷率画像：合格票 + 两票首选；0合格=不凑数按空仓/单票处理）
+    _steady = [f"{c['code']}{c['name']}" for c in result["candidates"] if c.get("steady_ok")]
+    _p14 = [f"{c['code']}{c['name']}" for c in result["candidates"] if c.get("p14_pick")]
+    print(f"\n🛡 P14稳健线(ATR≤4·5日≤10%·量比≤2·60位≤85·0弱信号)合格: "
+          f"{', '.join(_steady) if _steady else '本期 0 只（不降格凑数：合格<2 → 只买1只或空仓）'}"
+          + (f" · 两票首选: {', '.join(_p14)}" if _p14 else ""))
     print("\n### 买入方案（T+1 执行）")
     bh = ["排名", "代码", "名称", "状态", "买入/参考区间", "补仓区间", "建议仓位", "入场方式", "止损", "放弃条件"]
     print("| " + " | ".join(bh) + " |")
@@ -2250,6 +2307,12 @@ def render_html(result: dict, report_dir: str | None = None, preview: bool = Fal
         color = _RISK_COLOR.get(rl, "#666")
         chips = "".join(f"<span class=chip>{_esc(s)}</span>"
                         for s in _signal_tag(c).split("/") if s)
+        # P14 稳健线徽标：两票首选=深绿加粗，仅合格=浅绿
+        if c.get("p14_pick"):
+            chips += (f"<span class=chip style='background:#1b5e20;color:#fff;font-weight:700'>"
+                      f"🛡P14两票首选#{c['p14_pick']}</span>")
+        elif c.get("steady_ok"):
+            chips += "<span class=chip style='background:#e8f5e9;color:#1b5e20'>🛡稳健线合格</span>"
         rnote = c.get("risk_note", "")
         rnote_html = (f"<div class=line><span class='k grey'>风险补充</span>{_esc(rnote)}</div>"
                       if rnote else "")
@@ -2282,6 +2345,8 @@ def render_html(result: dict, report_dir: str | None = None, preview: bool = Fal
                    if c.get('add_zone') else "")
                 + f"<div class=line><span class=k>入场</span>{_esc(c.get('entry_mode',''))}：{_esc(c.get('entry_tactic',''))}</div>"
                 f"<div class=line><span class='k red'>放弃</span>{_esc(c.get('abort',''))}</div>"))
+            + (f"<div class=line><span class=k>🛡P14风险</span>{_esc(c.get('p14_risk_note',''))}</div>"
+               if c.get("p14_risk_note") else "")
             + f"<div class=line><span class='k green'>催化剂</span>{_esc(c.get('catalyst','—'))}</div>"
             + ((f"<div class=line><span class=k>基本面</span>扣非同比 <b>{c.get('kcfj_yoy')}%</b>"
                 + (f" · PE {c.get('pe')}" if c.get('pe') is not None else "")

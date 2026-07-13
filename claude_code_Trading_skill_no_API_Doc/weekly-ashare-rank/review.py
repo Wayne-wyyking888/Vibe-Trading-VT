@@ -15,6 +15,8 @@
     低于区间下沿但高于止损 → 更优价按开盘成交；开盘已 ≤ 止损 → 放弃(竞价破位)
   - 入场当日不可卖(A股T+1)；次日起 最低≤止损 → 止损价出(跳空低开穿越按开盘价)，
     最高≥目标 → 目标价出；同日双触保守按止损算
+  - P14-3 崩盘快刀(2026-07-14)：买入日收盘≤入场价-5% → 次日开盘无条件离场(优先于止损/目标判定；
+    依据40509股票日面板：崩后10日真·涨回率仅9-11%、84-89%先触-8%止损)
   - 到 sell_by 收盘仍未触发 → 按收盘离场；数据不足(还没到期) → 标记"持仓中"给浮动盈亏
 """
 from __future__ import annotations
@@ -104,12 +106,19 @@ def simulate(c: dict, days: list[dict], sell_by: str) -> dict:
         return {"status": "未成交(窗口内未回落到买入区)"}
 
     mfe = 0.0  # 最高浮盈%
+    crash_exit = False  # P14-3 崩盘快刀：买入日收盘≤入场价-5% → 次日开盘无条件出(崩后10日真·涨回率仅9-11%)
     for d in days[entry_i:]:
         if d["date"] > sell_by:
             break
         mfe = max(mfe, (d["h"] / entry - 1) * 100)
         if d["date"] == entry_date:        # T+1：入场当日不可卖
+            if d["c"] <= entry * 0.95:
+                crash_exit = True
             continue
+        if crash_exit:
+            return {"status": "崩盘快刀(买入日收≤-5%,次日无条件出·P14-3)", "entry": entry,
+                    "entry_date": entry_date, "exit": d["o"], "exit_date": d["date"],
+                    "ret": round((d["o"] / entry - 1) * 100, 2), "mfe": round(mfe, 1)}
         if d["l"] <= stop:
             px = min(d["o"], stop)         # 跳空穿越按开盘
             return {"status": "止损", "entry": entry, "entry_date": entry_date,
@@ -126,7 +135,9 @@ def simulate(c: dict, days: list[dict], sell_by: str) -> dict:
                     "ret": round((d["c"] / entry - 1) * 100, 2), "mfe": round(mfe, 1)}
     last = days[-1]
     note = ""
-    if target and last["c"] >= target * 0.985:
+    if crash_exit:
+        note = "⚠买入日收≤-5%：明日开盘无条件离场(P14-3崩盘快刀)"
+    elif target and last["c"] >= target * 0.985:
         note = "⚠已近/到目标价,提醒分批止盈"
     elif last["c"] <= stop * 1.015:
         note = "⚠逼近止损,次日跌破必须出"
