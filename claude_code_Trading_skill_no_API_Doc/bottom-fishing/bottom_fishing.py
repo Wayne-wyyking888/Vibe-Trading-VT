@@ -293,6 +293,8 @@ def render_html(r: dict) -> pathlib.Path:
                   f"<div class=row>信号: {esc(_hits_str(c))}</div>"
                   + ((f"<div class=row style='background:#f3f0fa;border-radius:6px;padding:6px 9px'>"
                       f"<b>裁定{esc(j)}</b> {esc(c.get('judge_why', ''))}</div>") if j else "")
+                  + "".join(f"<div class={'alert-hi' if a.get('level') == 'high' else 'alert-md'}>"
+                            f"⚠ {esc(a.get('text', ''))}</div>" for a in c.get("alerts") or [])
                   + ((f"<div class=row>F10: 扣非同比{c.get('kcfj_yoy')}% · PE {c.get('pe')} "
                       + (f"<b style='color:#b23'>{esc(c['f10_flag'])}</b>" if c.get('f10_flag') else '')
                       + (("<br>公告: " + esc('; '.join(c['notices'][:3]))) if c.get('notices') else '')
@@ -306,6 +308,8 @@ def render_html(r: dict) -> pathlib.Path:
         cards = "<div class=empty>🈳 <b>本期空手</b> —— 无过线票。合格线宁缺毋滥(历史约6成日子无票)，不降格凑数。</div>"
     n_ok = sum(1 for c in r["candidates"] if c.get("judge") == "✓")
     adj_note = f" · Agent②裁定后可入<b>{n_ok}</b>只" if r.get("adjudicated") else ""
+    galerts = "".join(f"<div class={'alert-hi' if a.get('level') == 'high' else 'alert-md'}>"
+                      f"⚠ {esc(a.get('text', ''))}</div>" for a in r.get("alerts") or [])
     obs = "".join(f"<li>{o['code']} {esc(o['name'])}（分{o['score']}·{esc(o['fail_why'])}）</li>"
                   for o in r["observe"])
     d = r["disclosure"]
@@ -320,12 +324,15 @@ def render_html(r: dict) -> pathlib.Path:
 .sc{{margin-left:auto;background:#eef4ff;color:#1565c0;border-radius:6px;padding:2px 8px;font-weight:700}}
 .row{{font-size:13.5px;margin:4px 0;color:#445}}.plan{{background:#f3f6fa;border-radius:8px;padding:7px 10px;font-size:13.5px;margin:6px 0}}
 .empty{{background:#fff;border:1px dashed #aab;border-radius:12px;padding:26px;text-align:center;font-size:16px;color:#556}}
+.alert-hi{{background:#fdecea;border:1.5px solid #e57373;color:#b71c1c;border-radius:8px;padding:7px 10px;font-size:13.5px;font-weight:600;margin:6px 0}}
+.alert-md{{background:#fff8e1;border:1px solid #e6c26a;color:#8a6d1a;border-radius:8px;padding:6px 10px;font-size:13px;margin:5px 0}}
 .foot{{font-size:12px;color:#788;margin-top:16px;border-top:1px solid #dde;padding-top:9px}}
 ul{{font-size:13px;color:#556}}</style>
 <h2>🎣 抄底扫描 — T={r['T']}（买入日=T+1）</h2>
 <div class=env><b>市况: {regime}</b> · 创业板T日{m['chg1']:+.2f}% · 大盘RSV={m['idx_rsv']} ·
 底部区候选{r['n_bottom_zone']}只 · 过线<b>{len(r['candidates'])}</b>只{adj_note}
 <br><span style='font-size:12.5px;color:#667'>推荐线: {'总分≥%.0f(防守日路径)' % TH_TOTAL if m['defensive'] else '个股分≥%.0f(非防守日路径)' % TH_STOCK} 且 ATR≤{TH_ATR:.0f}%</span></div>
+{galerts}
 <div class=warn>⚖ <b>真实口径(必读)</b>: 走样本 胜率{d['win_oos']}(先到+5% vs 先砸-8%,20日窗) · 爆雷率{d['stop_oos']} ·
 {d['monthly_range']} · {d['window_bias']} · <b>{d['shadow']}</b> · 拆档: 触-10%=12% / -15%=4% / +10%=53% / +20%=19%
 <br>{d.get('regime_risk','')}</div>
@@ -352,9 +359,11 @@ def adjudicate() -> None:
         print(f"⚠ 裁定文件T={adj.get('T')} ≠ 最新扫描T={r['T']}, 拒绝合并(先重跑扫描或更新裁定)")
         return
     rulings = adj.get("rulings", {})
+    r["alerts"] = adj.get("alerts") or []          # 报告级全局警示(高亮横幅)
     for c in r["candidates"]:
         v = rulings.get(c["code"], {})
         c["judge"], c["judge_why"] = v.get("verdict", "?"), v.get("why", "未裁定(按存疑处理)")
+        c["alerts"] = v.get("alerts") or []        # 个股警示: [{"level":"high|med","text":...}]
         if c["judge"] != "✓":
             c.pop("plan", None)
     order = {"✓": 0, "?": 1, "✗": 2}
@@ -375,6 +384,13 @@ def adjudicate() -> None:
     for c in r["candidates"]:
         print(f"  {c['rank']}. {c['judge']} {c['code']} {c['name']} 总分{c['score']} — {c['judge_why'][:48]}")
     html = render_html(r)
+    removed = 0
+    for old in REPORTS.glob(f"bottom_{r['T']}_*.html"):   # 同T旧版(含旧裁定版)一律清理, 只留最新裁定版
+        if old != html:
+            old.unlink()
+            removed += 1
+    if removed:
+        print(f"🧹 已清理同T旧版HTML {removed} 份")
     print(f"📄 裁定版HTML: {html}")
 
 
