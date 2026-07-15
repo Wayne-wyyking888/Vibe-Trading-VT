@@ -141,7 +141,9 @@ def stock_factors(df: pd.DataFrame, defensive: bool) -> dict | None:
     score = sum(W[k] for k, v in hits.items() if v)
     stock_score = score - (W["defensive"] if defensive else 0)
     vma20 = s.v.rolling(20).mean().iloc[-1]
-    return dict(T=c.d, close=round(float(c.c), 2), dd60=round(float(dd60), 1),
+    # dd250: 长期深跌标注(2026-07-15面板: ≤-50时89.8%胜/10.2%雷, 但n=59且无2024检验 → 只标注不打分)
+    dd250 = round(float((c.c / s.h.rolling(250).max().iloc[-1] - 1) * 100), 1) if len(s) >= 260 else None
+    return dict(T=c.d, close=round(float(c.c), 2), dd60=round(float(dd60), 1), dd250=dd250,
                 pos60=round(float(pos60), 1), atr=round(float(atr), 2), rsv=round(rsv, 1),
                 ret5=round(float(s.c.pct_change(5).iloc[-1] * 100), 2),
                 volx=round(float(c.v / vma20), 2) if vma20 else None,
@@ -163,10 +165,18 @@ def scan() -> dict:
             continue
         codes.append((code, name, str(r.get("行业", "") or "")))
     print(f"[bottom] universe={len(codes)}, 拉K线扫描底部区(约2-4分钟) ...")
+    # 旋转门冷却历史: 同票10交易日内已过线 → 本次降入观察池(2026-07-15走样本: 4/5段改善, 全期67.1胜/25.8雷 vs 基线62.7/30.1)
+    shadow_hist: dict[str, str] = {}
+    if SHADOW.exists():
+        for ln in SHADOW.read_text(encoding="utf-8").splitlines():
+            if ln.strip():
+                e = json.loads(ln)
+                if e["T"] < idx["T"] and e["T"] > shadow_hist.get(e["code"], ""):
+                    shadow_hist[e["code"]] = e["T"]
     cands, obs = [], []
     for k, (code, name, ind) in enumerate(codes):
         sym = ("sh" if code[0] in "69" else "sz") + code
-        df = tx_kline(sym)
+        df = tx_kline(sym, 320)   # 320根: dd250标注需要250日窗
         if df is None:
             continue
         df = _drop_intraday(df)
@@ -178,9 +188,19 @@ def scan() -> dict:
         f.update(code=code, name=name, industry=ind)
         path_ok = (idx["defensive"] and f["score"] >= TH_TOTAL) or \
                   ((not idx["defensive"]) and f["stock_score"] >= TH_STOCK)
-        f["qualified"] = bool(path_ok and f["atr"] <= TH_ATR)
+        cooldown, prev_T = False, shadow_hist.get(code)
+        if path_ok and prev_T:
+            ds = df.d.tolist()
+            if prev_T in ds:
+                cooldown = (ds.index(idx["T"]) - ds.index(prev_T)) <= 10
+            else:  # 停牌等致该日不在本票K线里 → 退化为日历14天
+                cooldown = (dt.date.fromisoformat(idx["T"]) - dt.date.fromisoformat(prev_T)).days <= 14
+        f["cooldown"] = bool(cooldown)
+        f["qualified"] = bool(path_ok and f["atr"] <= TH_ATR and not cooldown)
         f["fail_why"] = "" if f["qualified"] else \
-            ("ATR>%.0f" % TH_ATR if path_ok else ("总分<%.0f" % TH_TOTAL if idx["defensive"] else "个股分<%.0f" % TH_STOCK))
+            ("旋转门冷却(10交易日内已过线)" if (path_ok and f["atr"] <= TH_ATR and cooldown)
+             else "ATR>%.0f" % TH_ATR if path_ok
+             else ("总分<%.0f" % TH_TOTAL if idx["defensive"] else "个股分<%.0f" % TH_STOCK))
         (cands if f["qualified"] else obs).append(f)
         if (k + 1) % 100 == 0:
             print(f"[bottom]   {k+1}/{len(codes)}  底部区累计{len(cands)+len(obs)}")
@@ -224,7 +244,8 @@ def scan() -> dict:
                          hold=f"最晚{sell_str}收盘离场", pos=f"≤{POS_CAP}%")
     result = dict(generated_at=WK._cn_now().isoformat(timespec="seconds"), T=idx["T"],
                   market=idx, threshold=dict(total=TH_TOTAL, stock=TH_STOCK, atr=TH_ATR),
-                  n_bottom_zone=len(cands) + len(obs), candidates=cands, observe=obs[:10],
+                  n_bottom_zone=len(cands) + len(obs), candidates=cands,
+                  observe=obs[:10] + [o for o in obs[10:] if o.get("cooldown")],  # 冷却票必须可见
                   disclosure=dict(win_oos="75.2~77.8%", stop_oos="13.8~13.9%(CI≤16.3)",
                                   monthly_range="月度胜率45~92%·爆雷2~55%成簇(毒月内61%的雷集中在同一周,78%来自反复过线的同批票)",
                                   regime_risk="⚠市况依赖型: 2024式阴跌熊市全年EV为负(51.6%胜/42.7%雷,2024全年实测)——"
@@ -234,10 +255,12 @@ def scan() -> dict:
     DATA.mkdir(exist_ok=True)
     OUT_JSON.write_text(json.dumps(result, ensure_ascii=False, indent=1), encoding="utf-8")
     with open(SHADOW, "a", encoding="utf-8") as fh:
-        for c in cands:
+        # 冷却票也入影子日志(cooldown=True, 不推荐)——保持"距上次过线"参照连续 + 供--review对照冷却是否真省了雷
+        for c in cands + [o for o in obs if o.get("cooldown")]:
             fh.write(json.dumps(dict(T=idx["T"], code=c["code"], name=c["name"], close=c["close"],
                                      score=c["score"], atr=c["atr"], def_days=idx["def_days"],
-                                     idx_rsv=idx["idx_rsv"], outcome=None), ensure_ascii=False) + "\n")
+                                     idx_rsv=idx["idx_rsv"], volx=c.get("volx"), dd250=c.get("dd250"),
+                                     cooldown=bool(c.get("cooldown")), outcome=None), ensure_ascii=False) + "\n")
     _print_report(result)
     html = render_html(result)
     print(f"\n📄 HTML: {html}\n💾 JSON: {OUT_JSON}\n🗒 影子日志: {SHADOW}")
@@ -267,6 +290,10 @@ def _print_report(r: dict) -> None:
     if r["observe"]:
         print("\n观察池(底部区未过线): " + ", ".join(
             f"{o['code']}{o['name']}(分{o['score']}·{o['fail_why']})" for o in r["observe"][:8]))
+    cool = [o for o in r["observe"] if o.get("cooldown")]
+    if cool:
+        print("♻ 旋转门冷却(10交易日内已过线·本期不推荐): " + ", ".join(
+            f"{o['code']}{o['name']}(分{o['score']})" for o in cool))
     d = r["disclosure"]
     print(f"\n⚖ 真实口径: OOS胜率{d['win_oos']} · 先砸-8%={d['stop_oos']} · {d['monthly_range']} · "
           f"{d['window_bias']} · {d['shadow']}")
@@ -290,7 +317,10 @@ def render_html(r: dict) -> pathlib.Path:
                   f"{_BADGE.get(j, '<span class=badge>过线·待裁定(影子期)</span>')}<span class=sc>总分 {c['score']}</span></div>"
                   f"<div class=row>收盘 <b>{c['close']}</b> · 回撤{c['dd60']}% · 60日位{c['pos60']} · "
                   f"ATR {c['atr']}% · RSV {c['rsv']} · 5日{c['ret5']}%</div>"
-                  f"<div class=row>信号: {esc(_hits_str(c))}</div>"
+                  + ((f"<div class=row><b style='color:#7b1fa2'>🕳 长期深跌 dd250={c['dd250']}%</b> · "
+                      f"2025-26面板89.8%胜/10.2%雷·n=59小样本·<b>仅标注不参与打分</b></div>")
+                     if c.get("dd250") is not None and c["dd250"] <= -50 else "")
+                  + f"<div class=row>信号: {esc(_hits_str(c))}</div>"
                   + ((f"<div class=row style='background:#f3f0fa;border-radius:6px;padding:6px 9px'>"
                       f"<b>裁定{esc(j)}</b> {esc(c.get('judge_why', ''))}</div>") if j else "")
                   + "".join(f"<div class={'alert-hi' if a.get('level') == 'high' else 'alert-md'}>"
@@ -439,7 +469,8 @@ def review() -> None:
             changed = True
     if changed:
         SHADOW.write_text("\n".join(json.dumps(e, ensure_ascii=False) for e in lines) + "\n", encoding="utf-8")
-    done = [e for e in lines if e.get("outcome")]
+    done_all = [e for e in lines if e.get("outcome")]
+    done = [e for e in done_all if not e.get("cooldown")]   # 头条战绩=推荐线(冷却票未推荐,单列对照)
     n = len(done)
     if not n:
         print("暂无已了结样本")
@@ -447,6 +478,11 @@ def review() -> None:
     w = sum(1 for e in done if e["outcome"] == "win")
     s = sum(1 for e in done if e["outcome"] == "stop")
     print(f"## 抄底影子复验  已了结 {n} 笔 (目标30笔转正)")
+    cd = [e for e in done_all if e.get("cooldown")]
+    if cd:
+        cw = sum(1 for e in cd if e["outcome"] == "win")
+        cs = sum(1 for e in cd if e["outcome"] == "stop")
+        print(f"旋转门冷却票(未推荐·对照): {len(cd)}笔 胜{cw/len(cd)*100:.0f}% 雷{cs/len(cd)*100:.0f}% —— 冷却若比推荐线差=规则在省雷,符合预期")
     print(f"胜(先到+5%) {w}/{n} = {w/n*100:.0f}%   先砸-8% {s}/{n} = {s/n*100:.0f}%   "
           f"[回测口径: 75.2% / 13.9% — 偏离即报告]")
     jd = [e for e in done if e.get("judge") == "✓"]
