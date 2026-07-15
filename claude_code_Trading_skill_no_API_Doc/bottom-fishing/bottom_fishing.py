@@ -165,7 +165,10 @@ def scan() -> dict:
             continue
         codes.append((code, name, str(r.get("行业", "") or "")))
     print(f"[bottom] universe={len(codes)}, 拉K线扫描底部区(约2-4分钟) ...")
-    # 旋转门冷却历史: 同票10交易日内已过线 → 本次降入观察池(2026-07-15走样本: 4/5段改善, 全期67.1胜/25.8雷 vs 基线62.7/30.1)
+    # 旋转门冷却历史: 同票5交易日内已过线 → 本次降入观察池。
+    # 2026-07-15 敏感性(N=0/3/5/7/10/15, panel900): N=3~15为平坦高原(胜66.3~67.6/雷25.5~26.7),
+    # 精华在前3天("别明天接同一把刀"); N=5 定版(用户选): 全期67.1胜/26.2雷/EV+1.26 vs 无冷却62.6/30.0/+0.73,
+    # 信号量比N=10多24%(日均4.9只/298天有票); N=10旧值2024年EV反而更差(-0.30 vs N=5的-0.17)。
     shadow_hist: dict[str, str] = {}
     if SHADOW.exists():
         for ln in SHADOW.read_text(encoding="utf-8").splitlines():
@@ -192,13 +195,13 @@ def scan() -> dict:
         if path_ok and prev_T:
             ds = df.d.tolist()
             if prev_T in ds:
-                cooldown = (ds.index(idx["T"]) - ds.index(prev_T)) <= 10
-            else:  # 停牌等致该日不在本票K线里 → 退化为日历14天
-                cooldown = (dt.date.fromisoformat(idx["T"]) - dt.date.fromisoformat(prev_T)).days <= 14
+                cooldown = (ds.index(idx["T"]) - ds.index(prev_T)) <= 5
+            else:  # 停牌等致该日不在本票K线里 → 退化为日历8天
+                cooldown = (dt.date.fromisoformat(idx["T"]) - dt.date.fromisoformat(prev_T)).days <= 8
         f["cooldown"] = bool(cooldown)
         f["qualified"] = bool(path_ok and f["atr"] <= TH_ATR and not cooldown)
         f["fail_why"] = "" if f["qualified"] else \
-            ("旋转门冷却(10交易日内已过线)" if (path_ok and f["atr"] <= TH_ATR and cooldown)
+            ("旋转门冷却(5交易日内已过线)" if (path_ok and f["atr"] <= TH_ATR and cooldown)
              else "ATR>%.0f" % TH_ATR if path_ok
              else ("总分<%.0f" % TH_TOTAL if idx["defensive"] else "个股分<%.0f" % TH_STOCK))
         (cands if f["qualified"] else obs).append(f)
@@ -246,7 +249,8 @@ def scan() -> dict:
                   market=idx, threshold=dict(total=TH_TOTAL, stock=TH_STOCK, atr=TH_ATR),
                   n_bottom_zone=len(cands) + len(obs), candidates=cands,
                   observe=obs[:10] + [o for o in obs[10:] if o.get("cooldown")],  # 冷却票必须可见
-                  disclosure=dict(win_oos="75.2~77.8%", stop_oos="13.8~13.9%(CI≤16.3)",
+                  disclosure=dict(win_oos="75.2~77.8%(2025-26窗) / 扩窗2023-11起全期·含冷却=66.9%",
+                                  stop_oos="13.8~13.9%(2025-26窗,CI≤16.3) / 扩窗全期·含冷却=25.8%",
                                   monthly_range="月度胜率45~92%·爆雷2~55%成簇(毒月内61%的雷集中在同一周,78%来自反复过线的同批票)",
                                   regime_risk="⚠市况依赖型: 2024式阴跌熊市全年EV为负(51.6%胜/42.7%雷,2024全年实测)——"
                                               "毒月里输家与赢家的个股特征完全相同,选股端无解,牛熊闸门(MA250)已测无效",
@@ -292,7 +296,7 @@ def _print_report(r: dict) -> None:
             f"{o['code']}{o['name']}(分{o['score']}·{o['fail_why']})" for o in r["observe"][:8]))
     cool = [o for o in r["observe"] if o.get("cooldown")]
     if cool:
-        print("♻ 旋转门冷却(10交易日内已过线·本期不推荐): " + ", ".join(
+        print("♻ 旋转门冷却(5交易日内已过线·本期不推荐): " + ", ".join(
             f"{o['code']}{o['name']}(分{o['score']})" for o in cool))
     d = r["disclosure"]
     print(f"\n⚖ 真实口径: OOS胜率{d['win_oos']} · 先砸-8%={d['stop_oos']} · {d['monthly_range']} · "
