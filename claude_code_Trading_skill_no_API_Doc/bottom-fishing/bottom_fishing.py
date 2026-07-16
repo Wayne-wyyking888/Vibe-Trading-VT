@@ -76,6 +76,29 @@ def _drop_intraday(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def _fc_age_tag(fc: dict, T: str) -> str:
+    """业绩预告年龄标签 → 直接拼进 f10_flag 文本。
+
+    为什么不按 fresh 过滤掉 flag（2026-07-17 定，勿改回）:
+    f10_flag 是"待裁定"提示器、**不是 gate**（不进打分/推荐线）。东财 RPT_PUBLIC_OP_NEWPREDICT 取的是
+    "该股最新一条业绩预告、无年龄下限"——公司只在业绩大变动时才发预告，增长平稳者可以一两年不发，
+    故最新一条可以任意老。但若给 flag 加 `fresh` 门槛（fresh_days=10）会**造成漏报**: 20天前的预亏
+    照样重大却 fresh=False → flag 不亮 → Agent② 不去看。**漏报比误报危险**，故保留"任何负面预告都亮"，
+    改为把年龄摆到台面上，使核龄不依赖执行者记性。
+    实例(2026-07-16 宁德时代): flag 由 2025-01-21"略减"点亮·讲的是**2024年营收**·距T 541天·fresh=False，
+    而同期 kcfj_yoy=+52.95%、2026Q1 营收+52.45%/净利+48.52%，方向完全相反 → 典型误报。
+    """
+    nd, typ = str(fc.get("notice_date") or ""), str(fc.get("type") or "")
+    if not nd:
+        return ""
+    try:
+        age = (dt.date.fromisoformat(T) - dt.date.fromisoformat(nd)).days
+    except ValueError:
+        return f"(预告{typ}·{nd})"
+    return (f"(预告{typ}·{nd}·{age}天前"
+            + ("" if fc.get("fresh") else "·⚠陈旧,须与扣非同比/最新季报交叉验证,勿据此否决") + ")")
+
+
 def index_features() -> dict:
     df = _drop_intraday(tx_kline("sz399006", 140))
     df["ma20"] = df.c.rolling(20).mean()
@@ -233,7 +256,10 @@ def scan() -> dict:
                 fc = nt.get("forecast") or {}
                 bad_fc = any(k in str(fc.get("type") or "") for k in ("亏", "减"))
                 bad_nt = any(k in t for t in c["notices"] for k in ("减持", "解除质押", "质押", "解禁", "立案", "警示"))
-                c["f10_flag"] = "⚠F10负面待裁定" if (bad_fc or bad_nt) else ""
+                # 预告可任意老(见 _fc_age_tag): 仍照亮 flag, 但把年龄直出到文本里由 Agent② 核龄后定夺
+                # ——不按 fresh 门槛掐掉(漏报>误报)。公告侧(bad_nt)本就限近期, 无此问题。
+                c["f10_flag"] = (("⚠F10负面待裁定" + (_fc_age_tag(fc, idx["T"]) if bad_fc else ""))
+                                 if (bad_fc or bad_nt) else "")
             except Exception:  # noqa: BLE001
                 c["forecast"], c["notices"], c["f10_flag"] = None, [], ""
             time.sleep(0.2)
