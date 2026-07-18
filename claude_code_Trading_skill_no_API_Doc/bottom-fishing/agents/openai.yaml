@@ -1,0 +1,6 @@
+interface:
+  display_name: "A股抄底扫描"
+  short_description: "底部区量化扫描、消息裁定、复盘与审计"
+  default_prompt: "使用 $bottom-fishing 扫描最新已收盘 A 股底部机会，并完成裁定、复核与 HTML 报告。"
+policy:
+  allow_implicit_invocation: true

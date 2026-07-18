@@ -1,0 +1,6 @@
+interface:
+  display_name: "A股持仓诊断"
+  short_description: "六角色诊断单只A股并给出可审计操作方案"
+  default_prompt: "使用 $stock-diagnostic 诊断我的 A 股持仓，按六角色流程完成证据、复核与 HTML 报告。"
+policy:
+  allow_implicit_invocation: true

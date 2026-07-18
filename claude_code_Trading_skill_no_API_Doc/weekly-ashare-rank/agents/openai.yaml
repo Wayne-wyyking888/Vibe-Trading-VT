@@ -1,0 +1,6 @@
+interface:
+  display_name: "A股短线排名"
+  short_description: "市场闸门、全市场排名、验证复核与战绩闭环"
+  default_prompt: "使用 $weekly-ashare-rank 生成最新 A 股 T+1 短线排名，并完成市场闸门、验证与 HTML 报告。"
+policy:
+  allow_implicit_invocation: true

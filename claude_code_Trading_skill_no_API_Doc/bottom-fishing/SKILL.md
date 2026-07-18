@@ -1,4 +1,9 @@
-# A股抄底扫描（0 API · Claude Code 原生 · 影子复验期）
+---
+name: bottom-fishing
+description: A股底部区与超跌修复扫描（0 API、Codex 原生）。用于抄底、超跌、底部扫描、低吸扫描、bottom-fishing、错杀裁定、抄底复盘等请求；运行不可变 Python 引擎，执行双路径推荐线、ATR gate、5交易日冷却、F10与网页证据裁定、✓/?/✗分层、影子日志、adjudicate/review，并在独立验收通过后输出原生 HTML。
+---
+
+# A股抄底扫描（0 API · Codex 原生 · 影子复验期）
 
 以最新已收盘日 T 为基准，扫描全市场底部区（距60日高点回撤≥20%且60日位≤25），用**修复确认打分**
 （2026-07-14 用 476股×401日≈19万股票日面板校准，全部走样本验证）选出"最有希望抄底成功"的票。
@@ -9,12 +14,22 @@ edge 集中在**防守日**（信号96%来自防守期；⚠“防守≥9天=82%
 ## 触发词
 抄底 / 超跌 / 底部扫描 / bottom / 接飞刀(纠正用) / 低吸扫描
 
+Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 `$bottom-fishing`。
+
 ## 执行步骤（一句话就跑完）
 
-1. **跑引擎**（PowerShell + 刷PATH + `dangerouslyDisableSandbox: true`，约2-4分钟拉480只K线）：
+0. **先跑不可变基线门禁**。失败即停止，不得生成或宣称最终报告：
    ```powershell
-   python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\bottom-fishing\bottom_fishing.py"
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" baseline
    ```
+   人工裁定必须遵守 `C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\JUDGE_SCHEMA.md`，只用 Codex 网页检索，
+   每个关键事实保留 URL、发布日期和北京时间检索日期；不调用 MCP、付费 API 或外部 agent。
+1. **跑引擎**（PowerShell；行情联网被沙箱阻断时按 Codex 权限流程申请一次网络执行，约2-4分钟拉480只K线）：
+   ```powershell
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" bottom --
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" validate-bottom-engine --json "C:\Trading_analysis\data\bottom_latest.json" --html "<引擎stdout给出的原始HTML绝对路径>"
+   ```
+   第二条非零退出立即停止，不能进入消息面裁定。
    引擎自动：判市况（防守日/def_days/大盘RSV）→ 底部区扫描 → 打分 → **双路径推荐线**
    （防守日·总分≥18 ∥ 非防守日·个股分≥15，均须 ATR≤4）→ **旋转门冷却**（同票**5交易日**内重复过线
    自动降观察池；2026-07-15敏感性 N=0/3/5/7/10/15：N=3~15为平坦高原、精华在前3天，N=5定版=
@@ -50,7 +65,7 @@ edge 集中在**防守日**（信号96%来自防守期；⚠“防守≥9天=82%
       （关税/FDA/制裁）——底部票常是外部驱动，只搜国内会漏主因。
    ⑤ **前视纪律（双向：既防未来信息泄入，也防旧闻冒充当期）**：只认信号日T当日或之前已公开的信息定裁定；
       关键恶化信息若发布日>T，标"滞后披露·裁定时不可得"仅供复盘（8v8显示部分恶化如销量/季报系滞后披露）。
-      ⚠**对称的另一半同样致命——WebSearch 会把多年前旧文与当期新闻混排返回、摘要常不带年份，看着全像当期利空**：
+      ⚠**对称的另一半同样致命——网页检索会把多年前旧文与当期新闻混排返回、摘要常不带年份，看着全像当期利空**：
       **每条红旗必须核到"年"再采信**（点开来源/看URL日期段/与当前股价·市值量级对表），**核不出年份的一律不采信**，
       不因它否决、也不写进 why（2026-07-16 宁德时代实例：搜出的三条重磅红旗全是旧闻——"9.52亿股/近2800亿解禁"=
       **2021-06-11**、"LG夺特斯拉43亿订单致宁王跌6%"=**2025-07-30**、"国会议员指强迫劳动/要求列实体清单"=**2024-06**；
@@ -65,18 +80,28 @@ edge 集中在**防守日**（信号96%来自防守期；⚠“防守≥9天=82%
    "alerts":[{"level":"high|med","text":"警示"}]}}}`——**凡影响大的点必须抽成 alerts 高亮**（P9利好兑现/
    见光死、低价股滑点、重复过线旋转门、硬否决项等），high=红条/med=琥珀条，别埋在 why 长文里），然后跑：
    ```powershell
-   python "...bottom-fishing\bottom_fishing.py" --adjudicate
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" bottom -- --adjudicate
    ```
    引擎自动：**分层重排**（✓>?>✗，层内仍按引擎总分——纪律：不造未经走样本校准的新数值权重）→
    ?/✗票撤除买入方案（P13-3：非买入票不给价，卡片保留供对照，✗票置灰）→ 重出裁定版HTML
    （文件名带`_裁定版`）→ 裁定回写影子日志 → 以后 `--review` 自动拆「引擎全线 vs 裁定✓子集」
    两条战绩，长期检验Agent②消息面裁定是否真有增量。T不一致会拒绝合并（防脏裁定）；
    生成后**自动删除同T旧版HTML**（含旧裁定版），reports 里每个 T 只留最新裁定版。
-4. **Agent④式复核后输出最终表**：引擎表 + 裁定列（✓错杀可入 / ✗恶化·否决 / ?存疑降级），检查
+4. **Agent④式复核并通过 Codex 硬门禁后才输出最终表**：引擎表 + 裁定列（✓错杀可入 / ✗恶化·否决 / ?存疑降级），检查
    价格新鲜度(引擎T=最近已收盘日)、数字来源可追溯；否决票在文字报告注明理由（HTML卡片保留供对照）。
+   `bottom_adjudication.json` 顶层除原字段外必须加入 `codex_audit`。先对每个 `✓` 票执行独立跨源验价，
+   并把输出的 `price_verification_by_code` 并入 `codex_audit`；没有 `✓` 时输出为空对象即可：
+   ```powershell
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\verify_prices.py" --skill bottom-fishing --result "C:\Trading_analysis\data\bottom_latest.json"
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" attach-audit --result "C:\Trading_analysis\data\bottom_latest.json" --audit "C:\Trading_analysis\data\bottom_adjudication.json"
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" augment-report --skill bottom-fishing --json "C:\Trading_analysis\data\bottom_latest.json" --html "<裁定版HTML绝对路径>"
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" brand-report --html "<裁定版HTML绝对路径>"
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" validate --skill bottom-fishing --json "C:\Trading_analysis\data\bottom_latest.json" --html "<裁定版HTML绝对路径>"
+   ```
+   任一命令非零退出即标记“未通过”，不得把该 HTML 当最终报告；验收器不提供最终报告降级开关。
 5. **复盘对账**：用户说"抄底复盘/对账"时跑：
    ```powershell
-   python "...bottom-fishing\bottom_fishing.py" --review
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" bottom -- --review
    ```
    自动给每笔历史过线票结算（先到+5% vs 先砸-8%，20日窗），输出累计胜率/爆雷率 vs 回测口径（75.2%/13.9%）。
 

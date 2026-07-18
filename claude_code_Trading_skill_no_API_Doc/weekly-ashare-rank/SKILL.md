@@ -1,14 +1,14 @@
 ---
 name: weekly-ashare-rank
-description: A股短线选股排名（0 API，纯 Claude Code 原生）。以最新收盘日 T 为基准，预测 T+1（下一交易日）买入、持有 ≤N 个交易日（N 默认5，可参数指定）最可能赚钱的股票。我（Claude Code）亲自扮演五个 agent：⓪ 市场环境·情绪裁判：跑 market_gate.py(指数趋势/放量下跌 + 涨停家数/炸板率/连板高度/跌停) + WebSearch 隔夜美股/A50/汇率 → 环境分+总仓闸门+跳空预案+T+1前瞻(历史类比+情绪·展示/背离告警·不改仓位/打分)，防守期切防守权重 ① 跑 Python 量化引擎拉东财/新浪/腾讯真实行情算因子(动量/量能/技术/盘口/涨停连板)打分，全市场~600只翻页扫描 ② 用 WebSearch 查政策/资金/催化剂(跨周末还查周末政策+盘后公告) ③ 风险挑战+跳空感知定价，输出排名(预期收益%/置信度/买入价/目标/止损)，含过热上限/主题逆风/独立催化优先三条硬规则 ④ 验证·复核官：跑走样本回测验证『综合分排名本身有 edge』(Top-K超额/胜率/排名IC) + 跨源价格校验 + 数值/催化剂自检，verify 过才出表、否则降级。另有复盘模式：review.py 按计划纪律仿真上期战绩(胜率/超额/止盈止损提醒)累计 track record。触发词：周度选股/下周买什么/明天买什么/A股排名/T+1选股/weekly ashare rank；复盘/战绩/上次推荐怎么样。支持参数：天数=N 板块=X top=K。
+description: A股 T+1 短线选股排名（0 API、Codex 原生）。用于周度选股、下周或明天买什么、A股排名、T+1选股、weekly-ashare-rank、复盘、战绩等请求；运行市场闸门、全市场量化筛选、IC/Top-K验证、跨源价格、F10与公告种子，由 Codex 依原 rubric 完成催化、风险挑战、物理重排、P1/P3/P7/P9/P11/P12/P13/P14 和审计，最终只发布通过硬门禁的 JSON 与原生 HTML。支持天数、板块、top 参数。
 ---
 
-# A股短线选股排名（0 API · Claude Code 原生 · T+1 通用）
+# A股短线选股排名（0 API · Codex 原生 · T+1 通用）
 
 ## 这个 skill 怎么运作
 
-**我（Claude Code）就是大脑，不调用任何外部 LLM API。** 我依次扮演五个 agent，用本机
-Python 引擎（免费东财/新浪/腾讯行情）+ 自带 WebSearch 完成"环境+量化+消息+风险+验证"五方辩论。
+**Codex 就是大脑，不调用任何外部 LLM API、MCP 或外部 agent。** 依次执行五个分析角色，用本机
+Python 引擎（免费东财/新浪/腾讯行情）+ Codex 网页检索完成“环境+量化+消息+风险+验证”五方流程。
 Agent⓪（市场环境·情绪裁判）是总闸门：个股再好，大盘跳空/情绪退潮也要先压总仓位；
 Agent④（验证·复核官）是为了"分析更精准、建议都 verify 过"专设的把关环节。
 
@@ -21,9 +21,9 @@ Agent④（验证·复核官）是为了"分析更精准、建议都 verify 过"
 
 用户可能这样调用，我要先解析参数（中文冒号/等号/空格都认）：
 ```
-/weekly-ashare-rank 天数=5
-/weekly-ashare-rank 天数：3 板块=光通信
-/weekly-ashare-rank top=10 hold=5 sector=机器人
+$weekly-ashare-rank 天数=5
+$weekly-ashare-rank 天数：3 板块=光通信
+$weekly-ashare-rank top=10 hold=5 sector=机器人
 ```
 | 用户写法（任一） | 含义 | 传给引擎 | 默认 |
 |---|---|---|---|
@@ -59,18 +59,18 @@ Agent④（验证·复核官）是为了"分析更精准、建议都 verify 过"
 1. **解析参数** N/板块/top。
 1.5. **Agent⓪ 市场环境·情绪闸门（每次必跑，约10秒）**：
    ```powershell
-   python "...\market_gate.py"
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" weekly-gate --
    ```
    得到 环境分/regime/总仓上限/跳空预案（详见步骤0.5），后续所有步骤受它约束。
 2. **权重自校准 + 策略验证（自动，必要时才跑）**：检查 `weights.json` 是否存在、`fwd_days==N` 且 ≤7 天。
    不满足就先自动跑回测刷权重 **再跑一次走样本验证**（共约 1–2 分钟，告诉用户"首次/换持有天数，先校准因子权重并验证排名 edge"）：
    ```powershell
-   python "...\ashare_weekly_rank.py" --backtest --hold-days N --bt-sample 60
-   python "...\ashare_weekly_rank.py" --validate --hold-days N --bt-sample 60 --val-topk 5 --out "C:\Trading_analysis\data\validate_latest.json"
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" weekly -- --backtest --hold-days N --bt-sample 60
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" weekly -- --validate --hold-days N --bt-sample 60 --val-topk 5 --out "C:\Trading_analysis\data\validate_latest.json"
    ```
    满足就跳过 backtest（权重不天天变，周度重算贴合本 skill 周度定位、避免每日refit追噪声过拟合）；validate 结果若 ≤7 天可直接复用 `validate_latest.json` 的裁定。
 3. **跑量化引擎**（引擎会自动读匹配的 weights.json + 自动做跨源价格校验，无需额外参数）：见步骤1命令。
-4. **Agent② WebSearch + Agent③ 综合 + Agent④ 验证·复核** → verify 通过后输出最终排名表。
+4. **Agent② Codex 网页检索 + Agent③ 综合 + Agent④ 验证·复核** → verify 通过后输出最终排名表。
 5. **结尾必须强调 T+1 复核（P9 恒逸教训：不是可选）**：T 晚上选的票，价格是 T 收盘价，**T+1 买入日的跳空只能当天早上算**。
    买入日 9:15–9:25 **务必回一句"复核"让我跑 recheck**（尤其有"过热/轻仓试探/催化已兑现"的票）——**向下跳空击穿买区=见光死要放弃，不复核直接照 T 的价位挂单极易接在跌停飞刀上**。没复核就买=自担风险。
 
@@ -78,7 +78,7 @@ Agent④（验证·复核官）是为了"分析更精准、建议都 verify 过"
 为什么单独：T 晚上选股时 T+1 价格还不存在，跳空只能买入日早上算。**用户不用跑脚本，说"复核"我来跑**。
 **P9 铁律**：recheck 现含"见光死护栏"——向下跳空≤−4%/开在止损边 → 判"放弃不接飞刀"（恒逸06-29跌停教训）。**不复核就按 T 收盘价位挂单，遇见光死会直接接在跌停飞刀上。**：
 ```powershell
-python "...\recheck.py" --in "C:\Trading_analysis\data\rank_latest.json"
+python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" weekly-recheck -- --in "C:\Trading_analysis\data\rank_latest.json"
 ```
 输出每只票跳空%/是否破位 → 可买/等回调/放弃；我据此提醒哪些改等回调、哪些放弃。
 复核时**同时跑一次 `market_gate.py`**：大盘竞价大幅低开/情绪退潮时按预案压总仓或推迟入场。
@@ -89,8 +89,8 @@ python "...\recheck.py" --in "C:\Trading_analysis\data\rank_latest.json"
 ### 复盘模式（买入日之后任意时间，闭环学习的关键）
 用户说"复盘/战绩/上次推荐怎么样"时：
 ```powershell
-python "...\review.py"                            # 默认复盘 rank_latest.json
-python "...\review.py" --in C:/.../某期历史.json   # 复盘任一期
+python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" weekly-review --                            # 默认复盘 rank_latest.json
+python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" weekly-review -- --in C:/.../某期历史.json   # 复盘任一期
 ```
 脚本按报告自己的纪律（买入区间/高开放弃/止损/目标/T+1/**P14-3崩盘快刀：买入日收盘≤入场价-5%→次日开盘无条件出**/到期离场）仿真每只票，输出
 战绩表（入场/离场/收益%/最高浮盈/状态）+ 胜率/平均收益/对沪指超额，并累计到
@@ -101,7 +101,7 @@ python "...\review.py" --in C:/.../某期历史.json   # 复盘任一期
 3. **反馈进化**：若连续 ≥2 期出现同类失误（如过热票排名过高、主题逆风票仍重仓），
    主动建议用户调整 SKILL 规则或引擎权重，并指出具体改哪条。
 
-> 一句话总结给用户：**平时只需 `/weekly-ashare-rank 天数=5` 一条；backtest+策略验证 我会按需自动跑；每次都会跨源校验价格、给出排名 edge 裁定；recheck 是买入日早上可选的，你说一声我跑；持有几天后说"复盘"自动算战绩。**
+> 一句话总结给用户：**在 Codex 新对话输入 `/skills` 选择本 skill，或直接 `$weekly-ashare-rank 天数=5`；backtest+策略验证按需自动跑；每次跨源校验价格、给出排名 edge 裁定；recheck 是买入日早上的可选模式，持有后说“复盘”自动算战绩。**
 
 ---
 
@@ -109,7 +109,9 @@ python "...\review.py" --in C:/.../某期历史.json   # 复盘任一期
 
 ### 步骤 0 — 准备
 - 引擎路径：`C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\weekly-ashare-rank\ashare_weekly_rank.py`
-- 用 **PowerShell** 跑，**必须** 先刷新 PATH + 加 `dangerouslyDisableSandbox: true`（沙箱拦行情网络）。
+- 用 **PowerShell** 跑；行情联网被沙箱阻断时按 Codex 权限流程申请一次网络执行，禁止跳过 verify/notices。
+- 任何引擎命令前必须运行 `python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" baseline`；失败立即停止。
+- 最终 JSON 的 `codex_audit` 必须遵守 `C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\JUDGE_SCHEMA.md`。
 - **交易日历自动查清**：引擎用权威A股日历(akshare,缓存30天)算出并打印 **T(数据截止日) / 买入日T+1 / 最晚卖出日T+N** 的**真实日期+星期**，自动跳过周末**和春节/国庆等节假日**；若日历取不到会标注"仅跳周末"。无需手动推算。把这三个日期**如实转述给用户**。
 
 ### 步骤 0.5 — Agent ⓪「市场环境·情绪裁判」：总闸门（每次必做，先于一切个股分析）
@@ -120,19 +122,19 @@ python "...\review.py" --in C:/.../某期历史.json   # 复盘任一期
 
 1. **跑闸门脚本**（腾讯指数 + 东财涨停/炸板/跌停池，免费）：
    ```powershell
-   python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\weekly-ashare-rank\market_gate.py"
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" weekly-gate --
    ```
    输出：四大指数趋势表 + 情绪(涨停家数/最高连板/炸板率/跌停/环比) + **环境分(0-100)/regime/总仓上限/预案**，
    并写 `C:\Trading_analysis\data\market_gate_latest.json`。
-2. **外盘与环境盲区（P12 起指数类外盘由脚本直出，勿再 WebSearch 查指数）**：
+2. **外盘与环境盲区（P12 起指数类外盘由脚本直出，勿再网页检索查指数）**：
    - `market_gate.py` 已自动输出 **🌍 隔夜/外盘表**（纳指/费半SOX/道指/标普/A50，新浪直拉，**每条报价自带北京时间戳+距今小时数**，与本机时钟无关）——直接读表，先核"距今"列确认新鲜度。
-   - WebSearch **只**补脚本拿不到的：人民币汇率异动、跨周末政策预期、外盘异动的"原因/新闻"。
+   - Codex 网页检索**只**补脚本拿不到的：人民币汇率异动、跨周末政策预期、外盘异动的“原因/新闻”。
    - **⚠ 时间硬规则（2026-07-07 教训：本机时区是UTC-6，LLM按本机日期拼出"美股 收盘 7月3日"，查到的是美股休市日+暴跌旧闻，把大涨的美股周一时段判成偏空）**：**搜索词禁止拼任何日期**，一律用"最新/收盘/隔夜"措辞；判断"今天几号/现在几点"只能用 market_gate 打印的「当前北京时间」行，不得用环境里的本机日期；搜到的结果必须核对内文日期与外盘表时间戳一致才可引用。
 2.5. **T+1 前瞻 nowcast（展示 + 背离告警用，绝不自动改仓位/打分）**：`market_gate.py` 现已自动多输出一条
    `🔮 T+1 前瞻` —— **历史类比基准率**（拿今天的状态去 800 根指数日线里找最像的相似日，看它们次日收益分布）
    **+ 情绪延续/退潮微调**，附**扩张窗口回测的方向命中率 / 跳空 MAE**（无前视），写进 `market_gate_latest.json` 的 `t1_forecast`。
-   我（Claude）要做两件事：
-   - **叠加外盘方向（P12 起读脚本 🌍 表，不再 WebSearch 查指数）**：把 market_gate 输出的隔夜美股 / 费半 SOX / A50（自带北京时间戳）与 nowcast 方向**人工对一下**，
+   Codex 要做两件事：
+   - **叠加外盘方向（P12 起读脚本 🌍 表，不再网页检索查指数）**：把 market_gate 输出的隔夜美股 / 费半 SOX / A50（自带北京时间戳）与 nowcast 方向**人工对一下**，
      在报告 🔮 行补一句（如"A50 夜盘 +0.6%、SOX +1.2% 同向支持偏多"或"外盘走弱、与历史类比偏多相左，降一档看"）。
      依据：A50 夜盘期货 + 美股对 A 股**次日早盘/跳空**有公认的领先/溢出关系（次日开盘最有 edge 的就是这块）。
    - **处理背离告警**：若脚本 `divergence` 字段非空（**滞后闸门 vs 前瞻方向不一致**，最常见=闸门判防守/观望但前瞻偏多的 V 反场景），
@@ -148,18 +150,21 @@ python "...\review.py" --in C:/.../某期历史.json   # 复盘任一期
    - **观望(<40)**：明确告诉用户"亏钱效应主导，建议本期空仓，等大盘止跌信号再进"。
      **P4 流程改变：观望档不出常规的8只买入方案表**——步骤4 的「买入方案」整块替换成「**结论=空仓观望**」+「观察池」列全部候选代码+一句原因（暂不入场）。全员置信度封顶「中」。不许照常铺8只买入区间给"能买"的暗示。
      **P13-3（2026-07-13 收紧，覆盖旧"至多1只观察标的"条款）：观望档禁止点名任何『观察标的/最强候选』，且文字报告与 HTML 均不给任何买入区间/止损/目标价位**——"观察标的+具体价位"=递刀诱导入场（07-13 环境分4分点名中电港观察标的、用户据此入场当日-6%的教训）。引擎 render 已自动隐藏观望档卡片价位（P13-3 硬编码），文字报告同样只列代码不列价。用户若执意要价位，先声明"这是你自担风险的手动查询，不是本系统建议"再给。
-   - 同时记下**前一交易日被集中抛售的主题**（脚本指数对比 + WebSearch 确认，如"6/5算力链被抛售"），
+   - 同时记下**前一交易日被集中抛售的主题**（脚本指数对比 + Codex 网页检索确认），
      交给 Agent③ 执行"主题逆风"硬规则。
 
 ### 步骤 1 — Agent ①「量化筛选者」：跑引擎
 ```powershell
 $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH","User")
-python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\weekly-ashare-rank\ashare_weekly_rank.py" --hold-days 5 --out "C:\Trading_analysis\data\rank_latest.json"
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" weekly -- --hold-days 5 --out "C:\Trading_analysis\data\rank_latest.json"
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" validate-weekly-engine --json "C:\Trading_analysis\data\rank_latest.json" --gate "C:\Trading_analysis\data\market_gate_latest.json"
 # 2026-07-10 起默认 pool=400/top=20(粗排≈噪声已被三组A/B证实,400≈全宇宙覆盖)；引擎输出20只供②③④详细分析,最终表只呈现头部(默认前8)
 # ⚠ 弹性安全阀：若本期 top20 经 gate 剔除后『零信号干净票』(weak_n=0 且无硬gate标记) < 3 只 →
 #   当期临时加 --top 30 重跑一次；若重跑后干净票仍然稀少=市场自己在喊空仓，按观望结论处理，不再扩。
 # 指定板块再加 --sector 光通信 ；想用回测权重再加 --weights auto
 ```
+第二条会对全部原始候选重算因子、风险、rank_score、跨源价格、公告字段与 Agent⓪；非零退出立即停止，
+不得进入 Agent②/③ 人工裁定。
 引擎输出每只候选：综合分 + 5个分项（动量/量能/技术/盘口/回调）+ 5日%/20日%涨幅 + 量比/当日量 +
 尾盘强弱 + 距MA10 + 60日位 + ATR% + 成交额/流通市值 + **信号(N连板/一字/回踩/尾盘强)**。
 - 读 stdout 表格 + `rank_latest.json`。注意引擎打印的 **T、T+1、是否跨周末**。
@@ -184,7 +189,7 @@ python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc
 
 - **（2026-07-13 新增·P13-1 可买双门槛，引擎已自动执行——催化剂诅咒实证）**：**非进攻档（环境分<70）**，`entry_status=可买` 须**同时满足**：①最终排名（物理顺序）≤3；②有 ≤7天正面新鲜催化（引擎客观代理 `p13_fresh7`：业绩预告预增/扭亏≤7天，或公告标题命中 中标/合同/签约/批复/重组/涨价 等正面关键词且≤7天；routine 异动/股东会/回购进展不算）。缺任一 → 引擎自动降为 `双门槛未过·观察(P13-1)`、pos=0。
   依据（17期56笔存档实测，scratchpad catalyst_study）：历史"可买"篮子 T+1开→收 -0.81%，按本门槛重算保留组 **+1.00%/胜率56%**、被砍组 -2.06%；"可买×无新鲜催化"3日 **-7.53%** 全表最惨（高能环境/和而泰模式）；"可买×无新鲜 vs 可买×新鲜" 3日 Welch t=-2.06。
-  **边界**：进攻档不生效（样本全来自防守/观望期，牛市右尾未验证不外推）；公告接口全挂时引擎跳过本gate（数据缺失=中性）；Agent② WebSearch 若查到引擎种子外的带日期新鲜催化，可回填 `fresh_override` 后重跑 gate（说一声即可）。**"排名≤3"半边单独不显著（t=-1.40），属待复验条款**。
+  **边界**：进攻档不生效（样本全来自防守/观望期，牛市右尾未验证不外推）；公告接口全挂时引擎跳过本gate（数据缺失=中性）；Agent②通过 Codex 网页检索查到引擎种子外的带日期新鲜催化，可回填 `fresh_override` 后重跑 gate。**“排名≤3”半边单独不显著（t=-1.40），属待复验条款**。
   **自动回滚条款**：复盘时若连续 2 期"被 P13-1 砍掉的票"平均收益反超"保留的票" → 本 gate 降回影子标注（改引擎+本条），并记录数据。**P13-2（催化已涨停/累涨>10%→降级price-in）经同一数据集检验无效（已兑现组3日-0.22% vs 未兑现-3.01%，t=-0.13），已否决不实施——单案例归纳要先过全样本再落地。**
 
 - **（2026-07-14 新增·P14 稳健两票模式，引擎已自动执行——爆雷率研究）**：非进攻档，引擎给每只算 `steady_ok` **稳健线**（`ATR≤4% + 5日涨幅≤10% + 量比≤2 + 60日位≤85 + 0弱信号`），并把「稳健线合格 ∧ 有≤7天新鲜催化 ∧ 可买」中 rank_score 最高的**两只（强制不同 `industry`）物理置顶为终排第1/2**（`p14_pick=1/2`，HTML 深绿🛡徽标；仅合格未入选=浅绿🛡徽标）——**前两名天然=全场最不易爆雷的两只**。
@@ -192,7 +197,7 @@ python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc
   **硬条款**：①合格<2只 → 只买1只或空仓，**不降格凑数**（187日中仅48日有合格票，频繁空仓是本线的本体；显式降档线 ATR≤5=爆雷率9%档，用时必须标注"降档"）；②**P14-2 损失限幅**：`仓位%=单笔风险预算(1.0~1.5%总资金)÷止损距%`——**只限损失、不降低爆雷概率**（禁止再包装成"概率保证"）；③**P14-3 执行三刀**：成交即挂条件单 / **买入日收盘≤-5%→次日无条件离场**（崩后10日"真·涨回"率仅9%）/ 赢家到期延展（浮盈且未破MA5→延2-4天,止损上移成本）；④**P14-4 滚动复验**：稳健线爆雷率标注恒为 `1.7%·CI0.6–4.9·复验中`，累计30笔实盘后重新裁定，禁止写"<3%已证明"；⑤两票vs单票取舍向用户披露：至少一雷 2.1% vs 1.7%、双雷 0% vs N/A。
   **研究否决留档（防重提）**：增持有天数N防雷=反向（3日21%→10日42.6%，N是收益节奏参数非防雷参数）；"崩了拿久点等回来"=幻觉（84-89%先触-8%止损，真·等回来9-11%）；披露日历回避证据不足留研究队列。
 
-### 步骤 2 — Agent ②「催化剂分析者」：先看引擎客观种子，再 WebSearch 补全
+### 步骤 2 — Agent ②「催化剂分析者」：先看引擎客观种子，再用 Codex 网页检索补全
 对引擎 Top 候选（前 ~10）逐一查最近催化剂，给 **催化剂强度(高/中/低/无)** + 一句话逻辑，
 并判断"利好是否已 price-in"（公告前已大涨）。
 
@@ -201,9 +206,9 @@ python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc
   2. **信号驱动专搜（硬规则）**：凡满足以下任一的票，**必须**专搜该事件本体，不得只凭泛搜下结论——
      ① 引擎 `has_fresh_event=⚡`；② 引擎信号含 涨停/N连板/尾盘强；③ T 日涨幅 ≥7%。
      专搜词：`{股票名} {⚡公告标题或T日完整日期YYYY-MM-DD} 详情/影响`、`{股票名} {T日日期} 涨停 原因`、`{股票名} 龙虎榜 {T日日期}`。
-  3. **来源 checklist（每只 Top 票至少覆盖 3 类、≥2 条独立 query）**：① 公告/业绩预告(引擎种子+必要时 WebFetch 拉巨潮/东财公告原文确认日期与数字) ② 当日异动归因(同花顺/东财涨停揭秘、龙虎榜=谁在买) ③ 机构研报/评级 ④ 风险面(减持/解禁/质押/商誉，引擎 `recent_notices` 常已含)。**单 query 一锤定音=不合格**。
+  3. **来源 checklist（每只 Top 票至少覆盖 3 类、≥2 条独立 query）**：① 公告/业绩预告（引擎种子+必要时打开巨潮/东财公告原文确认日期与数字）② 当日异动归因（同花顺/东财涨停揭秘、龙虎榜）③ 机构研报/评级 ④ 风险面（减持/解禁/质押/商誉，引擎 `recent_notices` 常已含）。**单 query 一锤定音=不合格**。
   4. **结构化产出 + 缺口自证**：每只票产出 `{事件, 日期, 来源URL, 类型(新鲜/存量), 是否price-in}`；**查不到新鲜催化也必须显式写"已搜 公告/异动/研报 ≥3 类源，均无≤7天事件"**，杜绝"查不到=默认无催化"的假阴性。凡引擎列了 ⚡ 的票，产出里必须对该 ⚡ 事件有交代（确认/证伪/判 price-in），漏掉=Agent④ 打回。
-> 纪律：具体数字必须来自 引擎种子 / WebSearch / WebFetch 原文，不得用训练记忆里的旧价/旧数。⚡ 新鲜事件**只是触发核验的线索，不等于强催化**——仍须按下面 P2 判新鲜/存量、按步骤3硬规则③判能否提权（位置过热的票即便催化新鲜也禁追高）。
+> 纪律：具体数字必须来自引擎种子或 Codex 打开的来源原文，不得用训练记忆里的旧价/旧数；每条关键事实保留 URL、发布日期、北京时间检索日期。⚡ 新鲜事件**只是触发核验的线索，不等于强催化**。
 
 - **P2 催化剂必须分两类、且带日期，不许混为一谈（教训：中国稀土用4月的Q1业绩+几月前的涨价当"强独立催化"提到第1，却用"催化太旧"把别的票降级——同样旧消息双标）**：
   - **新鲜催化（≤7天内突发事件）**：新签大单/中标、重组或批文落地、新提价函、突发政策、业绩预告首次披露等，**有明确日期且在 T 前 7 天内**。只有这类才算「高/强」、才有资格触发步骤3的「独立催化优先」提权。
@@ -213,7 +218,7 @@ python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc
   ① 本周末政策/会议/监管预期（A股政策常周末发）
   ② 候选股 T 日盘后公告（业绩预告/重组/减持/中标/解禁）
 - 常规搜索词模板：`"{板块} 政策 利好 最新"`、`"机构强推 A股 本周"`、`"{股票名} 公告 业绩"`、`"A股 下周 风险 解禁"`。
-> 纪律：具体数字必须来自 WebSearch 或引擎输出，不得用训练记忆里的旧价/旧数。
+> 纪律：具体数字必须来自 Codex 网页来源或引擎输出，不得用训练记忆里的旧价/旧数。
 
 ### 步骤 3 — Agent ③「风险挑战者」：质疑 + 跳空感知定价 + 排名
 逐一挑战并给最终排名：
@@ -268,19 +273,19 @@ python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc
 **B. 个股层 — 逐只 verify（每只过 5 项，全过才标 ✓，任一不过标 ⚠ 并处置）**
 1. **跨源价格**：看引擎 JSON 里每只的 `verify.status`。引擎现已做**四源共识校验（东财 / 腾讯 / 新浪 / 雅虎）**：东财限流时自动用 `腾讯×新浪` 交叉验证、两国内源不足时外网雅虎(沪市)补位，状态会写成 `一致(腾讯×新浪)` 这种**带参与源**的形式。处置：
    - `一致(源A×源B)` 且 ≥2 源 → 价格交叉验证通过，可作为 ✓ 的价格条件（仍需数值自洽+催化剂可追溯才给✓）。
-   - `存疑(跨源偏差大:...)` → 该票买入价/止损不可信，先 WebSearch/人工核对，对不上就**剔除**。
+   - `存疑(跨源偏差大:...)` → 该票买入价/止损不可信，先用 Codex 网页检索/人工核对，对不上就**剔除**。
    - `单源未校验(X)` → **P3：仅 1 源，一律不得标「✓已验证」，最高 `⚠单源(价格未交叉验证)`**；此时可手动跑 `_sina_kline_close`/`_yahoo_close` 再补一源，核不上的不进买入方案。
    - 旧版"全表单源需手动腾讯K线核对"已被引擎自动多源覆盖，正常情况下不应再出现整表单源（除非腾讯+新浪+雅虎同时挂）。
 2. **数值自洽**：必须 `止损 < 补仓区间 < 买入区间下沿 < 目标价`，且 `R:R ≥ 1.8`（引擎已给 `rr`，<1.8 的剔除或明确标"盈亏比不足，仅观察"；门槛随止损放宽由2.0下调至1.8）。
 3. **可买性**：`信号` 含「一字板」→ 次日买不进，不当常规标的（仅注明打板客竞价）；高位连板(≥3)→ 强制轻仓。
-4. **催化剂可追溯**：最终表里写的每条催化剂，**必须能对应到 Agent② 的某条 WebSearch 结果（带日期/来源）**；凡是只能凭记忆、查不到出处的 → 改写成"未证实"并下调置信度，严禁编造。
+4. **催化剂可追溯**：最终表里写的每条催化剂，**必须能对应到 Agent② 的某条网页来源（URL、发布日期、检索日期）**；凡是只能凭记忆、查不到出处的 → 改写成“未证实”并下调置信度，严禁编造。
 4.5. **（P8 漏查兜底·机器兜人）引擎种子比对**：逐只比对该票引擎 `forecast`/`recent_notices`（尤其 `has_fresh_event=⚡` 与 ⚡ 标记的公告）与 Agent② 写出的催化剂——
    **若引擎列了实质性≤10天新鲜事件（业绩预告/中标/签约/重组批文/再融资过会/减持解禁等），而 Agent② 的产出里对该事件只字未提 → 判定「漏查」，打回步骤2 对该事件专搜后重做**，不得直接出表。
    （这正是 2026-06-27 恒逸石化的教训：引擎 ⚡ 列了 06-26 半年度业绩预告，若 Agent② 漏掉就会重蹈"误判存量已price-in"覆辙。）routine 类公告（回购调价/转股价调整/股东会流程）不触发打回，只看实质性事件。
 5. **数据新鲜度/样本量**：核对引擎输出的 `as_of` 是最新交易日、`spot_source` 与 `sanity_flags`；若有 `⚠universe偏小/种子兜底` → 在风险提示里如实披露"覆盖面有限"。
 
 **C. 产出**：给每只票一个核验标记（`✓已验证` / `⚠存疑:<原因>`），把策略裁定行 + 每只标记带进步骤4的表，并把 validate 裁定回填进结果 JSON 顶层 `validation` 字段（供 HTML 报告显示）。
-> **P3 强约束**：`✓已验证` 只发给**同时满足**「价格跨源一致 + 数值自洽(止损<买入<目标且R:R≥1.8) + 催化剂可追溯到≤7天WebSearch出处」的票；只要价格是单源/缓存，标记里**必含「⚠单源」**，绝不能出现"✓已验证(价格仅单源)"这种自相矛盾写法。
+> **P3 强约束**：`✓已验证` 只发给**同时满足**「价格跨源一致 + 数值自洽(止损<买入<目标且R:R≥1.8) + 催化剂可追溯到≤7天网页出处」的票；只要价格是单源/缓存，标记里**必含「⚠单源」**。
 
 ### 步骤 4 — 输出最终排名表
 ```markdown
@@ -330,13 +335,22 @@ python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc
    `rr`(如"2.5:1")、`catalyst`(核心催化剂一句话)、`risk_note`(基本面风险补充)。
    **⚠️ 核验标记要塞进会被渲染的字段**：`render_html` **不读任何独立的"核验"字段**（`verify_mark` 之类会被静默丢弃，HTML 上看不到 ✓/⚠），所以把 Agent④ 的 `✓已验证`/`⚠存疑:<原因>` **拼到该票 `risk_note` 的开头**（卡片会渲染 risk_note）。
    **顶层加 `validation`**(把 `validate_latest.json` 整个对象塞进来 → 报告顶部显示策略验证裁定；render 读取 `verdict/excess_vs_market/top_win_rate/rank_ic/n_sections/top_k`，字段名勿改)；
-   可选顶层加 `catalysts_md`/`final_md`(消息面/裁决全文)。
+   顶层必须加 `codex_audit`（严格遵守共享 `JUDGE_SCHEMA.md`），其中 `weekly.final_codes` 必须与
+   裁剪后的 `candidates[]` 物理顺序逐项一致，`confidence_by_code` 受 IC 上限约束；事实必须有 URL、
+   发布日期和北京时间检索日期，并含反方挑战与审计官复核。可选顶层加 `catalysts_md`/`final_md`。
 2. 运行：
    ```powershell
-   python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\weekly-ashare-rank\make_report.py" --in "C:\Trading_analysis\data\rank_latest.json"
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" weekly-report -- --in "C:\Trading_analysis\data\rank_latest.json"
    ```
-3. **渲染后 sanity check（必做）**：核对生成的 HTML 里「排名 1→N 的代码顺序」与你文字最终表**逐一一致**、`策略验证` 行正常显示、`🌡 环境横幅`与每张卡的**状态徽标(可买/观察·不入场/过热剔除)**与你文字结论一致（观望档应全员"观察·不入场"、无任何"可买"绿标）、核验标记/置信度/催化剂都在。任一不一致 → 回第0/1步修正后**重新渲染**（旧的错序报告要删掉，每个 session 只留一份正确的）。
-4. 把生成的 HTML 路径告诉用户（report 文件名里的时间戳是中国当地时间）。
+3. 对 stdout 给出的完整版 HTML 做品牌归一与强制验收：
+   ```powershell
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" augment-report --skill weekly-ashare-rank --json "C:\Trading_analysis\data\rank_latest.json" --html "<完整版HTML绝对路径>"
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" brand-report --html "<完整版HTML绝对路径>"
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" validate --skill weekly-ashare-rank --json "C:\Trading_analysis\data\rank_latest.json" --html "<完整版HTML绝对路径>"
+   ```
+   验收会机械核对排名物理顺序、策略验证、IC置信上限、跨源价格、价位关系、P13/P14、环境横幅、状态徽标、
+   核验标记以及观望不给价位。任一命令非零退出：标记“未通过”，回第0/1步修正并重渲染；验收器不提供最终报告降级开关。
+4. 只有验收返回 `[PASS]`，才把 HTML 路径告诉用户（文件名时间戳为北京时间 UTC+8）。
 
 ---
 
@@ -346,16 +360,17 @@ python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc
 - **市场环境闸门(Agent⓪)**：`python market_gate.py`（→ 环境分/总仓上限/跳空预案 + market_gate_latest.json）
 - 盘前复核：`python recheck.py --in C:\Trading_analysis\data\rank_latest.json`
 - **复盘战绩**：`python review.py [--in 某期JSON]`（→ 计划vs实际仿真 + 胜率/超额 + track_record.json 累计）
-- 强制不用回测权重：选股命令加 `--weights none`；强制重拉行情：加 `--refresh`；跳过跨源价格校验：加 `--no-verify`
+- 强制不用回测权重：选股命令加 `--weights none`；强制重拉行情：加 `--refresh`。原引擎虽保留
+  `--no-verify`/`--no-notices` 兼容参数，**Codex workflow 禁止使用**；跨源价格和 F10/公告均不得跳过。
 
 ## 硬性纪律
-1. **0 API**：除自带 WebSearch 外不调用任何付费 LLM/数据 API。
-2. **真实数据**：行情来自引擎实时拉取，资讯来自 WebSearch，严禁编造/用旧记忆数。
+1. **0 API**：除 Codex 网页检索外不调用任何付费 LLM/数据 API、MCP 或外部 agent。
+2. **真实数据**：行情来自引擎实时拉取，资讯来自 Codex 网页来源，严禁编造/用旧记忆数。
 3. **A股特性**：T+1（次日才能卖）、涨跌停、流动性(日均额>1亿)、剔除 ST/次新。
 4. **仓位**：单票≤10%，持 3–5 只；明确止损纪律；跨周末提示周末消息面不确定性。
    **总仓位服从 Agent⓪ 闸门**（进攻≤60% / 中性≤50% / 防守≤30% / 观望≤15%或空仓），个股再好也不突破。
 5. **建议必须 verify 过（Agent④）**：① 排名整体 edge 看走样本验证裁定，未通过就不给「高」置信、提示轻仓；
-   ② 每只票的价格(跨源)、数值自洽(止损<买入<目标且R:R≥1.8)、催化剂(可追溯到WebSearch出处)逐项核验，
+   ② 每只票的价格(跨源)、数值自洽(止损<买入<目标且R:R≥1.8)、催化剂(可追溯到网页出处)逐项核验，
    不过关就降级或剔除并在「核验」列标 ⚠；③ 置信度上限由验证裁定决定，不得拍脑袋给高分。
    ④ **(P1) 置信度先受 `rank_ic` 绝对值封顶：<0.02→封顶中低且明示"≈随机"，0.02–0.04→中，≥0.04才可中高，≥0.06+超额>1%+胜率>55%才可高**。任何置信度数字都要能被IC解释，禁止凭"独立催化/抗跌"等叙事抬分。
    ⑤ **(P3) 价格单源/缓存的票一律不得标✓，最高⚠单源**。
@@ -363,7 +378,7 @@ python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc
    ⑦ **(P7) 报告顶部强制坦白真实选股力(IC/超额/胜率)的人话翻译**，不许用精致价位掩盖底层≈随机的事实。
    ⑧ **(P9 见光死护栏) T+1 复核为必做**：T 选股给的是 T 收盘价位，跳空只能买入日早上算。**过热/利好已兑现/抛物线票务必 T+1 早上复核**；recheck 对"向下跳空≤−4%/开在止损边"判"放弃不接飞刀"，**严禁把跳空跳水跌破买区当'打折低吸'**（恒逸06-29业绩预告见光死、开盘跌停教训）。"只接深回踩"=盘中受控回踩，**不含向下跳空**。
    ⑨ **(P11 资金流负向铁律) `flow_x=2`(主力5日净流出且正天数≤2) 的票不得进买入方案**，除非 Agent② 拿到"当日资金已回流"的带日期证据；`flow_x=1` 降档票置信度封顶「中」；资金流**只否决不加分**（流入≠会涨，回测有反例）。兑现风险带（`cashout_soft`）票在防守/观望环境一律观察。
-   ⑩ **(P12 时间纪律) 本机时钟/时区不可信（实测UTC−6，比北京慢14小时），全部时间以引擎为准**：两引擎+market_gate+review 内部已统一北京时间(`_cn_now`=UTC+8换算)；**T/T+1/T+N 只认引擎打印的交易日窗口**（T=最新已收盘K线日，盘前跑=上一交易日，天然正确）；"现在几点/今天几号"只认 market_gate 的「当前北京时间」行；**外盘指数读 🌍 表（自带北京时间戳），WebSearch 搜索词禁拼日期**；引用任何搜索结果前先核对内文日期。
+   ⑩ **(P12 时间纪律) 本机时钟/时区不可信，全部时间以引擎为准**：两引擎+market_gate+review 内部已统一北京时间(`_cn_now`=UTC+8换算)；**T/T+1/T+N 只认引擎打印的交易日窗口**；“现在几点/今天几号”只认 market_gate 的「当前北京时间」行；**外盘指数读 🌍 表，网页检索词禁拼日期**；引用前核对内文日期。
    ⑪ **(P13-1 可买双门槛·非进攻档) `可买`须同时满足 终排≤3 且 ≤7天正面新鲜催化**，缺一引擎自动降观察（实证：可买×无新鲜催化 3日-7.53%、高能/和而泰模式；带自动回滚条款——连续2期被砍组反超保留组即降回影子）。P13-2（已兑现降级）经检验无效已否决。
    ⑫ **(P13-3 观望不递刀) 观望档禁止点名观察标的、禁止给任何操作价位**（文字+HTML 一致，render 已硬编码）；**(P13-4/5) 策略验证必须披露验证窗口市况**，上涨段测的 IC 用在环境分<55 的退潮日必须明示"未在退潮市验证"并考虑弃用回测权重/动量减半。
    ⑬ **(P14 稳健两票) 非进攻档终排前2=稳健线(ATR≤4·5日≤10·量比≤2·60位≤85·0弱信号)×新鲜催化×不同行业的两票首选**（引擎自动置顶）；合格<2不降格凑数；仓位公式只是损失限幅**不得宣传为爆雷概率保证**；买入日收盘≤-5%次日无条件离场；稳健线爆雷率永远带CI标注（1.7%·CI0.6–4.9·30笔复验中）。

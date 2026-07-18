@@ -13,7 +13,7 @@
 ```
 bottom-fishing/
 ├─ bottom_fishing.py     # 引擎: 扫描/打分/推荐线/执行方案/F10种子/影子日志/--review/HTML
-├─ SKILL.md              # skill定义副本(生效版在 ~/.claude/skills/bottom-fishing/)
+├─ SKILL.md              # Codex skill 定义（安装到工作区 .agents/skills/bottom-fishing/）
 ├─ README.md             # 研究存档: 全部方法论数字/否决清单/毒月专项
 ├─ DOC.md                # 本文件(操作文档)
 └─ reports/              # HTML报告(gitignore, 每次跑一份带时间戳)
@@ -24,8 +24,8 @@ C:\Trading_analysis\data\
 
 ## 引擎命令行
 ```powershell
-python bottom_fishing.py            # 扫描(约2-4分钟, 480只K线; 盘中跑自动丢未完成K线)
-python bottom_fishing.py --review   # 对账: 先到+5% vs 先砸-8%(20日窗) + 滚动停做开关
+python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" bottom --            # 扫描
+python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" bottom -- --review   # 对账
 ```
 
 ## 数据流水线
@@ -41,7 +41,7 @@ python bottom_fishing.py --review   # 对账: 先到+5% vs 先砸-8%(20日窗) +
   + **国内外双向搜索**(周期/出口/医药必查海外驱动) + 前视纪律(只认T日已公开信息)。详见 SKILL step2。
   **取证护栏×2**(2026-07-17加, 源自宁德时代实盘裁定, 非判据改动): ①**F10种子会过期**——`f10_flag`只看
   `forecast.type`不看新鲜度, 必核 `notice_date`/`fresh` 并与 `kcfj_yoy`/最新季报交叉验证, 陈旧或矛盾=误报勿否决;
-  ②**旧闻污染**——WebSearch 把多年前旧文与当期新闻混排且摘要常不带年份, 每条红旗核到"年"再采信, 核不出不采信
+②**旧闻污染**——网页检索会把多年前旧文与当期新闻混排且摘要常不带年份, 每条红旗核到"年"再采信, 核不出不采信
   (旧闻致**错误否决**, 比误给✓更隐蔽)。详见 README §Agent②取证护栏。
 - Agent④=复核官: 价格新鲜度/来源可追溯/口径一致。
 

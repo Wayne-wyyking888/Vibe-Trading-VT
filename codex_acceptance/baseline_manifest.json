@@ -1,0 +1,34 @@
+{
+  "schema": "codex-trading-baseline/v1",
+  "purpose": "Lock deterministic pre-migration engine files before the Codex workflow migration. Text instructions and independent validators are intentionally outside this list.",
+  "files": {
+    "bottom-fishing/bottom_fishing.py": "4DF078597134A74D3FE1D0D6B77AEA48CC23E88FF987ECCEB1F531B7CEFCEA6B",
+    "stock-diagnostic/stock_diagnostic.py": "5D8649A1D3ABDD7F773EA0B0F1F9BE9DDF3A460DE06B0B54BAA277D88E0C49BC",
+    "stock-diagnostic/make_diag_report.py": "C3C17D3FF8B1B78A2F1BF8F5EA5DCD258E25503A6C4AD8A3B223B81C39BBFBB3",
+    "stock-diagnostic/recheck_diag.py": "F34D6A6284A8F46BC53FB8D60584A0910274ED917E07126F2775C51DB7EC0C6F",
+    "weekly-ashare-rank/ashare_weekly_rank.py": "A692A61CE72B937EEB4A75A9496F39411E5B081EFC5AC3C555F1FD41647F2193",
+    "weekly-ashare-rank/market_gate.py": "4B5D4177FE84C993BDDC76E6B43ED032A94F7A8F31B43377982D463B7B0F0A59",
+    "weekly-ashare-rank/review.py": "044CCA9B7E4ACE3597554668161C486756FA794DCBD01A09E1D255E4C91F721F",
+    "weekly-ashare-rank/recheck.py": "A4FA7020586B6912A2FA174C2016BB4FAB20010977F7E9C17499E7567A17115F",
+    "weekly-ashare-rank/make_report.py": "BAFAE96B80024E1E96823AFA09EB3BD85CBDC4864C9134EFAFFAFFDEC70DE41B"
+  },
+  "mutable_contract_files": {
+    "stock-diagnostic/weights.json": {
+      "initial_sha256": "DFCFD687C4DD0069FCE4AF31E1DC7B27E3272DB8B079ABE516053991DBB456DB",
+      "reason": "原引擎按≤24h纪律自动重校准，值是合法运行状态；只锁schema和边界，不锁字节。"
+    },
+    "weekly-ashare-rank/weights.json": {
+      "initial_sha256": "989DD1B4BC1CC7CC417AC9BF28B812AD70E10B664149D899E0ABE5A7C178D213",
+      "reason": "原引擎按持有天数/≤7天纪律重校准，值是合法运行状态；只锁schema和边界，不锁字节。"
+    }
+  },
+  "ignored_business_neutral_fields": [
+    "generated_at",
+    "cn_time",
+    "adjudicated_at",
+    "reviewed_at",
+    "validation.generated_at",
+    "report_path",
+    "report filename timestamp"
+  ]
+}

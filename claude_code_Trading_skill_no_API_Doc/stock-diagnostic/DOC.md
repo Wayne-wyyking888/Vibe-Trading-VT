@@ -1,23 +1,23 @@
 # stock-diagnostic — 完整文档
 
-单只A股「持仓深度诊断」skill。Claude Code 原生、**0 API**、真实免费行情，**6-Agent 辩论 + 复核裁定**。
+单只A股「持仓深度诊断」skill。Codex 原生、**0 付费 API**、真实免费行情，**6-Agent 辩论 + 复核裁定**。
 给一只票的**代码 + 你的持仓成本**，从 技术/基本面/消息/资金/风险 五维彻底诊断 + 结合**整个A股**
 （同行/行业/板块/大盘）→ **复核通过后**给**综合裁定 + 结合成本的操作建议**（加仓/持有/减仓/止损，带具体价位与风险预算仓位）。
 
 ## 🚀 怎么调用（样板 wording，复制改数字）
 
 ```
-/stock-diagnostic 股票代码=600519 成本价=1500
-/stock-diagnostic 600519 1500
-/stock-diagnostic 代码：300750 成本=180 持有天数=10
+$stock-diagnostic 股票代码=600519 成本价=1500
+$stock-diagnostic 600519 1500
+$stock-diagnostic 代码：300750 成本=180 持有天数=10
 诊断一下 600036，我成本 40.5，最多拿一个月
 我 600036 套了，成本40，现在怎么操作？
 ```
 - **必填**：股票代码。**强烈建议**：成本价（给了才能算盈亏/解套/补仓/止盈止损；不给则做通用诊断）。
 - 可选：持有天数/视野 N（默认 20 个交易日，驱动情景目标、止损 ATR 倍数与 IC 回测窗口）。
 
-调用后我（Claude Code）会：解析参数 → 跑引擎拿量化底座（技术/资金/F10事件面/同行/大盘/成本）→ 扮演 6 个 agent
-（②基本面 ③消息中英文 ④资金板块 由 WebSearch 补全，⑤风险裁决综合，⑥验证复核）→ 给**多维评分表 + 操作矩阵 +
+调用后 Codex 会：解析参数 → 跑引擎拿量化底座（技术/资金/F10事件面/同行/大盘/成本）→ 扮演 6 个角色
+（②基本面 ③消息中英文 ④资金板块 由网页检索补全，⑤风险裁决综合，⑥验证复核）→ 给**多维评分表 + 操作矩阵 +
 关键价位地图 + HTML 报告**。**0 API、0 额外花费。**
 
 ## 6 个 Agent（我依次扮演，⑤裁定 → ⑥复核通过才出报告）
@@ -25,9 +25,9 @@
 | Agent | 角色 | 数据来源 | 产出 |
 |---|---|---|---|
 | ① | 技术·量价分析师 | Python 引擎（东财/腾讯行情 + IC 校准因子 + 新鲜度守卫） | 趋势/动量/MACD/RSI/BOLL/位置/支撑压力/ATR + 量价 stance |
-| ② | 基本面·财务分析师 | WebSearch + 引擎 PE/PB/市值/业绩预告 | 估值分位/业绩趋势/质地 → 按锚定 rubric 打分（亮算式） |
-| ③ | 消息·催化剂分析师（**中英文·海内外**） | WebSearch ≥6次（≥4中文+≥2英文） | 公告/研报/政策/互动易/龙虎榜/海外 + 量化 price-in → 打分（亮算式） |
-| ④ | 资金·板块·大盘联动分析师 | 引擎主力资金流+两融+同行+指数 + WebSearch | 资金/杠杆/板块景气/相对强弱/大盘 → 打分（亮算式） |
+| ② | 基本面·财务分析师 | Codex 网页检索 + 引擎 PE/PB/市值/业绩预告 | 估值分位/业绩趋势/质地 → 按锚定 rubric 打分（亮算式） |
+| ③ | 消息·催化剂分析师（**中英文·海内外**） | Codex 网页检索 ≥6次（≥4中文+≥2英文） | 公告/研报/政策/互动易/龙虎榜/海外 + 量化 price-in → 打分（亮算式） |
+| ④ | 资金·板块·大盘联动分析师 | 引擎主力资金流+两融+同行+指数 + Codex 网页检索 | 资金/杠杆/板块景气/相对强弱/大盘 → 打分（亮算式） |
 | ⑤ | 风险挑战者·首席裁决官 | 综合 ①~④ + 引擎技术风险 + F10事件风险 | 挑刺3条 → **反驳回合** → 硬性gate → 5维加权裁定 + 操作（R:R/止损三性/仓位公式） |
 | ⑥ | 验证·复核官 | 全部 JSON + 前五方产出 | 8项 checklist（新鲜度/跨源/算术/rubric/价位逻辑/引用/口径/与上次对比），未过先修 |
 
@@ -44,7 +44,7 @@
 ## 文件结构
 ```
 stock-diagnostic/
-├── SKILL.md              # Claude Code 执行流程（6-agent + rubric + 反驳回合 + 复核checklist）
+├── SKILL.md              # Codex 执行流程（6角色 + rubric + 反驳回合 + 复核checklist）
 ├── DOC.md                # 本文件
 ├── stock_diagnostic.py   # 诊断引擎（Agent① 量化底座 + F10事件面）+ HTML 报告渲染
 ├── make_diag_report.py   # 由结果JSON渲染完整版HTML + 富集版JSON留痕
@@ -57,7 +57,7 @@ stock-diagnostic/
 
 ## 引擎命令行
 ```
-python stock_diagnostic.py --code 600519 [选项]
+python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" stock -- --code 600519 [选项]
   --code 600519       股票代码（必填）
   --cost 1500         持仓成本价（可选，给了算盈亏/解套/补仓/止盈止损）
   --hold-days N       评估视野(交易日)。默认20。驱动情景目标 + 止损ATR倍数 + IC回测窗口
@@ -66,7 +66,7 @@ python stock_diagnostic.py --code 600519 [选项]
   --refresh           强制重拉行情（绕过缓存）
   --no-report         不生成HTML报告
 ```
-> Windows：先刷新 PATH，且行情请求要 `dangerouslyDisableSandbox: true`（沙箱拦外网）。
+> Windows：行情联网若被沙箱拦截，按 Codex 权限流程申请精确的网络执行；不得跳过校验。
 
 ### 引擎产出（Agent① 量化底座，写入 JSON + stdout + 预览HTML）
 1. **个股快照**：现价/今涨/PE/PB/总市值·流通市值/换手/量比/行业/板块（东财 stock/get → 腾讯兜底）。
@@ -80,7 +80,7 @@ python stock_diagnostic.py --code 600519 [选项]
 5. **事件面 F10（东财数据中心，客观直出）**：未来解禁批次（日期/比例/类型）、质押比例、最近业绩预告、
    股东户数变化、两融余额与5日净买入；并产出**事件风险加点**（解禁临近/质押偏高/预亏预减），
    叠加在技术风险上得总风险。
-6. **同行对比**：板块成分股 20 日相对强弱排名（**本股必在表内**；匹配不到板块→交给 Agent④ WebSearch）。
+6. **同行对比**：板块成分股 20 日相对强弱排名（**本股必在表内**；匹配不到板块→交给 Agent④网页检索）。
 7. **大盘环境**：上证/深证/创业板/沪深300 涨跌 + 是否站上MA20 + regime。
 8. **成本相关**：盈亏%、状态、解套需涨%、等量补仓后新成本与新解套涨幅。
 9. **情景分析**：T+N 看多/基准/看空目标；**基准漂移随趋势定方向**（上行+/中性0/下行−，不再恒正）。
@@ -125,37 +125,37 @@ python stock_diagnostic.py --code 600519 [选项]
 ## 次日盘前复核（recheck_diag.py）
 买入/加仓当天早上 9:15–9:30 或盘中跑：读 `diag_latest.json`，腾讯拉实时价，对照成本/止损/价位地图给即时建议。
 ```
-python recheck_diag.py --in C:\Trading_analysis\data\diag_latest.json
+python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" stock-recheck -- --in C:\Trading_analysis\data\diag_latest.json
 ```
 
 ## 数据源与容错
 - 个股快照：东财 stock/get → 腾讯兜底；K线：东财 → 腾讯（当天缓存 + 新鲜度守卫强拉）。
-- 主力资金流：当日缓存(TTL12h) → 东财历史日线(push2his,含占比) → **新浪历史(`ssl_qsfx_zjlrqs`,独立host,完整5日+占比;但主力tick口径≠东财,带`caliber_warn`,verdict里降权为方向参考)** → 东财实时单日(push2,仅当日)；都不行标"暂不可用"交 WebSearch。**腾讯 `ff_` 接口已失效(返回`v_pv_none_match`),勿用。**
+- 主力资金流：当日缓存(TTL12h) → 东财历史日线(push2his,含占比) → **新浪历史(`ssl_qsfx_zjlrqs`,独立host,完整5日+占比;但主力tick口径≠东财,带`caliber_warn`,verdict里降权为方向参考)** → 东财实时单日(push2,仅当日)；都不行标"暂不可用"交 Codex 网页检索。**腾讯 `ff_` 接口已失效(返回`v_pv_none_match`),勿用。**
 - F10 事件面：东财数据中心 datacenter-web（RPT_LIFT_STAGE 解禁 / RPT_CSDC_LIST 质押 /
   RPT_PUBLIC_OP_NEWPREDICT 业绩预告 / RPT_HOLDERNUM_DET 股东户数 / RPTA_WEB_RZRQ_GGMX 两融），
   每项独立 try/except，挂了不影响主诊断。
-- 同行：东财板块成分（行业名清洗罗马数字后匹配；匹配不到不回退全市场，交 Agent④ WebSearch）。
+- 同行：东财板块成分（行业名清洗罗马数字后匹配；匹配不到不回退全市场，交 Agent④网页检索）。
 - 大盘：东财指数。交易日历：akshare 权威源（含节假日，缓存30天）。
 - 东财限流：多镜像轮换 + 指数退避 + 熔断 + 当天缓存兜底。跨源价差>1.5% 写进 data_warnings。
 
 ## 已知限制
-- f127 行业名是申万口径，与东财板块名不总一一对应；匹配不到时同行对比交 WebSearch（不影响主诊断）。
+- f127 行业名是申万口径，与东财板块名不总一一对应；匹配不到时同行对比交 Codex 网页检索（不影响主诊断）。
 - 主力资金流东财历史源偶发限流→先走新浪独立源(完整5日但口径异于东财,仅趋势参考)→再不行才"仅最新日"；板块列表偶发限流导致同行匹配失败（报告会标注）。
 - 业绩预告是"最近一次披露"，可能是一年前的旧公告（已按 NOTICE_DATE 12个月内才计入风险加点，报告显示日期）。
 - IC 样本小（~50只×26截面日），权重仅微调用；"最predictive"指流程上每日校准+方向修正，非统计保证。
 - 盘中跑：最新K线是未完成bar，收盘后指标会变（data_warnings 已标注）。
-- 引擎只做量价/资金/事件/位置/成本的客观计算；基本面与消息由 Agent②③（WebSearch）补足。
+- 引擎只做量价/资金/事件/位置/成本的客观计算；基本面与消息由 Agent②③（Codex 网页检索）补足。
 - 结果为量化 + 研究分析，**非投资建议**；A股 T+1。成本相关测算仅供参考。
 
 ## 手动自测
 ```powershell
 $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH","User")
 # 诊断（首次或超24h会先校准IC权重~1分钟）
-python stock_diagnostic.py --code 600036 --cost 40 --hold-days 20
+python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" stock -- --code 600036 --cost 40 --hold-days 20
 # 快速诊断（跳过IC校准）
-python stock_diagnostic.py --code 300750 --cost 280 --hold-days 10 --weights none
+python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" stock -- --code 300750 --cost 280 --hold-days 10 --weights none
 # 次日复核
-python recheck_diag.py
+python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" stock-recheck --
 ```
 看到 T/评估视野/时段表头 + 数据警示 + 现价·PE·PB + 成本盈亏 + 技术/资金/F10事件面/同行/大盘/情景/
 价位地图(含R:R) + 基线动作即正常。

@@ -4,13 +4,13 @@
 
 **日常选股（一句话，平时就用这条）：**
 ```
-/weekly-ashare-rank 天数=5
+$weekly-ashare-rank 天数=5
 ```
 **带参数（板块/数量/持有天数都可选，省略用默认）：**
 ```
-/weekly-ashare-rank 天数=3 板块=光通信 top=10
-/weekly-ashare-rank 天数=5 板块=机器人
-/weekly-ashare-rank top=15
+$weekly-ashare-rank 天数=3 板块=光通信 top=10
+$weekly-ashare-rank 天数=5 板块=机器人
+$weekly-ashare-rank top=15
 ```
 **自然语言也认（不想记格式就直接说）：**
 ```
@@ -36,15 +36,15 @@
 重新校准 weekly-ashare-rank 的因子权重，持有天数5
 ```
 
-> 调用后我（Claude Code）会：解析参数 → 自动查清 **T / 买入日T+1 / 最晚卖出日T+N 的真实日期**（含春节国庆等节假日）
-> → 必要时自动校准权重**并验证排名 edge** → 跑量化引擎(全市场~600只翻页扫描 + 跨源价格校验) + WebSearch 催化剂 + 风险综合
+> 调用后 Codex 会：解析参数 → 自动查清 **T / 买入日T+1 / 最晚卖出日T+N 的真实日期**（含春节国庆等节假日）
+> → 必要时自动校准权重**并验证排名 edge** → 跑量化引擎(全市场~600只翻页扫描 + 跨源价格校验) + Codex 网页检索催化剂 + 风险综合
 > → **Agent④ 复核(建议都 verify 过)** → 给最终排名表。**0 API、0 额外花费。**
 
 参数对照：`天数/持有/hold/N`→持有交易日数(默认5)；`板块/行业/sector`→限定板块(默认全市场)；`top/数量`→输出几只(默认8)。
 
 ---
 
-> A股短线选股排名 skill。Claude Code 原生、0 API、真实免费行情。
+> A股短线选股排名 skill。Codex 原生、0 付费 API、真实免费行情。
 > 定位：以最新收盘日 **T** 为基准 → **T+1 买入** → **持有 ≤N 个交易日**（N 默认 5，可参数指定）。
 > 不局限于周一；T+1 与 T+N 的真实日期由权威交易日历算出（自动跳过周末+节假日）。
 
@@ -55,14 +55,14 @@
 ## 1. 为什么 0 API
 
 Vibe-Trading 自带 swarm（`agent/src/swarm/presets/`）每个 agent 都调外部 LLM，需 API key/Ollama。
-本 skill 反过来：**Claude Code 本身就是大脑**，读 `SKILL.md` 后亲自跑 Python 引擎（免费行情）+
-自带 WebSearch + 自己判断排名 + 自己回测验证。0 API、0 额外花费。五个 agent：⓪市场环境·情绪闸门
+本 skill 由 **Codex 作为裁定执行者**，读 `SKILL.md` 后亲自跑 Python 引擎（免费行情）+
+Codex 网页检索 + 固定 rubric 排名 + 本地回测验证。0 付费 API、0 额外花费。五个角色：⓪市场环境·情绪闸门
 ①量化筛选 ②催化剂 ③风险定价(含过热/主题逆风/独立催化硬规则) ④验证复核；另有复盘模式(review.py)闭环记录真实战绩。
 
 ## 2. 文件结构
 ```
 weekly-ashare-rank/
-├── SKILL.md                 # Claude Code 执行流程（五方辩论:环境/量化/催化剂/风险/验证 + 参数解析 + 跳空规则）
+├── SKILL.md                 # Codex 执行流程（五方辩论:环境/量化/催化剂/风险/验证 + 参数解析 + 跳空规则）
 ├── DOC.md                   # 本文件
 ├── ashare_weekly_rank.py    # 量化引擎（Agent①）+ 因子IC回测 + HTML报告渲染
 ├── market_gate.py           # Agent⓪ 市场环境·情绪闸门（指数趋势+涨停/炸板/跌停 → 环境分/总仓上限/跳空预案）
@@ -76,7 +76,7 @@ weekly-ashare-rank/
 
 ## 3. 引擎命令行
 ```
-python ashare_weekly_rank.py [选项]
+python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" weekly -- [选项]
   --hold-days N     最多持有交易日数（T+1买入，持有≤N）。默认5。驱动因子权重 + 回测窗口
   --sector X        行业/概念板块名，模糊匹配（光通信/煤炭/机器人…）。省略=全市场
   --top K           最终输出数量。默认15（skill 默认传8）
@@ -91,7 +91,7 @@ python ashare_weekly_rank.py [选项]
   --refresh         强制重拉（绕过读缓存）
   --no-verify       跳过最终候选的跨源价格校验（默认开启）
 ```
-> Windows：先刷新 PATH，且行情请求要 `dangerouslyDisableSandbox: true`（沙箱拦外网）。
+> Windows：行情联网若被沙箱拦截，按 Codex 权限流程申请精确的网络执行；不得跳过校验。
 
 ### 数据流水线
 1. **快照/universe**（按成交额降序取前600）：东方财富 clist → 新浪 Market_Center → 种子(腾讯报价)。
@@ -175,7 +175,7 @@ python ashare_weekly_rank.py [选项]
 读 `rank_latest.json`，用腾讯实时集合竞价价算每只票相对 T 收盘的 **跳空%**、是否跌破止损，给
 **可买 / 等回调(高开>3%) / 放弃(破位) / 受控回踩小仓低吸 / 放弃(见光死)**。
 ```
-python recheck.py --in C:\Trading_analysis\data\rank_latest.json
+python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" weekly-recheck -- --in C:\Trading_analysis\data\rank_latest.json
 ```
 **P9 见光死护栏（2026-06-29 恒逸石化教训）**：旧版把"现价<买入区下沿但没破止损"无脑当"★更优价打折买"，
 会把你送进跌停飞刀。现已修正——区分铁律：
@@ -193,7 +193,7 @@ python recheck.py --in C:\Trading_analysis\data\rank_latest.json
 
 ## 7. 已知限制
 - 板块解析依赖东财板块接口；东财被限流时板块模式回退全市场。
-- 引擎只做量价/技术/盘口因子；基本面与消息面由 Agent②(WebSearch) 补足；建议可信度由 Agent④ 验证/复核把关。
+- 引擎只做量价/技术/盘口因子；基本面与消息面由 Agent②(Codex 网页检索)补足；建议可信度由 Agent④验证/复核把关。
 - `--validate` 的样本是"当前"高流动性股票回溯历史，有**幸存者偏差**，绝对收益偏乐观；看相对指标(超额/价差/胜率)更可靠。
 - 跨源价格校验已多源化（东财/腾讯/新浪/雅虎）：东财被限流仍可 `腾讯×新浪` 交叉验证，仅当三源同挂才退化为"单源未校验"。
 - 交易日历用 akshare 权威源(覆盖到当年底)，春节/国庆等节假日已精确处理；跨年且新一年日历未发布时，
@@ -204,13 +204,13 @@ python recheck.py --in C:\Trading_analysis\data\rank_latest.json
 ```powershell
 $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH","User")
 # 选股（末尾会有"跨源价格校验"表 + 行情源/sanity 行）
-python ashare_weekly_rank.py --hold-days 5 --top 8
+python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" weekly -- --hold-days 5 --top 8
 # 回测刷权重
-python ashare_weekly_rank.py --backtest --bt-sample 40 --hold-days 5
+python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" weekly -- --backtest --bt-sample 40 --hold-days 5
 # 策略验证(排名edge)：看到 超额/胜率/排名IC + 裁定 即正常
-python ashare_weekly_rank.py --validate --bt-sample 40 --hold-days 5 --val-topk 5
+python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" weekly -- --validate --bt-sample 40 --hold-days 5 --val-topk 5
 # T+1 复核
-python recheck.py
+python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" weekly-recheck --
 ```
 看到带 T/T+1/持有天数 表头 + 真实价格/信号列 + 跨源校验表即正常；validate 给出"通过/弱通过/未通过"裁定即正常。
 - 自检：`初筛漏斗` 第一段数应≈600（翻页生效）；若只有~100 说明翻页被限流降级（重试或等1–2分钟）。
@@ -232,7 +232,7 @@ python recheck.py
 - **统一北京时间**：`_cn_now()`(=系统UTC+8换算,中国无夏令时)提前到引擎公共区并新增`_cn_today()`；两引擎+market_gate+review 全部裸 `datetime.now()/date.today()/time.strftime` 已清零(静态grep=0)。涉及：缓存时间戳与TTL、公告新鲜度、解禁days_to、generated_at、权重文件年龄、复盘时间戳。旧缓存/旧权重的裸时间戳按本机时区`astimezone()`补齐后比较，缓存连续性不受影响。
 - **T/T+1 口径**：T=最新已收盘K线日(数据驱动,天然北京口径)+akshare权威交易日历推T+1/T+N；盘前跑=上一交易日为T。诊断引擎的 盘前/盘中/盘后 会话判定与K线新鲜度守卫全部走 `_cn_now`。
 - **隔夜外盘引擎直出**：`market_gate.fetch_overnight()` 新浪 hq.sinajs 直拉 纳指/费半SOX/道指/标普(gb_*,字段3=北京时间戳) + A50期货(hf_CHA50CFD)，stdout出"🌍 隔夜/外盘"表(含距今小时数)、JSON存`overnight`；市场时段提示改为按北京时间实时判定(盘中/盘前盘后各自文案)；`generated_at`带"(北京时间)"标注。
-- **SKILL 硬规则⑩(P12)**：搜索词禁拼日期；"现在几点"只认market_gate的「当前北京时间」行；外盘指数读🌍表,WebSearch只补政策/新闻；引用搜索结果前核对内文日期。
+- **SKILL 硬规则⑩(P12)**：搜索词禁拼日期；"现在几点"只认market_gate的「当前北京时间」行；外盘指数读🌍表，Codex网页检索只补政策/新闻；引用搜索结果前核对内文日期。
 - 终验断言(2026-07-07 北京10:15/本机显示07-06 20:15)：_cn_now=UTC+8✓ T=07-06→T+1=07-07(周二)✓ 盘中判定+应有K线=07-07✓ 外盘5指数距今2.4-3.1h✓。
 
 ## 11. 2026-07-07 U1-U4：高能式陷阱(竞价正常盘中崩)防御体系
