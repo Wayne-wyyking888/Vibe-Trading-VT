@@ -1806,6 +1806,22 @@ def validate_html(skill: str, obj: dict[str, Any], html_path: pathlib.Path, stri
     plain = _plain_html(raw)
     link_targets = _html_link_targets(raw)
     if strict:
+        if skill == "bottom-fishing":
+            stamp_field = "adjudicated_at" if obj.get("adjudicated") else "generated_at"
+            stamp = _beijing_datetime(obj.get(stamp_field))
+            expected_name = None
+            if stamp is not None:
+                tag = "_裁定版" if obj.get("adjudicated") else ""
+                expected_name = f"bottom_cn_{stamp.strftime('%Y-%m-%d_%H-%M-%S')}{tag}.html"
+            out.check(expected_name is not None and html_path.name == expected_name,
+                      f"bottom 报告文件名不是严格北京时间戳: {html_path.name} != {expected_name}")
+        elif skill == "weekly-ashare-rank":
+            match = re.search(r"生成\(中国时间\).*?(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})", plain)
+            expected_name = None
+            if match:
+                expected_name = f"ashare_rank_cn_{match.group(1)}_{match.group(2).replace(':', '-')}.html"
+            out.check(expected_name is not None and html_path.name == expected_name,
+                      f"weekly 报告文件名不是严格北京时间戳: {html_path.name} != {expected_name}")
         out.check("Claude" not in plain and "WebSearch" not in plain, "最终 HTML 仍含 Claude/WebSearch 品牌残留")
         out.check(AUDIT_START in raw and AUDIT_END in raw, "最终 HTML 缺 Codex 可见审计附录")
         for idx, fact in enumerate((obj.get("codex_audit") or {}).get("facts") or []):
@@ -2192,6 +2208,9 @@ def _test_bottom_search_case() -> tuple[dict[str, Any], dict[str, Any]]:
     forecast = {"notice_date": "2026-01-09", "type": "预增", "content": "预计扣非净利润增长20%",
                 "fresh": True}
     result_obj = {
+        "generated_at": f"{retrieved}T09:55:00+08:00",
+        "adjudicated": True,
+        "adjudicated_at": f"{retrieved}T10:00:00+08:00",
         "T": t,
         "candidates": [{"code": code, "judge": "✓", "forecast": forecast, "notices": notices,
                         "f10_flag": ""}],
@@ -2560,7 +2579,7 @@ def strict_self_test() -> Result:
         out.check("Claude" not in rendered and "WebSearch" not in rendered, "HTML 品牌归一自测失败")
         out.check(w_facts[0]["source_url"] in rendered, "HTML 审计附录缺证据 URL")
 
-        search_sample = pathlib.Path(td) / "bottom-search.html"
+        search_sample = pathlib.Path(td) / "bottom_cn_2026-01-12_10-00-00_裁定版.html"
         search_sample.write_text("<html><body><p>600000</p><p>非投资建议</p></body></html>", encoding="utf-8")
         search_final = copy.deepcopy(search_result)
         search_final["codex_audit"] = copy.deepcopy(search_audit_doc["codex_audit"])
@@ -2610,6 +2629,7 @@ def rerender_test() -> Result:
         bottom_mod = _load_module(SKILLS_SOURCE / "bottom-fishing" / "bottom_fishing.py", "codex_test_bottom")
         bottom_mod.REPORTS = temp / "bottom"
         bottom_html = pathlib.Path(bottom_mod.render_html(copy.deepcopy(bottom)))
+        out.merge(augment_report(bottom_html, bottom, "bottom-fishing"))
         out.merge(validate_html("bottom-fishing", bottom, bottom_html, strict=False))
 
         stock = _load(inputs["stock-diagnostic"])

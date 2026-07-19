@@ -71,7 +71,7 @@ weekly-ashare-rank/
 ├── make_report.py           # 由结果JSON渲染HTML报告（Agent③富集后出完整版）
 ├── universe_seed.txt        # 兜底种子universe（约100只龙头）
 ├── weights.json             # 回测产出的因子权重（--backtest 生成，--weights auto 调用）
-└── reports/                 # 每次run自动生成的HTML报告（文件名后缀=中国当地时间）
+└── reports/                 # 完整版 ashare_rank_cn_YYYY-MM-DD_HH-MM-SS.html（完整UTC+8时间戳）
 ```
 
 ## 3. 引擎命令行

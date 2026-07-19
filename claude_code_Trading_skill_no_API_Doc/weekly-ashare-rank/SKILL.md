@@ -326,7 +326,9 @@ $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH","Machine") + ";"
 > 所以 Agent③ 只需**重排 + 回填催化剂/置信度**。**严禁再出现"文字说空仓观望、HTML 却铺 8 只可买"的脱节**。
 
 引擎跑完已**自动**在 `reports/ashare_rank_cn_preview.html` 存一份量化预览报告（**固定文件名**，引擎跑几次都只覆盖这一个，不堆中间文件）。
-做完 Agent②/③/④ 后，把消息面/裁决结论**回填**进结果 JSON，再生成**完整版**报告（完整版用时间戳命名，并**自动删掉那个 preview 预览文件**，最终 reports/ 里每个 session 只留一份带时间戳的完整版）：
+做完 Agent②/③/④ 后，把消息面/裁决结论**回填**进结果 JSON，再生成**完整版**报告（严格命名为
+`ashare_rank_cn_YYYY-MM-DD_HH-MM-SS.html`；日期与时分秒来自同一次 `_cn_now()` UTC+8 取值，T 不进入文件名；
+并**自动删掉那个 preview 预览文件**，最终 reports/ 里每个 session 只留一份带时间戳的完整版）：
 0. **⚠️ 必须先重排 `candidates[]` 数组顺序 = Agent③ 终排名次（最易漏，2026-06-16 就栽在这：文字按 Agent③ 重排了、JSON 没重排，HTML 名次还停在引擎量化分顺序，两者脱节）**。
    **⚠️ 且必须裁剪到最终呈现的头部 8 只（2026-07-10 起 top 默认 20）**：`render_html` 渲染 candidates[] 里的每一只——不裁剪 HTML 会出 20 张卡。回填时把 Agent③ 终排的**前 8 只**（含其中被 gate 剔除的灰卡，保留"为什么剔"的信息价值）留在 `candidates[]`，第 9-20 名从数组删掉、只在文字报告的「观察池」段落列代码+一句原因。
    原因：`render_html` 用 `enumerate(candidates, 1)` **按数组下标编号**、自身不排序——**JSON 里 candidates 的物理顺序 = HTML 的「排名1/2/3…」**。引擎默认按量化分降序输出，但 Agent③ 几乎总会因「过热上限/主题逆风/独立催化/基本面雷」硬规则重排，所以**回填前先把 `candidates[]` 物理重排成你文字最终表的名次**。
@@ -350,7 +352,8 @@ $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH","Machine") + ";"
    ```
    验收会机械核对排名物理顺序、策略验证、IC置信上限、跨源价格、价位关系、P13/P14、环境横幅、状态徽标、
    核验标记以及观望不给价位。任一命令非零退出：标记“未通过”，回第0/1步修正并重渲染；验收器不提供最终报告降级开关。
-4. 只有验收返回 `[PASS]`，才把 HTML 路径告诉用户（文件名时间戳为北京时间 UTC+8）。
+4. 只有验收返回 `[PASS]`，才把 HTML 路径告诉用户（文件名是同一时点生成的完整北京时间 UTC+8，
+   不得把 T、系统本地日期或文件系统显示时间拼入 timestamp）。
 
 ---
 

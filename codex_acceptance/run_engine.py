@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Codex 薄启动器：不改业务引擎，只把其用户目录缓存重定向到工作区。
+"""Codex 薄启动器：不改业务引擎，只做工作区适配。
 
 用法：
   python run_engine.py bottom --
@@ -9,12 +9,15 @@
   python run_engine.py stock -- --code 600519 --cost 1500
 
 `--` 之后的参数原样交给原引擎。所有量化、阈值、数据源顺序和 renderer
-仍由 hash 锁定的原文件执行。
+仍由 hash 锁定的原文件执行；启动层只重定向缓存，并把 bottom 报告的历史
+“T日+北京时间时分秒”混合文件名归一为完整 UTC+8 生成时间戳。
 """
 from __future__ import annotations
 
+import datetime as dt
 import importlib.util
 import pathlib
+import re
 import sys
 from types import ModuleType
 
@@ -61,6 +64,52 @@ def _redirect_cache(mod: ModuleType, seen: set[int] | None = None) -> None:
             _redirect_cache(child, seen)
 
 
+def _bottom_report_t(path: pathlib.Path) -> str | None:
+    """从 bottom HTML 读取业务截止日 T；文件名只承载生成时间，不再承载 T。"""
+    try:
+        html = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError):
+        return None
+    match = re.search(r"\bT=(\d{4}-\d{2}-\d{2})\b", html)
+    return match.group(1) if match else None
+
+
+def _install_bottom_cn_report_naming(mod: ModuleType) -> None:
+    """强制 bottom 报告使用同一 UTC+8 时点中的完整日期和时分秒。
+
+    原引擎文件名为 ``bottom_<T>_<北京时分秒>[_裁定版].html``，日期与时钟
+    不是同一口径。启动层以结果中的 ``generated_at`` / ``adjudicated_at`` 为
+    单一事实源，统一输出 ``bottom_cn_YYYY-MM-DD_HH-MM-SS[_裁定版].html``。
+    """
+    original = mod.render_html
+    cn_tz = dt.timezone(dt.timedelta(hours=8))
+
+    def render_html_cn(result: dict, *args, **kwargs):
+        legacy_path = pathlib.Path(original(result, *args, **kwargs))
+        field = "adjudicated_at" if result.get("adjudicated") else "generated_at"
+        raw = result.get(field)
+        if not raw:
+            raise ValueError(f"bottom 报告缺少 {field}，拒绝生成非严格北京时间文件名")
+        stamp = dt.datetime.fromisoformat(str(raw))
+        if stamp.tzinfo is None:
+            raise ValueError(f"bottom {field} 不含时区偏移：{raw}")
+        stamp = stamp.astimezone(cn_tz)
+        tag = "_裁定版" if result.get("adjudicated") else ""
+        target = legacy_path.with_name(f"bottom_cn_{stamp.strftime('%Y-%m-%d_%H-%M-%S')}{tag}.html")
+        if legacy_path != target:
+            legacy_path.replace(target)
+
+        # 裁定完成后仍保持原合同：同一 T 只留最新裁定版。T 从 HTML 正文读取，
+        # 不再污染严格的生成时间戳文件名。
+        if result.get("adjudicated"):
+            for old in target.parent.glob("bottom_cn_*.html"):
+                if old != target and _bottom_report_t(old) == result.get("T"):
+                    old.unlink()
+        return target
+
+    mod.render_html = render_html_cn
+
+
 def main() -> int:
     if len(sys.argv) < 2 or sys.argv[1] not in ENTRIES:
         names = ", ".join(ENTRIES)
@@ -81,6 +130,8 @@ def main() -> int:
     CACHE.mkdir(parents=True, exist_ok=True)
     mod = _load(path, f"codex_entry_{entry.replace('-', '_')}")
     _redirect_cache(mod)
+    if entry in {"bottom", "bottom-smoke"}:
+        _install_bottom_cn_report_naming(mod)
     sys.argv = [str(path), *passthrough]
 
     if entry == "bottom-smoke":

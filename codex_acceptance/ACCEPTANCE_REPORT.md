@@ -48,7 +48,7 @@ Codex 原生不提供旧式直接 `/bottom-fishing` 自定义命令；这是宿�
 - 完整扫描 490 只，未缩池；T=2026-07-17；底部区255只；6只过线；实际耗时约8分37秒。
 - 公式/T/双路径/ATR/冷却/HTML 等122项通过。
 - JSON：`C:\Trading_analysis\data\codex_smoke\bottom\bottom_latest.json`
-- HTML：`C:\Trading_analysis\data\codex_smoke\bottom\reports\bottom_2026-07-17_06-52-35.html`
+- HTML：`C:\Trading_analysis\data\codex_smoke\bottom\reports\bottom_cn_2026-07-19_06-52-35.html`
 - 影子日志：`C:\Trading_analysis\data\codex_smoke\bottom\bottom_shadow_log.jsonl`
 
 ### stock-diagnostic

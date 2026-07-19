@@ -18,7 +18,7 @@ bottom-fishing/
 │  └─ WEB_EVIDENCE_PROTOCOL.md # 六维检索/官方源血缘/F10逐条对账/T后安全增量
 ├─ README.md             # 研究存档: 全部方法论数字/否决清单/毒月专项
 ├─ DOC.md                # 本文件(操作文档)
-└─ reports/              # HTML报告(gitignore, 每次跑一份带时间戳)
+└─ reports/              # HTML报告(gitignore, bottom_cn_完整北京时间戳[_裁定版].html)
 C:\Trading_analysis\data\
 ├─ bottom_latest.json        # 最新一期结果(供回填/复查)
 └─ bottom_shadow_log.jsonl   # 影子日志: 每笔过线票+def_days/idx_rsv影子字段+结算结果
@@ -35,6 +35,9 @@ python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" bott
 底部区(回撤≥20%+60位≤25) → 修复确认打分 → 双路径推荐线 → F10种子(东财datacenter,仅过线票) →
 执行方案(权威交易日历给真实买入/离场日期) → stdout+JSON+HTML+影子日志。
 指数: 创业板(防守日/def_days/大盘RSV, 后两者为影子字段不进规则)。
+
+报告文件名严格使用 `bottom_cn_YYYY-MM-DD_HH-MM-SS[_裁定版].html`：日期与时分秒均来自同一个
+UTC+8 的 `generated_at` / `adjudicated_at`。业务截止日 T 只写入正文与 JSON，不再与生成时钟混拼。
 
 ## 角色分工（LLM侧, 见SKILL.md）
 - Agent①=引擎(全自动)。
