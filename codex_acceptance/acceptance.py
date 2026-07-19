@@ -20,7 +20,9 @@ import re
 import sys
 import tempfile
 from dataclasses import dataclass, field
+from html.parser import HTMLParser
 from typing import Any, Iterable
+from urllib.parse import urlsplit
 
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -29,7 +31,6 @@ SKILLS_SOURCE = ROOT / "claude_code_Trading_skill_no_API_Doc"
 DATA = pathlib.Path(r"C:\Trading_analysis\data")
 MANIFEST = HERE / "baseline_manifest.json"
 DATE_RE = re.compile(r"^20\d{2}-\d{2}-\d{2}$")
-URL_RE = re.compile(r"^https?://", re.I)
 CODE_RE = re.compile(r"(?<!\d)(?:00|30|60|68)\d{4}(?!\d)")
 
 
@@ -105,6 +106,44 @@ def _plain_html(raw: str) -> str:
     return re.sub(r"\s+", " ", html.unescape(raw)).strip()
 
 
+def _valid_http_url(value: Any) -> bool:
+    """Accept only absolute HTTP(S) URLs without control characters or whitespace."""
+    text = str(value or "")
+    if not text or "\\" in text or any(ch.isspace() or ord(ch) < 32 for ch in text):
+        return False
+    try:
+        parsed = urlsplit(text)
+        parsed.port  # force validation of an explicitly supplied port
+    except (TypeError, ValueError):
+        return False
+    return (parsed.scheme.lower() in {"http", "https"} and bool(parsed.hostname) and
+            parsed.username is None and parsed.password is None)
+
+
+class _LinkCollector(HTMLParser):
+    """Collect decoded link targets; HTMLParser turns ``&amp;`` back into ``&``."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.urls: set[str] = set()
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        for name, value in attrs:
+            if name.lower() in {"href", "src"} and value:
+                self.urls.add(value)
+
+
+def _html_link_targets(raw: str) -> set[str]:
+    parser = _LinkCollector()
+    try:
+        parser.feed(raw)
+        parser.close()
+    except Exception:
+        # The caller will fail any required link that could not be parsed.
+        pass
+    return parser.urls
+
+
 def baseline_check() -> Result:
     out = Result("baseline")
     manifest = _load(MANIFEST)
@@ -159,6 +198,27 @@ def _date(value: Any) -> dt.date | None:
         return None
 
 
+BEIJING_TZ = dt.timezone(dt.timedelta(hours=8))
+
+
+def _beijing_datetime(value: Any) -> dt.datetime | None:
+    text = str(value or "").strip()
+    labelled = text.endswith("北京时间")
+    if labelled:
+        text = text[:-4].strip()
+    try:
+        parsed = dt.datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        if not labelled:
+            return None
+        parsed = parsed.replace(tzinfo=BEIJING_TZ)
+    if parsed.utcoffset() != dt.timedelta(hours=8):
+        return None
+    return parsed.astimezone(BEIJING_TZ)
+
+
 def audit_common(obj: dict[str, Any], skill: str, required_codes: Iterable[str]) -> Result:
     out = Result(f"{skill}.codex_audit")
     audit = obj.get("codex_audit")
@@ -200,7 +260,7 @@ def audit_common(obj: dict[str, Any], skill: str, required_codes: Iterable[str])
             covered.add(code)
         out.check(bool(str(fact.get("fact", "")).strip()), f"{tag}.fact 为空")
         out.check(bool(str(fact.get("source_name", "")).strip()), f"{tag}.source_name 为空")
-        out.check(bool(URL_RE.match(str(fact.get("source_url", "")))), f"{tag}.source_url 缺失或无效")
+        out.check(_valid_http_url(fact.get("source_url")), f"{tag}.source_url 缺失或无效")
         out.check(bool(DATE_RE.match(str(fact.get("published_at", "")))), f"{tag}.published_at 缺失")
         out.check(bool(DATE_RE.match(str(fact.get("retrieved_at_beijing", "")))),
                   f"{tag}.retrieved_at_beijing 缺失")
@@ -262,17 +322,25 @@ def f10_cross_check(obj: dict[str, Any], skill: str) -> Result:
                 event_date = str(lift.get("date", ""))
                 out.check(_has_f10_fact(facts, event_date), f"{code} F10 解禁 {event_date} 未在 facts 留痕")
     elif skill == "bottom-fishing":
+        t_date = _date(obj.get("T"))
         for row in obj.get("candidates") or []:
             code = str(row.get("code", ""))
             facts = _facts_for(obj, code)
             fc = row.get("forecast") or {}
             if fc.get("notice_date") and row.get("f10_flag"):
                 date = str(fc.get("notice_date"))
-                out.check(_has_f10_fact(facts, date), f"{code} F10 负面预告 {date} 未被确认/证伪")
+                seed_date = _date(date)
+                if seed_date is not None and not (t_date and seed_date > t_date):
+                    out.check(_has_f10_fact(facts, date), f"{code} F10 负面预告 {date} 未被确认/证伪")
             for notice in row.get("notices") or []:
                 text = str(notice)
                 if MATERIAL_NOTICE_RE.search(text):
                     date = text[:10] if DATE_RE.match(text[:10]) else ""
+                    seed_date = _date(date)
+                    if t_date and seed_date and seed_date > t_date:
+                        continue
+                    if seed_date is None:
+                        continue
                     out.check(bool(date) and _has_f10_fact(facts, date),
                               f"{code} 实质性 F10 公告未留痕: {text[:60]}")
     else:
@@ -289,6 +357,763 @@ def f10_cross_check(obj: dict[str, Any], skill: str) -> Result:
             if fc.get("fresh") and fc.get("notice_date"):
                 date = str(fc.get("notice_date"))
                 out.check(_has_f10_fact(facts, date), f"{code} 新鲜业绩预告 {date} 未交叉留痕")
+    return out
+
+
+BOTTOM_SEARCH_CATEGORIES = (
+    "performance_operations",
+    "financial_credit",
+    "governance_regulatory",
+    "corporate_events",
+    "industry_policy_domestic",
+    "external_global_peer",
+)
+BOTTOM_SOURCE_KINDS = {
+    "official_direct",
+    "verified_official_mirror",
+    "independent_media",
+    "independent_research",
+    "unverified_secondary",
+}
+BOTTOM_QUERY_MODES = {
+    "official",
+    "exact_title",
+    "broad_web",
+    "regulator",
+    "industry",
+    "overseas",
+    "ah_cross_listing",
+    "drop_cause",
+    "freshness_delta",
+}
+BOTTOM_MATCH_BASIS = {"title", "published_at", "document_id", "full_text"}
+BOTTOM_VERDICT_RANK = {"✗": 0, "?": 1, "✓": 2}
+BOTTOM_CATEGORY_LOOKBACK_DAYS = {
+    "performance_operations": 180,
+    "financial_credit": 365,
+    "governance_regulatory": 730,
+    "corporate_events": 180,
+    "industry_policy_domestic": 90,
+    "external_global_peer": 90,
+}
+
+
+def _string_list(value: Any) -> list[str]:
+    return [str(x) for x in value] if isinstance(value, list) else []
+
+
+def _bottom_verdicts(result_obj: dict[str, Any], audit_doc: dict[str, Any] | None) -> dict[str, str]:
+    if audit_doc is None:
+        return {
+            str(row.get("code", "")): str(row.get("judge", ""))
+            for row in result_obj.get("candidates") or []
+            if row.get("judge") in BOTTOM_VERDICT_RANK
+        }
+    verdicts: dict[str, str] = {}
+    rulings = audit_doc.get("rulings") or {}
+    if isinstance(rulings, dict):
+        for code, row in rulings.items():
+            if isinstance(row, dict) and row.get("verdict") in BOTTOM_VERDICT_RANK:
+                verdicts[str(code)] = str(row.get("verdict"))
+    return verdicts
+
+
+def _bottom_expected_seeds(result_obj: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Return one deterministic expected entry per raw forecast/notice seed."""
+    expected: dict[str, dict[str, Any]] = {}
+    for row in result_obj.get("candidates") or []:
+        code = str(row.get("code", ""))
+        forecast = row.get("forecast")
+        if isinstance(forecast, dict) and forecast:
+            text = " ".join(str(forecast.get(key) or "").strip()
+                            for key in ("notice_date", "type", "content")).strip()
+            date = str(forecast.get("notice_date") or "")
+            forecast_date = _date(date)
+            forecast_type = str(forecast.get("type") or "")
+            expected[f"{code}:forecast"] = {
+                "code": code,
+                "kind": "forecast",
+                "raw_index": None,
+                "seed_text": text,
+                "raw_date": date if forecast_date else None,
+                "material": bool(forecast.get("fresh")) or
+                            any(flag in forecast_type for flag in ("预亏", "预减", "略减", "续亏", "首亏")),
+            }
+        for idx, notice in enumerate(row.get("notices") or []):
+            text = str(notice)
+            date = text[:10] if _date(text[:10]) else None
+            expected[f"{code}:notices:{idx}"] = {
+                "code": code,
+                "kind": "notice",
+                "raw_index": idx,
+                "seed_text": text,
+                "raw_date": date,
+                "material": bool(MATERIAL_NOTICE_RE.search(text)),
+            }
+    return expected
+
+
+def validate_bottom_search(result_obj: dict[str, Any], audit_doc: dict[str, Any] | None = None,
+                           required: bool = False) -> Result:
+    """Validate the versioned bottom-search evidence graph without network access."""
+    out = Result("bottom-search")
+    pre_adjudication = audit_doc is not None
+    document = audit_doc if isinstance(audit_doc, dict) else result_obj
+    audit = document.get("codex_audit") or {}
+    search = audit.get("bottom_search")
+    if not isinstance(search, dict):
+        if required:
+            out.check(False, "缺 codex_audit.bottom_search；新裁定不得发布")
+        return out
+
+    out.check({"version", "T", "cutoff_beijing", "retrieved_at_beijing", "required_categories",
+               "sources", "queries", "coverage_by_code", "market_coverage", "f10_seed_ledger",
+               "post_t_safety_by_code"} <= set(search), "bottom_search 缺必需字段")
+
+    out.check(search.get("version") == "bottom-search-audit/v1", "bottom_search.version 错误")
+    t = str(result_obj.get("T", ""))
+    t_date = _date(t)
+    t_start = dt.datetime.combine(t_date, dt.time.min, tzinfo=BEIJING_TZ) if t_date else None
+    out.check(search.get("T") == t and t_date is not None, "bottom_search.T 与引擎 T 不一致")
+    cutoff = str(search.get("cutoff_beijing", ""))
+    cutoff_dt = _beijing_datetime(cutoff)
+    expected_cutoff = dt.datetime.combine(t_date, dt.time(23, 59, 59), tzinfo=BEIJING_TZ) if t_date else None
+    out.check(cutoff_dt is not None and cutoff_dt == expected_cutoff,
+              "bottom_search.cutoff_beijing 必须是 T 23:59:59+08:00")
+    out.check(cutoff == str(audit.get("evidence_cutoff_beijing", "")),
+              "bottom_search.cutoff_beijing 与 codex_audit.evidence_cutoff_beijing 不一致")
+    retrieved_text = str(search.get("retrieved_at_beijing", ""))
+    retrieved_dt = _beijing_datetime(retrieved_text)
+    retrieved_date = _date(retrieved_text)
+    out.check(retrieved_dt is not None and t_start is not None and retrieved_dt >= t_start,
+              "bottom_search.retrieved_at_beijing 无效或早于 T")
+    out.check(retrieved_date == _date(audit.get("retrieved_on_beijing")),
+              "bottom_search.retrieved_at_beijing 与 codex_audit.retrieved_on_beijing 不一致")
+    out.check(set(_string_list(search.get("required_categories"))) == set(BOTTOM_SEARCH_CATEGORIES) and
+              len(_string_list(search.get("required_categories"))) == len(BOTTOM_SEARCH_CATEGORIES),
+              "required_categories 必须精确包含六个固定维度")
+
+    candidates = list(result_obj.get("candidates") or [])
+    codes = {str(row.get("code", "")) for row in candidates}
+    verdicts = _bottom_verdicts(result_obj, document if pre_adjudication else None)
+    if pre_adjudication:
+        out.check(document.get("T") == t, "裁定文件 T 与引擎结果 T 不一致")
+        rulings = document.get("rulings")
+        out.check(isinstance(rulings, dict) and set(rulings) == codes,
+                  "裁定文件 rulings 必须与候选代码一一对应")
+        if isinstance(rulings, dict):
+            for code, ruling in rulings.items():
+                out.check(isinstance(ruling, dict) and ruling.get("verdict") in BOTTOM_VERDICT_RANK,
+                          f"裁定文件 {code}.verdict 无效")
+    if candidates:
+        out.check(set(verdicts) >= codes, "搜索审计缺候选裁定 verdict")
+    else:
+        out.check(bool(str(search.get("empty_reason", "")).strip()), "零候选搜索审计必须写 empty_reason")
+        for field_name in ("sources", "queries", "f10_seed_ledger"):
+            out.check(search.get(field_name) == [], f"零候选时 {field_name} 必须为空数组")
+        for field_name in ("coverage_by_code", "post_t_safety_by_code"):
+            out.check(search.get(field_name) == {}, f"零候选时 {field_name} 必须为空对象")
+
+    # Facts become graph nodes under this version; old facts remain compatible when the
+    # bottom_search object is absent.
+    facts = audit.get("facts") or []
+    out.check(isinstance(facts, list), "codex_audit.facts 必须是数组")
+    fact_by_id: dict[str, dict[str, Any]] = {}
+    for idx, fact in enumerate(facts if isinstance(facts, list) else []):
+        tag = f"facts[{idx}]"
+        out.check(isinstance(fact, dict), f"{tag} 必须是对象")
+        if not isinstance(fact, dict):
+            continue
+        out.check({"fact_id", "category", "source_ref", "seed_refs"} <= set(fact),
+                  f"{tag} 缺 bottom-search 图字段")
+        fact_id = str(fact.get("fact_id", ""))
+        out.check(bool(fact_id) and fact_id not in fact_by_id, f"{tag}.fact_id 缺失或重复")
+        if fact_id and fact_id not in fact_by_id:
+            fact_by_id[fact_id] = fact
+        code = str(fact.get("code", ""))
+        category = str(fact.get("category", ""))
+        out.check(code in codes or code == "MARKET", f"{tag}.code 不属于候选或 MARKET")
+        out.check(category in BOTTOM_SEARCH_CATEGORIES or (code == "MARKET" and category == "market_regime"),
+                  f"{tag}.category 不在允许枚举")
+        out.check(bool(str(fact.get("source_ref", ""))), f"{tag}.source_ref 为空")
+        out.check(isinstance(fact.get("seed_refs"), list), f"{tag}.seed_refs 必须是数组")
+        published = _date(fact.get("published_at"))
+        out.check(published is not None and t_date is not None and published <= t_date,
+                  f"{tag} 不得使用 T 后事实")
+
+    sources = search.get("sources") or []
+    out.check(isinstance(sources, list), "bottom_search.sources 必须是数组")
+    source_by_ref: dict[str, dict[str, Any]] = {}
+    origin_by_canonical: dict[str, str] = {}
+    origin_by_access: dict[str, str] = {}
+    for idx, source in enumerate(sources if isinstance(sources, list) else []):
+        tag = f"bottom_search.sources[{idx}]"
+        out.check(isinstance(source, dict), f"{tag} 必须是对象")
+        if not isinstance(source, dict):
+            continue
+        out.check({"source_ref", "access_url", "access_publisher", "source_kind", "origin_id",
+                   "canonical_url", "canonical_publisher", "match_basis"} <= set(source),
+                  f"{tag} 缺来源血缘字段")
+        ref = str(source.get("source_ref", ""))
+        out.check(bool(ref) and ref not in source_by_ref, f"{tag}.source_ref 缺失或重复")
+        if ref and ref not in source_by_ref:
+            source_by_ref[ref] = source
+        access_url = str(source.get("access_url", ""))
+        canonical_url = str(source.get("canonical_url", ""))
+        kind = str(source.get("source_kind", ""))
+        out.check(_valid_http_url(access_url), f"{tag}.access_url 无效")
+        out.check(bool(str(source.get("access_publisher", "")).strip()), f"{tag}.access_publisher 为空")
+        out.check(kind in BOTTOM_SOURCE_KINDS, f"{tag}.source_kind 无效")
+        out.check(bool(str(source.get("origin_id", "")).strip()), f"{tag}.origin_id 为空")
+        if kind == "official_direct":
+            out.check(canonical_url == access_url, f"{tag} 官方直源 canonical_url 必须等于 access_url")
+            out.check(bool(str(source.get("canonical_publisher", "")).strip()),
+                      f"{tag}.canonical_publisher 为空")
+        elif kind == "verified_official_mirror":
+            basis = set(_string_list(source.get("match_basis")))
+            out.check(_valid_http_url(canonical_url) and canonical_url != access_url,
+                      f"{tag} 已验证镜像必须回溯到不同的官方 canonical_url")
+            out.check(bool(str(source.get("canonical_publisher", "")).strip()),
+                      f"{tag} 已验证镜像缺官方发布者")
+            out.check(bool(str(source.get("document_id", "")).strip()),
+                      f"{tag} 已验证镜像缺稳定 document_id")
+            out.check(len(basis & BOTTOM_MATCH_BASIS) >= 2 and basis <= BOTTOM_MATCH_BASIS,
+                      f"{tag} 已验证镜像至少要有两项合法 match_basis")
+        elif canonical_url:
+            out.check(_valid_http_url(canonical_url), f"{tag}.canonical_url 无效")
+        if canonical_url:
+            prior_origin = origin_by_canonical.get(canonical_url)
+            origin_id = str(source.get("origin_id", ""))
+            out.check(prior_origin in (None, origin_id),
+                      f"{tag} 同一 canonical_url 必须共享同一 origin_id")
+            if prior_origin is None:
+                origin_by_canonical[canonical_url] = origin_id
+        prior_access_origin = origin_by_access.get(access_url)
+        origin_id = str(source.get("origin_id", ""))
+        out.check(prior_access_origin in (None, origin_id),
+                  f"{tag} 同一 access_url 必须共享同一 origin_id")
+        if prior_access_origin is None:
+            origin_by_access[access_url] = origin_id
+
+    for fact_id, fact in fact_by_id.items():
+        source = source_by_ref.get(str(fact.get("source_ref", "")))
+        out.check(source is not None, f"{fact_id} source_ref 无法回指 sources")
+        if source is not None:
+            out.check(str(fact.get("source_url", "")) == str(source.get("access_url", "")),
+                      f"{fact_id} source_url 与来源血缘 access_url 不一致")
+            if source.get("source_kind") == "unverified_secondary":
+                out.check(fact.get("source_tier") not in {"公告", "交易所"},
+                          f"{fact_id} 未核实二级来源不得冒充公告/交易所")
+
+    # Collect post-T deltas before validating query back-references.
+    post_table = search.get("post_t_safety_by_code") or {}
+    out.check(isinstance(post_table, dict), "post_t_safety_by_code 必须是对象")
+    out.check(isinstance(post_table, dict) and set(post_table) == codes,
+              "post_t_safety_by_code 必须与候选代码一一对应")
+    delta_by_id: dict[str, tuple[str, dict[str, Any]]] = {}
+    for code, post in (post_table.items() if isinstance(post_table, dict) else []):
+        tag = f"post_t_safety_by_code.{code}"
+        out.check(isinstance(post, dict), f"{tag} 必须是对象")
+        if not isinstance(post, dict):
+            continue
+        out.check({"checked_through_beijing", "base_verdict_asof_t", "effective_verdict", "items"} <= set(post),
+                  f"{tag} 缺必需字段")
+        checked = str(post.get("checked_through_beijing", ""))
+        checked_dt = _beijing_datetime(checked)
+        out.check(checked_dt is not None and t_start is not None and retrieved_dt is not None and
+                  t_start <= checked_dt <= retrieved_dt, f"{tag}.checked_through_beijing 无效")
+        out.check(checked_dt is not None and retrieved_dt is not None and
+                  checked_dt.date() == retrieved_dt.date(), f"{tag}.checked_through_beijing 必须覆盖到检索日")
+        base = str(post.get("base_verdict_asof_t", ""))
+        effective = str(post.get("effective_verdict", ""))
+        out.check(base in BOTTOM_VERDICT_RANK and effective in BOTTOM_VERDICT_RANK,
+                  f"{tag} 裁定枚举无效")
+        if base in BOTTOM_VERDICT_RANK and effective in BOTTOM_VERDICT_RANK:
+            out.check(BOTTOM_VERDICT_RANK[effective] <= BOTTOM_VERDICT_RANK[base],
+                      f"{tag} T 后信息不得上调裁定")
+        out.check(verdicts.get(str(code)) == effective, f"{tag}.effective_verdict 与最终裁定不一致")
+        items = post.get("items") or []
+        out.check(isinstance(items, list), f"{tag}.items 必须是数组")
+        expected_rank = BOTTOM_VERDICT_RANK.get(base)
+        for idx, item in enumerate(items if isinstance(items, list) else []):
+            item_tag = f"{tag}.items[{idx}]"
+            out.check(isinstance(item, dict), f"{item_tag} 必须是对象")
+            if not isinstance(item, dict):
+                continue
+            out.check({"delta_id", "source_ref", "published_at", "event_date", "query_ids", "summary",
+                       "polarity", "effect", "used_in_asof_t_verdict", "uncertainties"} <= set(item),
+                      f"{item_tag} 缺必需字段")
+            delta_id = str(item.get("delta_id", ""))
+            out.check(bool(delta_id) and delta_id not in delta_by_id, f"{item_tag}.delta_id 缺失或重复")
+            if delta_id and delta_id not in delta_by_id:
+                delta_by_id[delta_id] = (str(code), item)
+            out.check(str(item.get("source_ref", "")) in source_by_ref, f"{item_tag}.source_ref 无效")
+            published = _date(item.get("published_at"))
+            out.check(published is not None and t_date is not None and published > t_date,
+                      f"{item_tag}.published_at 必须晚于 T")
+            out.check(published is not None and retrieved_date is not None and published <= retrieved_date,
+                      f"{item_tag}.published_at 晚于实际检索时点")
+            out.check(published is not None and checked_dt is not None and published <= checked_dt.date(),
+                      f"{item_tag}.published_at 晚于 checked_through_beijing")
+            event_date = item.get("event_date")
+            out.check(event_date in (None, "") or _date(event_date) is not None,
+                      f"{item_tag}.event_date 无效")
+            out.check(bool(str(item.get("summary", "")).strip()), f"{item_tag}.summary 为空")
+            polarity = str(item.get("polarity", ""))
+            effect = str(item.get("effect", ""))
+            out.check(polarity in {"positive", "neutral", "negative", "unverified"},
+                      f"{item_tag}.polarity 无效")
+            out.check(effect in {"none", "cap_at_question", "cap_at_reject"}, f"{item_tag}.effect 无效")
+            if polarity in {"positive", "neutral"}:
+                out.check(effect == "none", f"{item_tag} T 后正面/中性信息不能改变裁定")
+            if polarity == "unverified":
+                out.check(effect != "cap_at_reject", f"{item_tag} 未核实增量最多降至 ?")
+            delta_source = source_by_ref.get(str(item.get("source_ref", "")))
+            if delta_source and delta_source.get("source_kind") == "unverified_secondary":
+                out.check(polarity == "unverified" and effect in {"none", "cap_at_question"},
+                          f"{item_tag} 未核实二级来源只能标 unverified 且最多降至 ?")
+            if effect == "cap_at_question" and effective in BOTTOM_VERDICT_RANK:
+                out.check(BOTTOM_VERDICT_RANK[effective] <= BOTTOM_VERDICT_RANK["?"],
+                          f"{item_tag} cap_at_question 未落实")
+                if expected_rank is not None:
+                    expected_rank = min(expected_rank, BOTTOM_VERDICT_RANK["?"])
+            if effect == "cap_at_reject":
+                out.check(effective == "✗", f"{item_tag} cap_at_reject 未落实")
+                if expected_rank is not None:
+                    expected_rank = BOTTOM_VERDICT_RANK["✗"]
+            out.check(item.get("used_in_asof_t_verdict") is False,
+                      f"{item_tag}.used_in_asof_t_verdict 必须为 false")
+            out.check(isinstance(item.get("query_ids"), list) and bool(item.get("query_ids")),
+                      f"{item_tag}.query_ids 不能为空")
+            out.check(isinstance(item.get("uncertainties"), list), f"{item_tag}.uncertainties 必须是数组")
+        if expected_rank is not None and effective in BOTTOM_VERDICT_RANK:
+            out.check(BOTTOM_VERDICT_RANK[effective] == expected_rank,
+                      f"{tag}.effective_verdict 必须由 base 与 delta caps 机械重算")
+
+    queries = search.get("queries") or []
+    out.check(isinstance(queries, list), "bottom_search.queries 必须是数组")
+    query_by_id: dict[str, dict[str, Any]] = {}
+    for idx, query in enumerate(queries if isinstance(queries, list) else []):
+        tag = f"bottom_search.queries[{idx}]"
+        out.check(isinstance(query, dict), f"{tag} 必须是对象")
+        if not isinstance(query, dict):
+            continue
+        out.check({"query_id", "code", "category", "phase", "query_mode", "query_text", "date_from",
+                   "date_to", "executed_at_beijing", "outcome", "reviewed_urls", "selected_fact_ids",
+                   "selected_delta_ids", "notes"} <= set(query), f"{tag} 缺必需字段")
+        query_id = str(query.get("query_id", ""))
+        out.check(bool(query_id) and query_id not in query_by_id, f"{tag}.query_id 缺失或重复")
+        if query_id and query_id not in query_by_id:
+            query_by_id[query_id] = query
+        code = str(query.get("code", ""))
+        category = str(query.get("category", ""))
+        phase = str(query.get("phase", ""))
+        mode = str(query.get("query_mode", ""))
+        outcome = str(query.get("outcome", ""))
+        fact_ids = _string_list(query.get("selected_fact_ids"))
+        delta_ids = _string_list(query.get("selected_delta_ids"))
+        reviewed_urls = _string_list(query.get("reviewed_urls"))
+        out.check(code in codes or code == "MARKET", f"{tag}.code 不属于候选或 MARKET")
+        out.check(category in BOTTOM_SEARCH_CATEGORIES or (code == "MARKET" and category == "market_regime"),
+                  f"{tag}.category 无效")
+        out.check(phase in {"as_of_t", "post_t_safety"}, f"{tag}.phase 无效")
+        out.check(mode in BOTTOM_QUERY_MODES, f"{tag}.query_mode 无效")
+        out.check(bool(str(query.get("query_text", "")).strip()), f"{tag}.query_text 为空")
+        query_from = _date(query.get("date_from"))
+        query_to = _date(query.get("date_to"))
+        out.check(query_from is not None and query_to is not None and query_from <= query_to,
+                  f"{tag} 查询日期窗无效")
+        executed = str(query.get("executed_at_beijing", ""))
+        executed_dt = _beijing_datetime(executed)
+        out.check(executed_dt is not None and t_start is not None and retrieved_dt is not None and
+                  t_start <= executed_dt <= retrieved_dt,
+                  f"{tag}.executed_at_beijing 无效")
+        out.check(query_to is not None and executed_dt is not None and query_to <= executed_dt.date(),
+                  f"{tag}.date_to 晚于查询执行日")
+        out.check(outcome in {"selected", "no_relevant_hit", "blocked"}, f"{tag}.outcome 无效")
+        out.check(isinstance(query.get("reviewed_urls"), list), f"{tag}.reviewed_urls 必须是数组")
+        for url in reviewed_urls:
+            out.check(_valid_http_url(url), f"{tag}.reviewed_urls 含无效 URL")
+        out.check(isinstance(query.get("selected_fact_ids"), list), f"{tag}.selected_fact_ids 必须是数组")
+        out.check(isinstance(query.get("selected_delta_ids"), list), f"{tag}.selected_delta_ids 必须是数组")
+        if outcome == "selected":
+            out.check(bool(fact_ids or delta_ids), f"{tag} selected 却没有采用 fact/delta")
+            out.check(bool(reviewed_urls), f"{tag} selected 必须记录 reviewed_urls")
+        else:
+            out.check(not fact_ids and not delta_ids, f"{tag} 未命中/受阻却选择了 fact/delta")
+            out.check(bool(str(query.get("notes", "")).strip()), f"{tag} 未命中/受阻必须解释 notes")
+        if phase == "as_of_t":
+            out.check(str(query.get("date_to", "")) == t, f"{tag} as_of_t.date_to 必须等于 T")
+            out.check(not delta_ids, f"{tag} as_of_t 不得选择 T 后 delta")
+            for fact_id in fact_ids:
+                fact = fact_by_id.get(fact_id)
+                out.check(fact is not None, f"{tag} selected_fact_id 不存在: {fact_id}")
+                if fact is not None:
+                    out.check(str(fact.get("code", "")) == code and str(fact.get("category", "")) == category,
+                              f"{tag} 选择了其他代码或类别的 fact: {fact_id}")
+                    source = source_by_ref.get(str(fact.get("source_ref", "")))
+                    out.check(source is not None and str(source.get("access_url", "")) in reviewed_urls,
+                              f"{tag} 未在 reviewed_urls 记录 fact 来源: {fact_id}")
+        elif phase == "post_t_safety":
+            expected_from = t_date + dt.timedelta(days=1) if t_date else None
+            out.check(query_from == expected_from, f"{tag} post_t_safety.date_from 必须严格为 T+1")
+            out.check(retrieved_date is not None and query_to == retrieved_date,
+                      f"{tag} post_t_safety.date_to 必须等于实际检索日")
+            out.check(not fact_ids, f"{tag} post_t_safety 不得选择主事实")
+            for delta_id in delta_ids:
+                delta = delta_by_id.get(delta_id)
+                out.check(delta is not None and delta[0] == code, f"{tag} selected_delta_id 不存在或代码不符: {delta_id}")
+                if delta is not None:
+                    source = source_by_ref.get(str(delta[1].get("source_ref", "")))
+                    out.check(source is not None and str(source.get("access_url", "")) in reviewed_urls,
+                              f"{tag} 未在 reviewed_urls 记录 delta 来源: {delta_id}")
+
+    # Validate delta -> query backlinks now that the query index exists.
+    for delta_id, (code, item) in delta_by_id.items():
+        for query_id in _string_list(item.get("query_ids")):
+            query = query_by_id.get(query_id)
+            out.check(query is not None and query.get("phase") == "post_t_safety" and
+                      str(query.get("code", "")) == code and delta_id in _string_list(query.get("selected_delta_ids")),
+                      f"{delta_id} query_id 无法双向回指 T 后查询: {query_id}")
+
+    coverage = search.get("coverage_by_code") or {}
+    out.check(isinstance(coverage, dict), "coverage_by_code 必须是对象")
+    out.check(isinstance(coverage, dict) and set(coverage) == codes,
+              "coverage_by_code 必须与候选代码一一对应")
+    all_coverage_fact_ids: dict[str, set[str]] = {}
+    for code, block in (coverage.items() if isinstance(coverage, dict) else []):
+        tag = f"coverage_by_code.{code}"
+        out.check(isinstance(block, dict), f"{tag} 必须是对象")
+        if not isinstance(block, dict):
+            continue
+        out.check({"aliases", "profile_tags", "categories", "official_latest_check", "ruling_evidence"} <=
+                  set(block), f"{tag} 缺必需字段")
+        out.check(isinstance(block.get("aliases"), list) and len(block.get("aliases") or []) >= 2,
+                  f"{tag}.aliases 至少包含全称和简称")
+        out.check(isinstance(block.get("profile_tags"), list), f"{tag}.profile_tags 必须是数组")
+        categories = block.get("categories") or {}
+        out.check(isinstance(categories, dict) and set(categories) == set(BOTTOM_SEARCH_CATEGORIES),
+                  f"{tag}.categories 必须精确覆盖六维")
+        if not isinstance(categories, dict):
+            categories = {}
+        covered_facts: set[str] = set()
+        hit_count = 0
+        blocked = False
+        for category in BOTTOM_SEARCH_CATEGORIES:
+            item = categories.get(category) or {}
+            if not isinstance(item, dict):
+                out.check(False, f"{tag}.categories.{category} 必须是对象")
+                item = {}
+            item_tag = f"{tag}.categories.{category}"
+            out.check({"status", "query_ids", "fact_ids", "reason"} <= set(item),
+                      f"{item_tag} 缺必需字段")
+            status = str(item.get("status", ""))
+            query_ids = _string_list(item.get("query_ids"))
+            fact_ids = _string_list(item.get("fact_ids"))
+            out.check(status in {"hit", "no_relevant_hit", "blocked"}, f"{item_tag}.status 无效")
+            out.check(bool(query_ids), f"{item_tag}.query_ids 不能为空")
+            out.check(bool(str(item.get("reason", "")).strip()), f"{item_tag}.reason 为空")
+            matching_queries: list[dict[str, Any]] = []
+            for query_id in query_ids:
+                query = query_by_id.get(query_id)
+                out.check(query is not None and query.get("phase") == "as_of_t" and
+                          str(query.get("code", "")) == str(code) and query.get("category") == category,
+                          f"{item_tag} query_id 不匹配: {query_id}")
+                if query is not None:
+                    matching_queries.append(query)
+            query_starts = [_date(query.get("date_from")) for query in matching_queries]
+            query_starts = [date for date in query_starts if date is not None]
+            required_start = t_date - dt.timedelta(days=BOTTOM_CATEGORY_LOOKBACK_DAYS[category]) if t_date else None
+            out.check(bool(query_starts) and required_start is not None and min(query_starts) <= required_start,
+                      f"{item_tag} 查询窗口未覆盖至少 {BOTTOM_CATEGORY_LOOKBACK_DAYS[category]} 天")
+            for fact_id in fact_ids:
+                fact = fact_by_id.get(fact_id)
+                out.check(fact is not None and str(fact.get("code", "")) == str(code) and
+                          fact.get("category") == category, f"{item_tag} fact_id 不匹配: {fact_id}")
+                out.check(any(fact_id in _string_list(query.get("selected_fact_ids"))
+                              for query in matching_queries), f"{item_tag} fact 未被本维查询采用: {fact_id}")
+            if status == "hit":
+                hit_count += 1
+                out.check(bool(fact_ids), f"{item_tag} hit 却没有 fact_ids")
+                out.check(any(query.get("outcome") == "selected" for query in matching_queries),
+                          f"{item_tag} hit 却没有 selected 查询")
+            elif status == "no_relevant_hit":
+                out.check(not fact_ids and any(query.get("outcome") == "no_relevant_hit"
+                                               for query in matching_queries),
+                          f"{item_tag} no_relevant_hit 与查询/事实不一致")
+                variants = {str(query.get("query_text", "")).strip() for query in matching_queries
+                            if query.get("outcome") == "no_relevant_hit"}
+                out.check(len(variants) >= 2, f"{item_tag} no_relevant_hit 至少需要两种查询变体")
+            elif status == "blocked":
+                blocked = True
+                out.check(not fact_ids and any(query.get("outcome") == "blocked" for query in matching_queries),
+                          f"{item_tag} blocked 与查询/事实不一致")
+            covered_facts.update(fact_ids)
+        all_coverage_fact_ids[str(code)] = covered_facts
+
+        official_queries = [q for q in query_by_id.values() if str(q.get("code", "")) == str(code) and
+                            q.get("phase") == "as_of_t" and q.get("query_mode") == "official"]
+        drop_queries = [q for q in query_by_id.values() if str(q.get("code", "")) == str(code) and
+                        q.get("phase") == "as_of_t" and q.get("query_mode") == "drop_cause"]
+        freshness_queries = [q for q in query_by_id.values() if str(q.get("code", "")) == str(code) and
+                             q.get("phase") == "post_t_safety" and q.get("query_mode") == "freshness_delta"]
+        out.check(bool(official_queries), f"{tag} 缺 official 查询")
+        official_starts = [_date(query.get("date_from")) for query in official_queries]
+        official_starts = [date for date in official_starts if date is not None]
+        out.check(bool(official_starts) and t_date is not None and
+                  min(official_starts) <= t_date - dt.timedelta(days=30),
+                  f"{tag} official 查询未回扫至少30天")
+        out.check(bool(drop_queries), f"{tag} 缺 drop_cause 查询")
+        if retrieved_date and t_date and retrieved_date > t_date:
+            out.check(any(query.get("outcome") in {"selected", "no_relevant_hit"}
+                          for query in freshness_queries),
+                      f"{tag} 缺可用的 T 后 freshness_delta 查询（不能全部 blocked）")
+
+        latest = block.get("official_latest_check") or {}
+        if not isinstance(latest, dict):
+            out.check(False, f"{tag}.official_latest_check 必须是对象")
+            latest = {}
+        out.check({"query_ids", "checked_sources", "latest_pre_t"} <= set(latest),
+                  f"{tag}.official_latest_check 缺必需字段")
+        latest_ids = _string_list(latest.get("query_ids"))
+        out.check(bool(latest_ids) and all(qid in query_by_id and
+                                          query_by_id[qid].get("query_mode") == "official" and
+                                          query_by_id[qid].get("phase") == "as_of_t" and
+                                          str(query_by_id[qid].get("code", "")) == str(code)
+                                          for qid in latest_ids), f"{tag}.official_latest_check.query_ids 无效")
+        out.check(isinstance(latest.get("checked_sources"), list) and bool(latest.get("checked_sources")),
+                  f"{tag}.official_latest_check.checked_sources 为空")
+        latest_date = _date(latest.get("latest_pre_t"))
+        latest_queries = [query_by_id[qid] for qid in latest_ids if qid in query_by_id]
+        latest_all_blocked = bool(latest_queries) and all(query.get("outcome") == "blocked"
+                                                          for query in latest_queries)
+        if latest_all_blocked:
+            out.check(latest.get("latest_pre_t") in (None, ""),
+                      f"{tag}.official_latest_check 全部受阻时 latest_pre_t 应为 null")
+        else:
+            out.check(latest_date is not None and t_date is not None and latest_date <= t_date,
+                      f"{tag}.official_latest_check.latest_pre_t 无效")
+
+        ruling = block.get("ruling_evidence") or {}
+        if not isinstance(ruling, dict):
+            out.check(False, f"{tag}.ruling_evidence 必须是对象")
+            ruling = {}
+        out.check({"supporting_fact_ids", "adverse_fact_ids", "decision_fact_ids", "unresolved_query_ids"} <=
+                  set(ruling), f"{tag}.ruling_evidence 缺必需字段")
+        supporting = _string_list(ruling.get("supporting_fact_ids"))
+        adverse = _string_list(ruling.get("adverse_fact_ids"))
+        decision = _string_list(ruling.get("decision_fact_ids"))
+        unresolved = _string_list(ruling.get("unresolved_query_ids"))
+        out.check(set(decision) <= (set(supporting) | set(adverse)),
+                  f"{tag}.ruling_evidence.decision 必须来自 supporting/adverse")
+        for field_name, ids in (("supporting", supporting), ("adverse", adverse), ("decision", decision)):
+            for fact_id in ids:
+                fact = fact_by_id.get(fact_id)
+                out.check(fact is not None and str(fact.get("code", "")) == str(code),
+                          f"{tag}.ruling_evidence.{field_name} 引用了无效 fact: {fact_id}")
+        for query_id in unresolved:
+            query = query_by_id.get(query_id)
+            out.check(query is not None and str(query.get("code", "")) == str(code) and
+                      query.get("outcome") in {"blocked", "no_relevant_hit"},
+                      f"{tag}.ruling_evidence.unresolved_query_ids 无效: {query_id}")
+        post_for_code = post_table.get(str(code)) if isinstance(post_table, dict) else {}
+        verdict = str((post_for_code or {}).get("base_verdict_asof_t", "")) if isinstance(post_for_code, dict) else ""
+        supporting_decision_sources = [
+            source_by_ref.get(str(fact_by_id[fid].get("source_ref", "")))
+            for fid in set(decision) & set(supporting) if fid in fact_by_id
+        ]
+        adverse_decision_sources = [
+            source_by_ref.get(str(fact_by_id[fid].get("source_ref", "")))
+            for fid in set(decision) & set(adverse) if fid in fact_by_id
+        ]
+        if verdict == "✓":
+            out.check(not blocked, f"{tag} 有 blocked 维度，不得给 ✓")
+            out.check(categories.get("performance_operations", {}).get("status") == "hit",
+                      f"{tag} ✓ 必须有 performance_operations 命中")
+            performance_sources = [source_by_ref.get(str(fact_by_id[fid].get("source_ref", "")))
+                                   for fid in _string_list(categories.get("performance_operations", {}).get("fact_ids"))
+                                   if fid in fact_by_id]
+            out.check(any(source and source.get("source_kind") in
+                          {"official_direct", "verified_official_mirror"} for source in performance_sources),
+                      f"{tag} ✓ 的最新财务锚必须是官方直源或已验证镜像")
+            out.check(hit_count >= 3, f"{tag} ✓ 至少命中三个维度")
+            out.check(bool(supporting) and bool(set(decision) & set(supporting)) and
+                      any(source and source.get("source_kind") in
+                          {"official_direct", "verified_official_mirror"}
+                          for source in supporting_decision_sources),
+                      f"{tag} ✓ 缺支持裁定的官方决定性事实")
+            out.check(all(query.get("outcome") != "blocked" for query in official_queries),
+                      f"{tag} ✓ 的官方公告回扫不得受阻")
+            out.check(all(query.get("outcome") != "blocked" for query in drop_queries),
+                      f"{tag} ✓ 的跌因搜索不得受阻")
+            origins = {str(source_by_ref.get(str(fact_by_id[fid].get("source_ref", "")), {}).get("origin_id", ""))
+                       for fid in covered_facts if fid in fact_by_id}
+            origins.discard("")
+            out.check(len(origins) >= 3, f"{tag} ✓ 采用事实不足三个独立 origin_id")
+        elif verdict == "✗":
+            out.check(bool(adverse) and bool(set(decision) & set(adverse)),
+                      f"{tag} ✗ 缺 adverse 决定性事实")
+            out.check(any(source and source.get("source_kind") in
+                          {"official_direct", "verified_official_mirror"}
+                          for source in adverse_decision_sources),
+                      f"{tag} ✗ 决定性恶化必须有官方原始证据")
+            out.check(all(source and source.get("source_kind") != "unverified_secondary"
+                          for source in adverse_decision_sources), f"{tag} ✗ 不得由未核实二级来源决定")
+        elif verdict == "?":
+            out.check(bool(unresolved) or blocked or (bool(supporting) and bool(adverse)),
+                      f"{tag} ? 必须有未决查询、受阻来源或正反冲突")
+
+    market = search.get("market_coverage") or {}
+    out.check(isinstance(market, dict), "market_coverage 必须是对象")
+    if isinstance(market, dict):
+        out.check({"status", "query_ids", "fact_ids", "reason"} <= set(market),
+                  "market_coverage 缺必需字段")
+        status = str(market.get("status", ""))
+        query_ids = _string_list(market.get("query_ids"))
+        fact_ids = _string_list(market.get("fact_ids"))
+        out.check(status in {"hit", "no_relevant_hit", "blocked"}, "market_coverage.status 无效")
+        out.check(bool(str(market.get("reason", "")).strip()), "market_coverage.reason 为空")
+        if not candidates:
+            out.check(status == "no_relevant_hit" and not query_ids and not fact_ids,
+                      "零候选 market_coverage 必须是 no_relevant_hit 且引用为空")
+        else:
+            out.check(bool(query_ids), "market_coverage.query_ids 不能为空")
+        market_queries = []
+        for query_id in query_ids:
+            query = query_by_id.get(query_id)
+            out.check(query is not None and query.get("code") == "MARKET" and
+                      query.get("category") == "market_regime" and query.get("phase") == "as_of_t",
+                      f"market_coverage query_id 无效: {query_id}")
+            if query is not None:
+                market_queries.append(query)
+        for fact_id in fact_ids:
+            fact = fact_by_id.get(fact_id)
+            out.check(fact is not None and fact.get("code") == "MARKET" and fact.get("category") == "market_regime",
+                      f"market_coverage fact_id 无效: {fact_id}")
+            out.check(any(fact_id in _string_list(query.get("selected_fact_ids")) for query in market_queries),
+                      f"market_coverage fact 未被查询采用: {fact_id}")
+        if not candidates:
+            pass
+        elif status == "hit":
+            out.check(bool(fact_ids) and any(q.get("outcome") == "selected" for q in market_queries),
+                      "market_coverage hit 与事实/查询不一致")
+        else:
+            out.check(not fact_ids and any(q.get("outcome") == status for q in market_queries),
+                      f"market_coverage {status} 与事实/查询不一致")
+
+        market_fact_set = set(fact_ids)
+        for fact_id, fact in fact_by_id.items():
+            code = str(fact.get("code", ""))
+            if code == "MARKET":
+                out.check(fact_id in market_fact_set, f"{fact_id} 是孤儿 MARKET fact，未进入 market_coverage")
+            elif code in codes:
+                out.check(fact_id in all_coverage_fact_ids.get(code, set()),
+                          f"{fact_id} 是孤儿候选 fact，未进入对应 category coverage")
+
+    # Exact, index-level F10 reconciliation: no date-only or alias matching.
+    expected_seeds = _bottom_expected_seeds(result_obj)
+    ledger = search.get("f10_seed_ledger") or []
+    out.check(isinstance(ledger, list), "f10_seed_ledger 必须是数组")
+    mapped_ledger: dict[str, dict[str, Any]] = {}
+    raw_ledger_keys: set[str] = set()
+    notice_fact_owner: dict[str, str] = {}
+    notice_delta_owner: dict[str, str] = {}
+    for idx, item in enumerate(ledger if isinstance(ledger, list) else []):
+        tag = f"f10_seed_ledger[{idx}]"
+        out.check(isinstance(item, dict), f"{tag} 必须是对象")
+        if not isinstance(item, dict):
+            continue
+        out.check({"seed_key", "code", "kind", "raw_index", "seed_text", "raw_date", "timing",
+                   "disposition", "query_ids", "fact_ids", "delta_ids", "reason"} <= set(item),
+                  f"{tag} 缺必需字段")
+        seed_key = str(item.get("seed_key", ""))
+        out.check(bool(seed_key) and seed_key not in raw_ledger_keys, f"{tag}.seed_key 缺失或重复")
+        raw_ledger_keys.add(seed_key)
+        out.check(seed_key in expected_seeds and seed_key not in mapped_ledger,
+                  f"{tag}.seed_key 不是原始种子或重复")
+        if seed_key not in expected_seeds or seed_key in mapped_ledger:
+            continue
+        canonical = seed_key
+        mapped_ledger[canonical] = item
+        expected = expected_seeds[canonical]
+        out.check(str(item.get("code", "")) == expected["code"], f"{tag}.code 与原始种子不符")
+        out.check(item.get("kind") == expected["kind"], f"{tag}.kind 与原始种子不符")
+        out.check(item.get("raw_index") == expected["raw_index"], f"{tag}.raw_index 与原始种子不符")
+        out.check(str(item.get("seed_text", "")) == expected["seed_text"], f"{tag}.seed_text 未逐字保留原始种子")
+        out.check((str(item.get("raw_date")) if item.get("raw_date") is not None else None) == expected["raw_date"],
+                  f"{tag}.raw_date 与原始种子不符")
+        seed_date = _date(expected["raw_date"])
+        timing = "undated" if seed_date is None else ("post_t" if t_date and seed_date > t_date else "pre_t")
+        out.check(item.get("timing") == timing, f"{tag}.timing 与 T 不符")
+        disposition = str(item.get("disposition", ""))
+        query_ids = _string_list(item.get("query_ids"))
+        fact_ids = _string_list(item.get("fact_ids"))
+        delta_ids = _string_list(item.get("delta_ids"))
+        out.check(bool(str(item.get("reason", "")).strip()), f"{tag}.reason 为空")
+        out.check(bool(query_ids), f"{tag}.query_ids 不能为空")
+        if timing == "post_t":
+            out.check(disposition == "quarantined_post_t" and not fact_ids and bool(query_ids) and bool(delta_ids),
+                      f"{tag} T 后种子必须隔离并关联 query/delta")
+        elif timing == "undated":
+            out.check(disposition == "quarantined_undated" and not fact_ids and not delta_ids and bool(query_ids),
+                      f"{tag} 无日期种子必须隔离")
+        elif expected["material"]:
+            out.check(disposition == "adjudicated_pre_t" and bool(fact_ids) and not delta_ids,
+                      f"{tag} T 前实质种子必须逐条裁定")
+        else:
+            out.check(disposition in {"adjudicated_pre_t", "logged_routine_pre_t"},
+                      f"{tag} T 前种子 disposition 无效")
+            if disposition == "logged_routine_pre_t":
+                out.check(not fact_ids and not delta_ids,
+                          f"{tag} logged_routine_pre_t 不得进入 fact/delta")
+        if disposition == "adjudicated_pre_t":
+            out.check(bool(fact_ids), f"{tag} adjudicated_pre_t 必须关联 fact_ids")
+        for query_id in query_ids:
+            query = query_by_id.get(query_id)
+            out.check(query is not None, f"{tag} query_id 不存在: {query_id}")
+            if query is not None and timing == "post_t":
+                out.check(query.get("phase") == "post_t_safety", f"{tag} T 后种子关联了 as_of_t 查询")
+            elif query is not None and timing != "post_t":
+                out.check(query.get("phase") == "as_of_t", f"{tag} T 前/无日期种子查询 phase 无效")
+        for fact_id in fact_ids:
+            fact = fact_by_id.get(fact_id)
+            out.check(fact is not None and str(fact.get("code", "")) == expected["code"],
+                      f"{tag} fact_id 不存在或代码不符: {fact_id}")
+            if fact is not None:
+                out.check(fact.get("f10_match") in {"confirmed", "conflict"},
+                          f"{tag} 对账 fact 必须 confirmed/conflict")
+                out.check(seed_key in _string_list(fact.get("seed_refs")) or canonical in _string_list(fact.get("seed_refs")),
+                          f"{tag} fact.seed_refs 未双向回指 seed")
+                out.check(any(fact_id in _string_list((query_by_id.get(query_id) or {}).get("selected_fact_ids"))
+                              for query_id in query_ids), f"{tag} fact 未被 ledger 查询采用: {fact_id}")
+        if expected["kind"] == "notice" and disposition == "adjudicated_pre_t":
+            unique_fact_ids = [fact_id for fact_id in fact_ids if fact_id not in notice_fact_owner]
+            out.check(bool(unique_fact_ids), f"{tag} 每条 notice 必须有未被其他 notice 复用的逐条 fact")
+            for fact_id in fact_ids:
+                notice_fact_owner.setdefault(fact_id, seed_key)
+        for delta_id in delta_ids:
+            delta = delta_by_id.get(delta_id)
+            out.check(delta is not None and delta[0] == expected["code"],
+                      f"{tag} delta_id 不存在或代码不符: {delta_id}")
+            out.check(any(delta_id in _string_list((query_by_id.get(query_id) or {}).get("selected_delta_ids"))
+                          for query_id in query_ids), f"{tag} delta 未被 ledger 查询采用: {delta_id}")
+        if expected["kind"] == "notice" and timing == "post_t":
+            unique_delta_ids = [delta_id for delta_id in delta_ids if delta_id not in notice_delta_owner]
+            out.check(bool(unique_delta_ids), f"{tag} 每条 T 后 notice 必须有未被其他 notice 复用的逐条 delta")
+            for delta_id in delta_ids:
+                notice_delta_owner.setdefault(delta_id, seed_key)
+    out.check(set(mapped_ledger) == set(expected_seeds), "f10_seed_ledger 与 forecast/notices 未一一相等")
+    for fact_id, fact in fact_by_id.items():
+        for seed_ref in _string_list(fact.get("seed_refs")):
+            out.check(seed_ref in raw_ledger_keys or seed_ref in expected_seeds,
+                      f"{fact_id}.seed_refs 引用了不存在的种子: {seed_ref}")
+
+    # Concentration is a transparency warning, not an automatic rejection.
+    for code in codes:
+        used_sources = [source_by_ref.get(str(fact_by_id[fid].get("source_ref", "")))
+                        for fid in all_coverage_fact_ids.get(code, set()) if fid in fact_by_id]
+        publishers = {str(source.get("access_publisher", "")) for source in used_sources if source}
+        out.warn(len(publishers) >= 2, f"{code} 采用事实来源发布者过度集中")
     return out
 
 
@@ -326,7 +1151,7 @@ BOTTOM_WEIGHTS = {
 }
 
 
-def validate_bottom(obj: dict[str, Any], strict: bool = True) -> Result:
+def validate_bottom(obj: dict[str, Any], strict: bool = True, require_search: bool = False) -> Result:
     out = Result("bottom-fishing")
     candidates = list(obj.get("candidates") or [])
     observe = list(obj.get("observe") or [])
@@ -369,16 +1194,20 @@ def validate_bottom(obj: dict[str, Any], strict: bool = True) -> Result:
         actual = [(layer.get(x.get("judge"), 9), -float(x.get("score", 0))) for x in candidates]
         out.check(actual == sorted(actual), "裁定版不是 ✓→?→✗ 且层内分数降序")
     if strict:
-        out.merge(audit_common(obj, "bottom-fishing", _code_list(candidates)))
+        search_enabled = isinstance((obj.get("codex_audit") or {}).get("bottom_search"), dict)
+        out.merge(audit_common(obj, "bottom-fishing", [] if search_enabled else _code_list(candidates)))
         t_date = _date(t)
         for idx, fact in enumerate((obj.get("codex_audit") or {}).get("facts") or []):
             published = _date(fact.get("published_at"))
             out.check(t_date is not None and published is not None and published <= t_date,
                       f"bottom facts[{idx}] 使用了 T 日之后信息（前视违规）")
-        out.merge(f10_cross_check(obj, "bottom-fishing"))
+        if not search_enabled:
+            out.merge(f10_cross_check(obj, "bottom-fishing"))
         buy_codes = [str(x.get("code")) for x in candidates if x.get("judge") == "✓"]
         if buy_codes:
             out.merge(price_audit_check(obj, buy_codes, t))
+        if require_search or search_enabled:
+            out.merge(validate_bottom_search(obj, required=require_search))
     return out
 
 
@@ -407,7 +1236,7 @@ def _scorecard_check(audit: dict[str, Any], scores: dict[str, float]) -> Result:
             out.check(delta is not None, f"Agent{dim}.items[{idx}] delta 无效")
             total += delta or 0
             out.check(bool(str(item.get("reason", "")).strip()), f"Agent{dim}.items[{idx}] reason 为空")
-            out.check(bool(URL_RE.match(str(item.get("source_url", "")))),
+            out.check(_valid_http_url(item.get("source_url")),
                       f"Agent{dim}.items[{idx}] 缺来源 URL")
             out.check(bool(DATE_RE.match(str(item.get("published_at", "")))),
                       f"Agent{dim}.items[{idx}] 缺来源日期")
@@ -488,7 +1317,7 @@ def _stock_formula_audit(obj: dict[str, Any], scores: dict[str, float]) -> Resul
         out.check(delta is not None and delta >= 0, f"⑤ subjective_items[{idx}] delta 必须非负")
         subtotal += delta or 0
         out.check(bool(str(item.get("reason", "")).strip()), f"⑤ subjective_items[{idx}] 缺理由")
-        out.check(bool(URL_RE.match(str(item.get("source_url", "")))), f"⑤ subjective_items[{idx}] 缺 URL")
+        out.check(_valid_http_url(item.get("source_url")), f"⑤ subjective_items[{idx}] 缺 URL")
         out.check(bool(DATE_RE.match(str(item.get("published_at", "")))), f"⑤ subjective_items[{idx}] 缺发布日期")
     expected = min(100.0, float(engine_tech or 0) + float(engine_event or 0) + subtotal)
     out.check(_close(risk.get("final"), expected, 0.11), "⑤ 风险分算术错误")
@@ -967,21 +1796,36 @@ def validate_weekly_engine(obj: dict[str, Any], gate: dict[str, Any]) -> Result:
     return out
 
 
-def validate_html(skill: str, obj: dict[str, Any], html_path: pathlib.Path, strict: bool = True) -> Result:
+def validate_html(skill: str, obj: dict[str, Any], html_path: pathlib.Path, strict: bool = True,
+                  require_bottom_search: bool = False) -> Result:
     out = Result(f"{skill}.html")
     out.check(html_path.is_file(), f"HTML 不存在: {html_path}")
     if not html_path.is_file():
         return out
     raw = html_path.read_text(encoding="utf-8-sig")
     plain = _plain_html(raw)
+    link_targets = _html_link_targets(raw)
     if strict:
-        out.check("Claude" not in raw and "WebSearch" not in raw, "最终 HTML 仍含 Claude/WebSearch 品牌残留")
+        out.check("Claude" not in plain and "WebSearch" not in plain, "最终 HTML 仍含 Claude/WebSearch 品牌残留")
         out.check(AUDIT_START in raw and AUDIT_END in raw, "最终 HTML 缺 Codex 可见审计附录")
         for idx, fact in enumerate((obj.get("codex_audit") or {}).get("facts") or []):
-            out.check(str(fact.get("source_url", "")) in raw, f"HTML 缺 facts[{idx}] 来源 URL")
+            url = str(fact.get("source_url", ""))
+            out.check(url in link_targets, f"HTML 缺 facts[{idx}] 来源 URL")
             out.check(str(fact.get("published_at", "")) in plain, f"HTML 缺 facts[{idx}] 发布日期")
     out.check("非投资建议" in plain or "不构成投资" in plain, "HTML 缺风险/非投资建议声明")
     if skill == "bottom-fishing":
+        search = (obj.get("codex_audit") or {}).get("bottom_search")
+        if require_bottom_search or isinstance(search, dict):
+            out.check(isinstance(search, dict), "HTML 最终验收要求 bottom_search")
+            if isinstance(search, dict):
+                out.check("搜索覆盖与时点增量" in plain and "bottom-search-audit/v1" in plain,
+                          "HTML 缺搜索覆盖与时点增量附录")
+                for code in search.get("coverage_by_code") or {}:
+                    out.check(str(code) in plain, f"HTML 搜索附录缺候选代码 {code}")
+                for idx, source in enumerate(search.get("sources") or []):
+                    url = str(source.get("access_url", ""))
+                    out.check(url in link_targets,
+                              f"HTML 搜索附录缺 sources[{idx}] access_url")
         expected = _code_list(obj.get("candidates") or [])
         positions = [plain.find(code) for code in expected]
         out.check(all(x >= 0 for x in positions), "HTML 缺候选代码")
@@ -1001,7 +1845,8 @@ def validate_html(skill: str, obj: dict[str, Any], html_path: pathlib.Path, stri
         if strict:
             for dim, card in ((obj.get("codex_audit") or {}).get("scorecards") or {}).items():
                 for idx, item in enumerate(card.get("items") or []):
-                    out.check(str(item.get("source_url", "")) in raw,
+                    url = str(item.get("source_url", ""))
+                    out.check(url in link_targets,
                               f"HTML 缺 Agent{dim} item[{idx}] 来源 URL")
                     out.check(str(item.get("published_at", "")) in plain,
                               f"HTML 缺 Agent{dim} item[{idx}] 来源日期")
@@ -1027,11 +1872,21 @@ def brand_report(path: pathlib.Path) -> Result:
     if not path.is_file():
         return out
     raw = path.read_text(encoding="utf-8-sig")
-    branded = raw.replace("Claude Code", "Codex").replace("Claude WebSearch", "Codex 网页检索")
+    protected: list[str] = []
+
+    def protect_url(match: re.Match[str]) -> str:
+        protected.append(match.group(3))
+        return f"{match.group(1)}{match.group(2)}__CODEX_URL_{len(protected) - 1}__{match.group(2)}"
+
+    branded = re.sub(r"(?is)(\b(?:href|src)\s*=\s*)(['\"])(.*?)\2", protect_url, raw)
+    branded = branded.replace("Claude Code", "Codex").replace("Claude WebSearch", "Codex 网页检索")
     branded = branded.replace("Claude", "Codex").replace("WebSearch", "网页检索").replace("WebFetch", "网页打开")
+    for idx, url in enumerate(protected):
+        branded = branded.replace(f"__CODEX_URL_{idx}__", url)
     if branded != raw:
         path.write_text(branded, encoding="utf-8")
-    out.check("Claude" not in branded and "WebSearch" not in branded, "品牌替换不完整")
+    visible = _plain_html(branded)
+    out.check("Claude" not in visible and "WebSearch" not in visible, "品牌替换不完整")
     return out
 
 
@@ -1045,6 +1900,28 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
     out.check(path.is_file(), f"报告不存在: {path}")
     audit = obj.get("codex_audit")
     out.check(isinstance(audit, dict), "JSON 缺 codex_audit，无法生成审计附录")
+    if not out.passed:
+        return out
+    for idx, fact in enumerate(audit.get("facts") or []):
+        out.check(_valid_http_url(fact.get("source_url")), f"facts[{idx}].source_url 无效，拒绝写入 HTML")
+    if skill == "stock-diagnostic":
+        for dim, card in (audit.get("scorecards") or {}).items():
+            for idx, item in enumerate(card.get("items") or []):
+                out.check(_valid_http_url(item.get("source_url")),
+                          f"scorecards.{dim}.items[{idx}].source_url 无效，拒绝写入 HTML")
+    search = audit.get("bottom_search")
+    if isinstance(search, dict):
+        for idx, source in enumerate(search.get("sources") or []):
+            out.check(_valid_http_url(source.get("access_url")),
+                      f"bottom_search.sources[{idx}].access_url 无效，拒绝写入 HTML")
+            canonical = source.get("canonical_url")
+            if canonical:
+                out.check(_valid_http_url(canonical),
+                          f"bottom_search.sources[{idx}].canonical_url 无效，拒绝写入 HTML")
+        for idx, query in enumerate(search.get("queries") or []):
+            for url in query.get("reviewed_urls") or []:
+                out.check(_valid_http_url(url),
+                          f"bottom_search.queries[{idx}].reviewed_urls 含无效 URL，拒绝写入 HTML")
     if not out.passed:
         return out
     raw = path.read_text(encoding="utf-8-sig")
@@ -1084,6 +1961,87 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
             "<table><tr><th>角色</th><th>起点</th><th>逐项加减与来源</th><th>最终</th></tr>"
             + "".join(score_rows) + "</table>"
         )
+    search_html = ""
+    if skill == "bottom-fishing" and isinstance(search, dict):
+        coverage_rows = []
+        for code, block in (search.get("coverage_by_code") or {}).items():
+            categories = block.get("categories") or {}
+            status_text = "；".join(
+                f"{name}={esc((categories.get(name) or {}).get('status'))}"
+                for name in BOTTOM_SEARCH_CATEGORIES
+            )
+            latest = block.get("official_latest_check") or {}
+            ruling = block.get("ruling_evidence") or {}
+            coverage_rows.append(
+                f"<tr><td>{esc(code)}</td><td>{status_text}</td>"
+                f"<td>{esc(latest.get('latest_pre_t'))}<br>{esc('；'.join(str(x) for x in latest.get('checked_sources') or []))}</td>"
+                f"<td>{esc('；'.join(str(x) for x in ruling.get('unresolved_query_ids') or []) or '无')}</td></tr>"
+            )
+        source_rows = []
+        for source in search.get("sources") or []:
+            canonical = str(source.get("canonical_url") or "")
+            canonical_link = (f"<br>官方：<a href='{esc(canonical)}'>{esc(source.get('canonical_publisher') or canonical)}</a>"
+                              if canonical and canonical != str(source.get("access_url") or "") else "")
+            source_rows.append(
+                f"<tr><td>{esc(source.get('source_ref'))}</td><td>{esc(source.get('source_kind'))}</td>"
+                f"<td>{esc(source.get('origin_id'))}</td>"
+                f"<td><a href='{esc(source.get('access_url'))}'>{esc(source.get('access_publisher'))}</a>{canonical_link}</td></tr>"
+            )
+        post_rows = []
+        for code, post in (search.get("post_t_safety_by_code") or {}).items():
+            items = "<br>".join(
+                f"{esc(item.get('published_at'))} {esc(item.get('summary'))} "
+                f"[{esc(item.get('polarity'))}/{esc(item.get('effect'))}]"
+                for item in post.get("items") or []
+            ) or "无 T 后增量"
+            post_rows.append(
+                f"<tr><td>{esc(code)}</td><td>{esc(post.get('base_verdict_asof_t'))}</td>"
+                f"<td>{esc(post.get('effective_verdict'))}</td><td>{esc(post.get('checked_through_beijing'))}</td>"
+                f"<td>{items}</td></tr>"
+            )
+        query_rows = []
+        for query in search.get("queries") or []:
+            urls = " ".join(
+                f"<a href='{esc(url)}'>链接{idx + 1}</a>"
+                for idx, url in enumerate(query.get("reviewed_urls") or [])
+            ) or "无链接"
+            query_rows.append(
+                f"<tr><td>{esc(query.get('query_id'))}</td><td>{esc(query.get('code'))}</td>"
+                f"<td>{esc(query.get('phase'))}/{esc(query.get('category'))}/{esc(query.get('query_mode'))}</td>"
+                f"<td>{esc(query.get('date_from'))} 至 {esc(query.get('date_to'))}</td>"
+                f"<td>{esc(query.get('outcome'))}<br>{urls}<br>{esc(query.get('notes'))}</td></tr>"
+            )
+        ledger_rows = []
+        for seed in search.get("f10_seed_ledger") or []:
+            ledger_rows.append(
+                f"<tr><td>{esc(seed.get('seed_key'))}</td><td>{esc(seed.get('timing'))}</td>"
+                f"<td>{esc(seed.get('disposition'))}</td>"
+                f"<td>{esc('；'.join(str(x) for x in seed.get('fact_ids') or []) or '无')}</td>"
+                f"<td>{esc('；'.join(str(x) for x in seed.get('delta_ids') or []) or '无')}</td>"
+                f"<td>{esc(seed.get('reason'))}</td></tr>"
+            )
+        empty_html = (f"<p><b>零候选说明：</b>{esc(search.get('empty_reason'))}</p>"
+                      if search.get("empty_reason") else "")
+        search_html = (
+            "<h3>搜索覆盖与时点增量</h3>"
+            f"<p><b>协议：</b>{esc(search.get('version'))}　<b>T：</b>{esc(search.get('T'))}　"
+            f"<b>裁定截止：</b>{esc(search.get('cutoff_beijing'))}　"
+            f"<b>末端检查：</b>{esc(search.get('retrieved_at_beijing'))}</p>"
+            + empty_html
+            + "<table><tr><th>代码</th><th>六维状态</th><th>最新T前官方回扫</th><th>未决查询</th></tr>"
+            + "".join(coverage_rows) + "</table>"
+            "<h4>来源血缘</h4><table><tr><th>source_ref</th><th>类型</th><th>origin_id</th><th>访问与官方原文</th></tr>"
+            + "".join(source_rows) + "</table>"
+            "<h4>T 后安全增量（只维持或降级）</h4>"
+            "<table><tr><th>代码</th><th>as-of-T</th><th>有效裁定</th><th>检查至</th><th>增量</th></tr>"
+            + "".join(post_rows) + "</table>"
+            "<details><summary>F10 逐条对账</summary>"
+            "<table><tr><th>seed_key</th><th>时点</th><th>处置</th><th>facts</th><th>deltas</th><th>理由</th></tr>"
+            + "".join(ledger_rows) + "</table></details>"
+            "<details><summary>查询日志</summary>"
+            "<table><tr><th>ID</th><th>代码</th><th>阶段/类别/模式</th><th>日期窗</th><th>结果/链接/说明</th></tr>"
+            + "".join(query_rows) + "</table></details>"
+        )
     price_rows = []
     for code, row in (audit.get("price_verification_by_code") or {}).items():
         price_rows.append(f"<tr><td>{esc(code)}</td><td>{esc(row.get('as_of'))}</td>"
@@ -1103,6 +2061,7 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
         + f"<p><b>证据截止：</b>{esc(audit.get('evidence_cutoff_beijing'))}　"
           f"<b>检索日：</b>{esc(audit.get('retrieved_on_beijing'))}</p>"
         + score_html
+        + search_html
         + "<h3>事实、来源、日期、rubric 与反方解释</h3>"
           "<table><tr><th>代码</th><th>事实</th><th>来源/日期</th><th>F10比对</th><th>加减</th><th>推理/反方/结论</th></tr>"
         + "".join(fact_rows) + "</table>"
@@ -1222,6 +2181,150 @@ def _test_audit(skill: str, cutoff: str, retrieved: str, facts: list[dict[str, A
     }
 
 
+def _test_bottom_search_case() -> tuple[dict[str, Any], dict[str, Any]]:
+    """Small complete graph used only to prove bottom-search positive/negative paths."""
+    t, retrieved, code = "2026-01-10", "2026-01-12", "600000"
+    notices = [
+        "2026-01-10 测试公司:关于股东减持计划的公告",
+        "2026-01-10 测试公司:关于重大诉讼进展的公告",
+        "2026-01-11 测试公司:关于股份回购进展的公告",
+    ]
+    forecast = {"notice_date": "2026-01-09", "type": "预增", "content": "预计扣非净利润增长20%",
+                "fresh": True}
+    result_obj = {
+        "T": t,
+        "candidates": [{"code": code, "judge": "✓", "forecast": forecast, "notices": notices,
+                        "f10_flag": ""}],
+    }
+    facts = [
+        _test_fact(code, "2026-01-09", retrieved, "https://example.com/perf?x=1&y=2", "confirmed"),
+        _test_fact(code, t, retrieved, "https://example.com/corporate", "confirmed"),
+        _test_fact(code, t, retrieved, "https://example.com/governance", "confirmed"),
+        _test_fact("MARKET", t, retrieved, "https://example.com/market"),
+    ]
+    graph_fields = [
+        ("fact-perf", "performance_operations", "source-perf", [f"{code}:forecast"]),
+        ("fact-corporate", "corporate_events", "source-corporate", [f"{code}:notices:0"]),
+        ("fact-governance", "governance_regulatory", "source-governance", [f"{code}:notices:1"]),
+        ("fact-market", "market_regime", "source-market", []),
+    ]
+    for fact, (fact_id, category, source_ref, seed_refs) in zip(facts, graph_fields):
+        fact.update({"fact_id": fact_id, "category": category, "source_ref": source_ref,
+                     "seed_refs": seed_refs})
+
+    def query(query_id: str, query_code: str, category: str, mode: str, outcome: str,
+              facts_selected: list[str] | None = None, deltas_selected: list[str] | None = None,
+              phase: str = "as_of_t", date_from: str = "2025-01-01",
+              date_to: str = t, reviewed_url: str = "https://example.com/search?x=1&y=2") -> dict[str, Any]:
+        return {
+            "query_id": query_id,
+            "code": query_code,
+            "category": category,
+            "phase": phase,
+            "query_mode": mode,
+            "query_text": f"{query_code} {category} {mode}",
+            "date_from": date_from,
+            "date_to": date_to,
+            "executed_at_beijing": f"{retrieved} 10:00:00+08:00",
+            "outcome": outcome,
+            "reviewed_urls": [reviewed_url],
+            "selected_fact_ids": facts_selected or [],
+            "selected_delta_ids": deltas_selected or [],
+            "notes": "已检查官方入口和查询变体，未发现可核实重大证据" if outcome != "selected" else "采用",
+        }
+
+    queries = [
+        query("q-perf", code, "performance_operations", "official", "selected", ["fact-perf"],
+              reviewed_url="https://example.com/perf?x=1&y=2"),
+        query("q-fin", code, "financial_credit", "broad_web", "no_relevant_hit"),
+        query("q-fin-2", code, "financial_credit", "regulator", "no_relevant_hit"),
+        query("q-gov", code, "governance_regulatory", "regulator", "selected", ["fact-governance"],
+              date_from="2024-01-01", reviewed_url="https://example.com/governance"),
+        query("q-corp", code, "corporate_events", "exact_title", "selected", ["fact-corporate"],
+              reviewed_url="https://example.com/corporate"),
+        query("q-industry", code, "industry_policy_domestic", "industry", "no_relevant_hit"),
+        query("q-industry-2", code, "industry_policy_domestic", "broad_web", "no_relevant_hit"),
+        query("q-global", code, "external_global_peer", "overseas", "no_relevant_hit"),
+        query("q-global-2", code, "external_global_peer", "ah_cross_listing", "no_relevant_hit"),
+        query("q-drop", code, "performance_operations", "drop_cause", "no_relevant_hit"),
+        query("q-market", "MARKET", "market_regime", "broad_web", "selected", ["fact-market"],
+              reviewed_url="https://example.com/market"),
+        query("q-delta", code, "corporate_events", "freshness_delta", "selected", [], ["delta-positive"],
+              "post_t_safety", "2026-01-11", retrieved, "https://example.com/delta"),
+    ]
+    categories: dict[str, dict[str, Any]] = {}
+    mapping = {
+        "performance_operations": ("hit", ["q-perf"], ["fact-perf"]),
+        "financial_credit": ("no_relevant_hit", ["q-fin", "q-fin-2"], []),
+        "governance_regulatory": ("hit", ["q-gov"], ["fact-governance"]),
+        "corporate_events": ("hit", ["q-corp"], ["fact-corporate"]),
+        "industry_policy_domestic": ("no_relevant_hit", ["q-industry", "q-industry-2"], []),
+        "external_global_peer": ("no_relevant_hit", ["q-global", "q-global-2"], []),
+    }
+    for category, (status, query_ids, fact_ids) in mapping.items():
+        categories[category] = {"status": status, "query_ids": query_ids, "fact_ids": fact_ids,
+                                "reason": "夹具命中" if status == "hit" else "完成官方入口与查询变体，未命中"}
+    sources = []
+    for ref, url, publisher, origin in (
+        ("source-perf", "https://example.com/perf?x=1&y=2", "交易所", "origin-perf"),
+        ("source-corporate", "https://example.com/corporate", "公司IR", "origin-corporate"),
+        ("source-governance", "https://example.com/governance", "监管机构", "origin-governance"),
+        ("source-market", "https://example.com/market", "统计机构", "origin-market"),
+        ("source-delta", "https://example.com/delta", "公司IR", "origin-delta"),
+    ):
+        sources.append({"source_ref": ref, "access_url": url, "access_publisher": publisher,
+                        "source_kind": "official_direct", "origin_id": origin,
+                        "canonical_url": url, "canonical_publisher": publisher, "match_basis": []})
+    audit = _test_audit("bottom-fishing", t, retrieved, facts)
+    audit["bottom_search"] = {
+        "version": "bottom-search-audit/v1",
+        "T": t,
+        "cutoff_beijing": f"{t} 23:59:59+08:00",
+        "retrieved_at_beijing": f"{retrieved} 10:00:00+08:00",
+        "required_categories": list(BOTTOM_SEARCH_CATEGORIES),
+        "sources": sources,
+        "queries": queries,
+        "coverage_by_code": {code: {
+            "aliases": ["测试股份有限公司", "测试公司"],
+            "profile_tags": ["内需"],
+            "categories": categories,
+            "official_latest_check": {"query_ids": ["q-perf"], "checked_sources": ["交易所", "公司IR"],
+                                      "latest_pre_t": "2026-01-09"},
+            "ruling_evidence": {"supporting_fact_ids": ["fact-perf", "fact-corporate"],
+                                "adverse_fact_ids": ["fact-governance"],
+                                "decision_fact_ids": ["fact-perf"], "unresolved_query_ids": []},
+        }},
+        "market_coverage": {"status": "hit", "query_ids": ["q-market"],
+                            "fact_ids": ["fact-market"], "reason": "系统性踩踏核查"},
+        "f10_seed_ledger": [
+            {"seed_key": f"{code}:forecast", "code": code, "kind": "forecast", "raw_index": None,
+             "seed_text": "2026-01-09 预增 预计扣非净利润增长20%", "raw_date": "2026-01-09",
+             "timing": "pre_t", "disposition": "adjudicated_pre_t", "query_ids": ["q-perf"],
+             "fact_ids": ["fact-perf"], "delta_ids": [], "reason": "逐条确认"},
+            {"seed_key": f"{code}:notices:0", "code": code, "kind": "notice", "raw_index": 0,
+             "seed_text": notices[0], "raw_date": t, "timing": "pre_t", "disposition": "adjudicated_pre_t",
+             "query_ids": ["q-corp"], "fact_ids": ["fact-corporate"], "delta_ids": [], "reason": "逐条确认"},
+            {"seed_key": f"{code}:notices:1", "code": code, "kind": "notice", "raw_index": 1,
+             "seed_text": notices[1], "raw_date": t, "timing": "pre_t", "disposition": "adjudicated_pre_t",
+             "query_ids": ["q-gov"], "fact_ids": ["fact-governance"], "delta_ids": [], "reason": "逐条确认"},
+            {"seed_key": f"{code}:notices:2", "code": code, "kind": "notice", "raw_index": 2,
+             "seed_text": notices[2], "raw_date": "2026-01-11", "timing": "post_t",
+             "disposition": "quarantined_post_t", "query_ids": ["q-delta"], "fact_ids": [],
+             "delta_ids": ["delta-positive"], "reason": "晚于T，隔离"},
+        ],
+        "post_t_safety_by_code": {code: {
+            "checked_through_beijing": f"{retrieved} 10:00:00+08:00",
+            "base_verdict_asof_t": "✓", "effective_verdict": "✓",
+            "items": [{"delta_id": "delta-positive", "source_ref": "source-delta",
+                       "published_at": "2026-01-11", "event_date": "2026-01-11",
+                       "query_ids": ["q-delta"], "summary": notices[2], "polarity": "positive",
+                       "effect": "none", "used_in_asof_t_verdict": False, "uncertainties": []}],
+        }},
+    }
+    audit_doc = {"T": t, "rulings": {code: {"verdict": "✓"}}, "codex_audit": audit}
+    return result_obj, audit_doc
+
+
 def strict_self_test() -> Result:
     """用当前 schema 的内存夹具覆盖严格通过路径和关键失败注入，不污染生产 JSON。"""
     out = Result("self-test")
@@ -1237,7 +2340,116 @@ def strict_self_test() -> Result:
         match = "conflict" if fc.get("notice_date") else "not_applicable"
         b_facts.append(_test_fact(code, published, b_date, f"https://example.com/bottom/{code}/{published}", match))
     bottom["codex_audit"] = _test_audit("bottom-fishing", b_date, b_date, b_facts)
+    bottom["codex_audit"]["price_verification_by_code"] = {}
+    for row in bottom.get("candidates") or []:
+        if row.get("judge") == "✓":
+            code = str(row.get("code"))
+            close = float(row.get("close"))
+            bottom["codex_audit"]["price_verification_by_code"][code] = {
+                "as_of": b_date, "usable_sources": {"源A": close, "源B": close},
+                "max_dev_pct": 0.0, "status": "verified",
+            }
     out.merge(validate_bottom(bottom, strict=True))
+
+    search_result, search_audit_doc = _test_bottom_search_case()
+    out.merge(validate_bottom_search(search_result, search_audit_doc, required=True))
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    del bad_search["codex_audit"]["bottom_search"]["coverage_by_code"]["600000"]["categories"][
+        "external_global_peer"]
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: bottom_search 缺六维未被拦截")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    ledger = bad_search["codex_audit"]["bottom_search"]["f10_seed_ledger"]
+    bad_search["codex_audit"]["bottom_search"]["f10_seed_ledger"] = [
+        row for row in ledger if row["seed_key"] != "600000:notices:1"
+    ]
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: 同日 F10 公告漏一条未被拦截")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    post_seed = next(row for row in bad_search["codex_audit"]["bottom_search"]["f10_seed_ledger"]
+                     if row["seed_key"] == "600000:notices:2")
+    post_seed["fact_ids"] = ["fact-perf"]
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: T 后 seed 混入主 fact 未被拦截")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    block = bad_search["codex_audit"]["bottom_search"]["coverage_by_code"]["600000"]
+    block["categories"]["financial_credit"].update({"status": "blocked", "query_ids": ["q-fin"]})
+    q_fin = next(row for row in bad_search["codex_audit"]["bottom_search"]["queries"]
+                 if row["query_id"] == "q-fin")
+    q_fin["outcome"] = "blocked"
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: blocked 维度仍给 ✓ 未被拦截")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    decisive = next(row for row in bad_search["codex_audit"]["bottom_search"]["sources"]
+                    if row["source_ref"] == "source-perf")
+    decisive.update({"source_kind": "verified_official_mirror",
+                     "canonical_url": "https://official.example.com/perf", "match_basis": ["title"]})
+    decisive.pop("document_id", None)
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: 镜像血缘不足仍作决定性证据")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    duplicate = copy.deepcopy(bad_search["codex_audit"]["bottom_search"]["sources"][0])
+    duplicate.update({"source_ref": "source-fake-duplicate", "access_url": "https://mirror.example.com/perf",
+                      "source_kind": "verified_official_mirror", "origin_id": "fake-origin",
+                      "canonical_url": "https://example.com/perf?x=1&y=2",
+                      "canonical_publisher": "交易所", "document_id": "doc-001",
+                      "match_basis": ["title", "published_at"]})
+    bad_search["codex_audit"]["bottom_search"]["sources"].append(duplicate)
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: 同 canonical_url 伪造独立 origin 未被拦截")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    post = bad_search["codex_audit"]["bottom_search"]["post_t_safety_by_code"]["600000"]
+    post["base_verdict_asof_t"] = "?"
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: T 后利好把 ? 升为 ✓ 未被拦截")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    delta_source = next(row for row in bad_search["codex_audit"]["bottom_search"]["sources"]
+                        if row["source_ref"] == "source-delta")
+    delta_source["source_kind"] = "unverified_secondary"
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: 未核实二级 T 后线索被当作已验证利好")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    bad_search["codex_audit"]["bottom_search"]["coverage_by_code"]["600000"]["categories"][
+        "financial_credit"]["query_ids"] = ["q-fin"]
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: no_relevant_hit 仅一条查询变体未被拦截")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    bad_search["codex_audit"]["bottom_search"]["coverage_by_code"]["600000"]["categories"][
+        "performance_operations"]["fact_ids"] = []
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: 孤儿候选 fact 未被拦截")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    bad_search["codex_audit"]["bottom_search"]["coverage_by_code"]["600000"]["ruling_evidence"][
+        "decision_fact_ids"] = ["fact-governance"]
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: ✓ 只引用 adverse 决定事实未被拦截")
+
+    zero_t = "2026-01-10"
+    zero_result = {"T": zero_t, "candidates": []}
+    zero_audit = _test_audit("bottom-fishing", zero_t, zero_t, [])
+    zero_audit["bottom_search"] = {
+        "version": "bottom-search-audit/v1", "T": zero_t,
+        "cutoff_beijing": f"{zero_t} 23:59:59+08:00",
+        "retrieved_at_beijing": f"{zero_t} 20:00:00+08:00",
+        "required_categories": list(BOTTOM_SEARCH_CATEGORIES), "empty_reason": "引擎本轮信号为零",
+        "sources": [], "queries": [], "coverage_by_code": {}, "f10_seed_ledger": [],
+        "post_t_safety_by_code": {},
+        "market_coverage": {"status": "no_relevant_hit", "query_ids": [], "fact_ids": [],
+                            "reason": "无候选，不启动个股网页裁定"},
+    }
+    zero_doc = {"T": zero_t, "rulings": {}, "codex_audit": zero_audit}
+    out.merge(validate_bottom_search(zero_result, zero_doc, required=True))
 
     stock = copy.deepcopy(_load(DATA / "diag_latest.json"))
     s_date = str(stock.get("as_of"))
@@ -1322,8 +2534,9 @@ def strict_self_test() -> Result:
 
     # 严格负例：每类关键门禁至少注入一次错误且必须被拒绝。
     bad = copy.deepcopy(bottom)
-    if bad.get("candidates"):
-        bad["candidates"][0]["plan"] = {"buy_low": 1}
+    non_buy = next((row for row in bad.get("candidates") or [] if row.get("judge") != "✓"), None)
+    if non_buy is not None:
+        non_buy["plan"] = {"buy_low": 1}
         out.check(not validate_bottom(bad, strict=True).passed, "严格负例失效: bottom 非买入票价位未拦截")
     bad = copy.deepcopy(stock)
     bad["codex_audit"]["technical_score"]["multiplier"] = 1.0
@@ -1346,6 +2559,28 @@ def strict_self_test() -> Result:
                   "HTML 审计附录重复生成不幂等")
         out.check("Claude" not in rendered and "WebSearch" not in rendered, "HTML 品牌归一自测失败")
         out.check(w_facts[0]["source_url"] in rendered, "HTML 审计附录缺证据 URL")
+
+        search_sample = pathlib.Path(td) / "bottom-search.html"
+        search_sample.write_text("<html><body><p>600000</p><p>非投资建议</p></body></html>", encoding="utf-8")
+        search_final = copy.deepcopy(search_result)
+        search_final["codex_audit"] = copy.deepcopy(search_audit_doc["codex_audit"])
+        out.merge(augment_report(search_sample, search_final, "bottom-fishing"))
+        out.merge(validate_html("bottom-fishing", search_final, search_sample, strict=True,
+                                require_bottom_search=True))
+        search_rendered = search_sample.read_text(encoding="utf-8")
+        out.check("https://example.com/perf?x=1&amp;y=2" in search_rendered,
+                  "HTML URL 的 & 未正确转义")
+        out.check("600000:notices:1" in _plain_html(search_rendered), "HTML 缺 F10 逐条 ledger")
+
+        brand_sample = pathlib.Path(td) / "brand-url.html"
+        brand_url = "https://example.com/Claude?tool=WebSearch&x=1"
+        brand_sample.write_text(
+            f"<html><body><a href='{brand_url}'>Claude WebSearch</a></body></html>", encoding="utf-8")
+        out.merge(brand_report(brand_sample))
+        branded_raw = brand_sample.read_text(encoding="utf-8")
+        out.check(brand_url in _html_link_targets(branded_raw), "brand-report 破坏了 href URL")
+        out.check("Claude" not in _plain_html(branded_raw) and "WebSearch" not in _plain_html(branded_raw),
+                  "brand-report 未清理可见品牌文案")
     return out
 
 
@@ -1438,6 +2673,9 @@ def main() -> None:
     bottom_engine = sub.add_parser("validate-bottom-engine", help="校验原始 bottom JSON/HTML（非最终裁定）")
     bottom_engine.add_argument("--json", required=True)
     bottom_engine.add_argument("--html")
+    bottom_search = sub.add_parser("validate-bottom-search", help="裁定写入前校验抄底搜索审计与时点隔离")
+    bottom_search.add_argument("--result", required=True)
+    bottom_search.add_argument("--audit", required=True)
     install = sub.add_parser("install-check", help="核对 .agents/skills 安装")
     install.add_argument("--skills-root", default=r"C:\Trading_analysis\.agents\skills")
     brand = sub.add_parser("brand-report", help="把最终 HTML 中的遗留品牌文案改为 Codex")
@@ -1454,6 +2692,8 @@ def main() -> None:
     val.add_argument("--skill", required=True, choices=("bottom-fishing", "stock-diagnostic", "weekly-ashare-rank"))
     val.add_argument("--json", required=True)
     val.add_argument("--html")
+    val.add_argument("--require-bottom-search", action="store_true",
+                     help="bottom-fishing 最终发布必须含通过验收的 bottom_search")
     args = parser.parse_args()
 
     if args.cmd == "baseline":
@@ -1476,6 +2716,15 @@ def main() -> None:
         if args.html:
             result.merge(validate_html("bottom-fishing", bottom_obj, pathlib.Path(args.html), strict=False))
         result.merge(baseline_check())
+    elif args.cmd == "validate-bottom-search":
+        bottom_obj = _load(pathlib.Path(args.result))
+        audit_obj = _load(pathlib.Path(args.audit))
+        result = validate_bottom_search(bottom_obj, audit_obj, required=True)
+        combined = copy.deepcopy(bottom_obj)
+        combined["codex_audit"] = audit_obj.get("codex_audit")
+        result.merge(audit_common(combined, "bottom-fishing", []))
+        result.merge(validate_bottom(bottom_obj, strict=False))
+        result.merge(baseline_check())
     elif args.cmd == "install-check":
         result = install_check(pathlib.Path(args.skills_root))
     elif args.cmd == "brand-report":
@@ -1488,14 +2737,16 @@ def main() -> None:
         obj = _load(pathlib.Path(args.json))
         strict = True
         if args.skill == "bottom-fishing":
-            result = validate_bottom(obj, strict)
+            result = validate_bottom(obj, strict, require_search=args.require_bottom_search)
         elif args.skill == "stock-diagnostic":
             result = validate_stock(obj, strict)
         else:
             result = validate_weekly(obj, strict)
         result.merge(baseline_check())
         if args.html:
-            result.merge(validate_html(args.skill, obj, pathlib.Path(args.html), strict))
+            result.merge(validate_html(args.skill, obj, pathlib.Path(args.html), strict,
+                                       require_bottom_search=(args.skill == "bottom-fishing" and
+                                                              args.require_bottom_search)))
     raise SystemExit(_print_result(result))
 
 

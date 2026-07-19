@@ -14,6 +14,8 @@
 bottom-fishing/
 ├─ bottom_fishing.py     # 引擎: 扫描/打分/推荐线/执行方案/F10种子/影子日志/--review/HTML
 ├─ SKILL.md              # Codex skill 定义（安装到工作区 .agents/skills/bottom-fishing/）
+├─ references/
+│  └─ WEB_EVIDENCE_PROTOCOL.md # 六维检索/官方源血缘/F10逐条对账/T后安全增量
 ├─ README.md             # 研究存档: 全部方法论数字/否决清单/毒月专项
 ├─ DOC.md                # 本文件(操作文档)
 └─ reports/              # HTML报告(gitignore, 每次跑一份带时间戳)
@@ -38,7 +40,10 @@ python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" bott
 - Agent①=引擎(全自动)。
 - **Agent②=错杀裁定官(人工信息唯一有增量的位置)**: 按「红旗分型」判(2026-07-16定)——
   **恶化型**(业绩/债务/治理)=强否决✗；**事件型**(减持/质押/解禁)单独≈无区分力、结合恶化或急性大比例才否；
-  + **国内外双向搜索**(周期/出口/医药必查海外驱动) + 前视纪律(只认T日已公开信息)。详见 SKILL step2。
+  + **六维多轮搜索**(业绩经营/财务信用/治理监管/资本事件/国内行业/海外驱动)，优先回溯官方原文；
+  逐条对账全部 F10 种子并按 `origin_id` 去重转载。裁定只认 T 日已公开信息，T 后更新单列安全增量且只能维持或降级。
+  每类查询、未命中、受阻、采用事实和来源血缘都写入 `codex_audit.bottom_search`，由独立门禁机械验收。
+  详见 SKILL step2 与 `references/WEB_EVIDENCE_PROTOCOL.md`。
   **取证护栏×2**(2026-07-17加, 源自宁德时代实盘裁定, 非判据改动): ①**F10种子会过期**——`f10_flag`只看
   `forecast.type`不看新鲜度, 必核 `notice_date`/`fresh` 并与 `kcfj_yoy`/最新季报交叉验证, 陈旧或矛盾=误报勿否决;
 ②**旧闻污染**——网页检索会把多年前旧文与当期新闻混排且摘要常不带年份, 每条红旗核到"年"再采信, 核不出不采信

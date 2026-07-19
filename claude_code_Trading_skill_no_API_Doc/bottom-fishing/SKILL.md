@@ -1,6 +1,6 @@
 ---
 name: bottom-fishing
-description: A股底部区与超跌修复扫描（0 API、Codex 原生）。用于抄底、超跌、底部扫描、低吸扫描、bottom-fishing、错杀裁定、抄底复盘等请求；运行不可变 Python 引擎，执行双路径推荐线、ATR gate、5交易日冷却、F10与网页证据裁定、✓/?/✗分层、影子日志、adjudicate/review，并在独立验收通过后输出原生 HTML。
+description: A股底部区与超跌修复扫描（0 API、Codex 原生）。用于抄底、超跌、底部扫描、低吸扫描、bottom-fishing、错杀裁定、抄底复盘等请求；运行不可变 Python 引擎，执行双路径推荐线、ATR gate、5交易日冷却、官方源优先的多轮网页检索、F10逐条对账、T日证据与检索时点增量隔离、结构化搜索覆盖审计、✓/?/✗分层、影子日志、adjudicate/review，并在独立验收通过后输出原生 HTML。
 ---
 
 # A股抄底扫描（0 API · Codex 原生 · 影子复验期）
@@ -23,7 +23,8 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" baseline
    ```
    人工裁定必须遵守 `C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\JUDGE_SCHEMA.md`，只用 Codex 网页检索，
-   每个关键事实保留 URL、发布日期和北京时间检索日期；不调用 MCP、付费 API 或外部 agent。
+   每个关键事实保留 URL、发布日期和北京时间检索日期；不调用 MCP、付费 API 或外部 agent。出现过线票时，裁定前还必须
+   **完整阅读** `references/WEB_EVIDENCE_PROTOCOL.md`，不得凭摘要或单轮泛搜跳过其中的覆盖与血缘门禁。
 1. **跑引擎**（PowerShell；行情联网被沙箱阻断时按 Codex 权限流程申请一次网络执行，约2-4分钟拉480只K线）：
    ```powershell
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" bottom --
@@ -41,6 +42,18 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
    输赢家量化特征完全相同，"为什么跌"只能靠消息面）**：按下面「红旗分型」判——核心不是"有没有F10红旗"，而是
    **"基本面是否在恶化"**（2026-07-16 毒月8v8消息面对照实证：⚠事件型红旗单独出现≈无区分力、恶化型才是毒月雷真
    源头，见README§CatBoost选股+毒月消息面对照双实验2026-07-16，n=16定性待面板量化）：
+   - **搜索覆盖硬门禁（v1）**：每票必须完成 `业绩经营/财务信用/治理监管/资本事件/国内行业/海外驱动` 六类查询，
+     另做官方公告回扫、T日跌因、代码/全称/简称精确标题回溯；有H股或重要海外业务时补HKEXnews、英文名、海外监管和子公司。
+     每类都要在 `codex_audit.bottom_search` 留 `hit/no_relevant_hit/blocked`、查询语句、时间窗、审阅URL与采用的
+     `fact_id`。`blocked` 或会改变结论的日期冲突/单一聚合源，不得给 ✓。
+   - **来源血缘硬门禁**：官方原文/PDF > 官方机构或公司IR > 主流媒体 > 聚合镜像。搜索摘要只用于发现；镜像必须回溯
+     `canonical_url` 和 `origin_id`，同一公告的多个转载只算一个来源。决定性 ✓/✗ 证据不能来自
+     `unverified_secondary`。
+   - **两个“最新”必须分账**：主事实和 `base_verdict_asof_t` 只认 `published_at≤T`；检索从T+1更新到实际完成时点，
+     T后内容只进 `post_t_safety_by_code`，不得混入主事实。T后利好不能升级；确认或未决的重大负面只能维持、上限降?或
+     上限降✗，并同时保存 `effective_verdict`。最终报告必须同时显示T日裁定与检索时点有效裁定。
+   - **F10必须逐条而非按日期对账**：`forecast` 与 `notices[]` 每一条都有唯一 seed key；同日四条公告也要四条 ledger。
+     T后种子必须 `quarantined_post_t`，无日期种子必须 `quarantined_undated`，都不得进入主事实。
    ① 先读引擎附的 **F10客观种子**（`kcfj_yoy`/`pe`/`forecast`/近14天公告/`f10_flag`，卡片已渲染）。
       ⚠**种子会过期·`f10_flag`常是误报**：东财取的是"该股**最新一条**业绩预告、**无年龄下限**"（公司只在大变动时才发预告，
       平稳者可一两年不发→最新一条可以任意老），而 flag 只看 `forecast.type`(预亏/预减/略减)**不看新鲜度**——这是**故意的**
@@ -77,11 +90,14 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
 3. **裁定同步进HTML（--adjudicate，2026-07-15 新增）**：把每只过线票的裁定写入
    `C:\Trading_analysis\data\bottom_adjudication.json`（格式
    `{"T":"引擎T日","alerts":[组合级警示],"rulings":{"代码":{"verdict":"✓|?|✗","why":"理由+日期来源",
-   "alerts":[{"level":"high|med","text":"警示"}]}}}`——**凡影响大的点必须抽成 alerts 高亮**（P9利好兑现/
+   "alerts":[{"level":"high|med","text":"警示"}]}},"codex_audit":{"bottom_search":{...}}}`——搜索审计必须严格遵守
+   `references/WEB_EVIDENCE_PROTOCOL.md`；**凡影响大的点必须抽成 alerts 高亮**（P9利好兑现/
    见光死、低价股滑点、重复过线旋转门、硬否决项等），high=红条/med=琥珀条，别埋在 why 长文里），然后跑：
    ```powershell
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" validate-bottom-search --result "C:\Trading_analysis\data\bottom_latest.json" --audit "C:\Trading_analysis\data\bottom_adjudication.json"
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" bottom -- --adjudicate
    ```
+   `validate-bottom-search` 非零退出时禁止 adjudicate：先补齐搜索、来源链、F10逐条对账或T+隔离记录，不能删字段绕过。
    引擎自动：**分层重排**（✓>?>✗，层内仍按引擎总分——纪律：不造未经走样本校准的新数值权重）→
    ?/✗票撤除买入方案（P13-3：非买入票不给价，卡片保留供对照，✗票置灰）→ 重出裁定版HTML
    （文件名带`_裁定版`）→ 裁定回写影子日志 → 以后 `--review` 自动拆「引擎全线 vs 裁定✓子集」
@@ -96,7 +112,7 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" attach-audit --result "C:\Trading_analysis\data\bottom_latest.json" --audit "C:\Trading_analysis\data\bottom_adjudication.json"
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" augment-report --skill bottom-fishing --json "C:\Trading_analysis\data\bottom_latest.json" --html "<裁定版HTML绝对路径>"
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" brand-report --html "<裁定版HTML绝对路径>"
-   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" validate --skill bottom-fishing --json "C:\Trading_analysis\data\bottom_latest.json" --html "<裁定版HTML绝对路径>"
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" validate --skill bottom-fishing --json "C:\Trading_analysis\data\bottom_latest.json" --html "<裁定版HTML绝对路径>" --require-bottom-search
    ```
    任一命令非零退出即标记“未通过”，不得把该 HTML 当最终报告；验收器不提供最终报告降级开关。
 5. **复盘对账**：用户说"抄底复盘/对账"时跑：

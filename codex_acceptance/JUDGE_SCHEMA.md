@@ -15,6 +15,7 @@
       "source_name": "来源名称",
       "source_url": "https://...",
       "published_at": "YYYY-MM-DD",
+      "published_time_precision": "date|datetime（bottom search 可选）",
       "retrieved_at_beijing": "YYYY-MM-DD",
       "event_date": "YYYY-MM-DD|null",
       "source_tier": "公告|交易所|主流媒体|研报|其他",
@@ -61,6 +62,8 @@ stock-diagnostic 必须覆盖标的；bottom-fishing 必须覆盖每个 `✓` �
 每条 `facts[]` 还必须满足：`source_name` 非空，`source_tier` 属于模板枚举，`f10_match` 属于模板枚举，
 `rubric_delta` 是数值，发布日期不得晚于证据截止日，检索日期必须与顶层北京时间检索日期一致。
 F10 中的实质性新公告/预告必须逐条在 facts 留痕；即使判定为例行公告或不采用，也要写出理由，不能静默漏查。
+bottom-fishing 启用 `bottom_search` 后按其 F10 ledger 执行：T 前实质种子仍必须关联 fact；例行种子可只写
+`logged_routine_pre_t`，T 后/无日期种子必须隔离且不得造主事实。
 
 ## stock-diagnostic 增量字段
 
@@ -114,4 +117,182 @@ F10 中的实质性新公告/预告必须逐条在 facts 留痕；即使判定�
 
 ## bottom-fishing 增量字段
 
-`facts[].code` 必须覆盖每个过线票；`rulings` 仍写在 `bottom_adjudication.json` 原位置，verdict 只能是 `✓/?/✗`。
+旧版、未启用 bottom search 的工件仍要求 `facts[].code` 覆盖每个过线票；`rulings` 写在
+`bottom_adjudication.json` 原位置，verdict 只能是 `✓/?/✗`。
+新生成的 bottom-fishing 裁定必须在 `codex_audit.bottom_search` 写入
+`bottom-search-audit/v1` 搜索审计；完整的检索、时间和来源规则见
+`claude_code_Trading_skill_no_API_Doc/bottom-fishing/references/WEB_EVIDENCE_PROTOCOL.md`。启用该审计时，
+`facts[]` 还必须有唯一 `fact_id`、六维之一的
+`category`（市场事实可用 `market_regime`）、可回指 `sources[]` 的 `source_ref`，以及逐条 F10 回指 `seed_refs[]`。
+这四项是启用 bottom search 后的增量字段，不要求 stock-diagnostic 或 weekly-ashare-rank 添加。
+启用 bottom search 后，候选级“已查全”由六维 coverage/query 图证明；若某 `?` 票所有维度均为
+`no_relevant_hit/blocked`，允许该票没有 fact，严禁为满足旧的 facts 覆盖规则虚构“无证据事实”。
+
+```json
+{
+  "fact_id": "fact-600000-001",
+  "category": "performance_operations",
+  "source_ref": "source-001",
+  "seed_refs": ["600000:forecast"]
+}
+```
+
+六个必查维度的固定枚举为：
+
+```text
+performance_operations
+financial_credit
+governance_regulatory
+corporate_events
+industry_policy_domestic
+external_global_peer
+```
+
+审计骨架如下。`coverage_by_code` 和 `post_t_safety_by_code` 必须与引擎候选代码一一对应；六维不得缺项。
+
+```json
+{
+  "bottom_search": {
+    "version": "bottom-search-audit/v1",
+    "T": "YYYY-MM-DD",
+    "cutoff_beijing": "YYYY-MM-DD 23:59:59+08:00",
+    "retrieved_at_beijing": "YYYY-MM-DD HH:MM:SS+08:00",
+    "required_categories": [
+      "performance_operations",
+      "financial_credit",
+      "governance_regulatory",
+      "corporate_events",
+      "industry_policy_domestic",
+      "external_global_peer"
+    ],
+    "sources": [
+      {
+        "source_ref": "source-001",
+        "access_url": "https://...",
+        "access_publisher": "访问页发布者",
+        "source_kind": "official_direct|verified_official_mirror|independent_media|independent_research|unverified_secondary",
+        "origin_id": "同一原始文件的稳定去重键",
+        "canonical_url": "https://...",
+        "canonical_publisher": "原始发布者",
+        "document_id": "官方文档号或公告编号",
+        "match_basis": ["title", "published_at", "document_id", "full_text"]
+      }
+    ],
+    "queries": [
+      {
+        "query_id": "query-600000-001",
+        "code": "600000",
+        "category": "performance_operations",
+        "phase": "as_of_t|post_t_safety",
+        "query_mode": "official|exact_title|broad_web|regulator|industry|overseas|ah_cross_listing|drop_cause|freshness_delta",
+        "query_text": "实际执行的查询",
+        "date_from": "YYYY-MM-DD",
+        "date_to": "YYYY-MM-DD",
+        "executed_at_beijing": "YYYY-MM-DD HH:MM:SS+08:00",
+        "outcome": "selected|no_relevant_hit|blocked",
+        "reviewed_urls": ["https://..."],
+        "selected_fact_ids": ["fact-600000-001"],
+        "selected_delta_ids": [],
+        "notes": "无命中/受阻时必须解释"
+      }
+    ],
+    "coverage_by_code": {
+      "600000": {
+        "aliases": ["公司全称", "证券简称"],
+        "profile_tags": ["A/H", "出口", "周期"],
+        "categories": {
+          "performance_operations": {
+            "status": "hit|no_relevant_hit|blocked",
+            "query_ids": ["query-600000-001"],
+            "fact_ids": ["fact-600000-001"],
+            "reason": "覆盖结论"
+          }
+        },
+        "official_latest_check": {
+          "query_ids": ["query-600000-official"],
+          "checked_sources": ["上交所", "公司IR"],
+          "latest_pre_t": "YYYY-MM-DD|null（全部受阻时）"
+        },
+        "ruling_evidence": {
+          "supporting_fact_ids": [],
+          "adverse_fact_ids": [],
+          "decision_fact_ids": [],
+          "unresolved_query_ids": []
+        }
+      }
+    },
+    "market_coverage": {
+      "status": "hit|no_relevant_hit|blocked",
+      "query_ids": ["query-MARKET-001"],
+      "fact_ids": ["fact-MARKET-001"],
+      "reason": "市场或行业踩踏核查"
+    },
+    "f10_seed_ledger": [
+      {
+        "seed_key": "600000:notices:0",
+        "code": "600000",
+        "kind": "notice",
+        "raw_index": 0,
+        "seed_text": "引擎原始种子全文",
+        "raw_date": "YYYY-MM-DD|null",
+        "timing": "pre_t|post_t|undated",
+        "disposition": "adjudicated_pre_t|logged_routine_pre_t|quarantined_post_t|quarantined_undated",
+        "query_ids": [],
+        "fact_ids": [],
+        "delta_ids": [],
+        "reason": "采用、例行或隔离理由"
+      }
+    ],
+    "post_t_safety_by_code": {
+      "600000": {
+        "checked_through_beijing": "YYYY-MM-DD HH:MM:SS+08:00",
+        "base_verdict_asof_t": "✓|?|✗",
+        "effective_verdict": "✓|?|✗",
+        "items": [
+          {
+            "delta_id": "delta-600000-001",
+            "source_ref": "source-002",
+            "published_at": "YYYY-MM-DD",
+            "event_date": "YYYY-MM-DD|null",
+            "query_ids": ["query-600000-delta"],
+            "summary": "T后安全增量",
+            "polarity": "positive|neutral|negative|unverified",
+            "effect": "none|cap_at_question|cap_at_reject",
+            "used_in_asof_t_verdict": false,
+            "uncertainties": []
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+同一公告的转载必须共享 `origin_id`；镜像只有在至少两项 `match_basis` 匹配且回溯到官方 `canonical_url` 后，才可标
+`verified_official_mirror`，且必须填写非空 `document_id`。`facts[].source_url` 必须等于所引 `source_ref` 的
+`access_url`；`official_direct` 的 `canonical_url` 必须等于 `access_url`。主事实只能使用 `published_at <= T`；
+T 后信息只进入 `post_t_safety_by_code.items[]`，利好不得
+把有效裁定向上调，负面只能维持或降级；`effective_verdict` 必须等于 base 与全部 cap 共同形成的最低上限。
+`rulings[code].verdict` 必须等于 `effective_verdict`；
+`base_verdict_asof_t` 只保留 T 日裁定，不直接交给 adjudicate。市场查询固定使用 `code=MARKET`、
+`category=market_regime`。
+
+`ruling_evidence.decision_fact_ids` 必须来自 supporting/adverse 的并集；`✓` 至少有一个 supporting 决定事实，
+`✗` 至少有一个 adverse 决定事实，不能用无关的官方事实替二手负面“洗白”来源层级。
+
+F10 seed key 只有两种：forecast 固定为 `{code}:forecast`，`raw_index=null`，`seed_text` 按
+`notice_date + 空格 + type + 空格 + content` 确定性拼接；公告为 `{code}:notices:{raw_index}`，逐字保留原始
+`notices[raw_index]`。只有公告按数组索引；不能用同日一条事实批量覆盖多条公告。实质/例行的机械判定词表以
+`WEB_EVIDENCE_PROTOCOL.md` §6 为准，由验收器从原始种子重算，不能人工声明。
+
+裁定写入前先运行：
+
+```powershell
+python C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py validate-bottom-search --result C:\Trading_analysis\data\bottom_latest.json --audit C:\Trading_analysis\data\bottom_adjudication.json
+```
+
+最终验收还必须给 `validate` 增加 `--require-bottom-search`；任一搜索门禁失败都不得发布为最终报告。
+若引擎 0 只过线票，`bottom_search` 仍须保留版本、T、两个时点和固定分类，并以非空 `empty_reason` 说明空手；
+`sources=[]`、`queries=[]`、`coverage_by_code={}`、`f10_seed_ledger=[]`、`post_t_safety_by_code={}`，
+`market_coverage={"status":"no_relevant_hit","query_ids":[],"fact_ids":[],"reason":"非空的空手说明"}`。
+不得虚构候选、查询或事实凑 schema。
