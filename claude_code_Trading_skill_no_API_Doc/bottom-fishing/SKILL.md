@@ -25,11 +25,20 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
    人工裁定必须遵守 `C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\JUDGE_SCHEMA.md`，只用 Codex 网页检索，
    每个关键事实保留 URL、发布日期和北京时间检索日期；不调用 MCP、付费 API 或外部 agent。出现过线票时，裁定前还必须
    **完整阅读** `references/WEB_EVIDENCE_PROTOCOL.md`，不得凭摘要或单轮泛搜跳过其中的覆盖与血缘门禁。
-1. **跑引擎**（PowerShell；行情联网被沙箱阻断时按 Codex 权限流程申请一次网络执行，约2-4分钟拉480只K线）：
+1. **跑引擎**（PowerShell；行情联网被沙箱阻断时按 Codex 权限流程申请一次网络执行；拉取约480只K线通常需要数分钟，网络慢时可能超过10分钟）：
    ```powershell
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" bottom --
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" validate-bottom-engine --json "C:\Trading_analysis\data\bottom_latest.json" --html "<引擎stdout给出的原始HTML绝对路径>"
    ```
+   **长任务等待与防重跑纪律（强制）**：引擎会串行拉取大量免费行情，长时间无新 stdout、调用层超时或暂时没有返回码，
+   都不等于引擎已经失败。若执行工具返回可继续等待的任务/cell ID，必须沿用该 ID 分段等待并向用户报告进度，禁止另开第二个
+   `run_engine.py bottom`。若调用看似超时，先检查是否仍有对应 Python 进程，并核对 `bottom_latest.json` 与当日原始 HTML 的
+   修改时间、交易日 T、文件大小是否仍在更新；进程仍在、产物仍在更新或尚未超过合理拉取窗口时，继续等待。只有在
+   **确认原进程已退出**、**没有生成可通过 `validate-bottom-engine` 的新 T 日产物**，且日志明确失败或产物停止更新后，才允许重跑。
+   检测到两个产物时先按 T、候选内容和哈希/逐行差异去重：内容相同则保留与 `bottom_latest.json` 时间一致的最新完整产物，
+   并检查 `bottom_shadow_log.jsonl` 是否因重叠执行产生相同 `T+code` 的重复行；仅在整行关键字段一致时保留一条，冷却票也按同样
+   规则核对，不得误删不同交易日或不同状态的记录。不得把重复产物误当成两次独立扫描结果。等待不是空转，而是避免两个联网
+   引擎并发覆盖同一个 `bottom_latest.json`、重复追加影子样本、制造重复 HTML、浪费网络请求并让后续裁定绑定到错误版本的必要步骤。
    第二条非零退出立即停止，不能进入消息面裁定。
    引擎自动：判市况（防守日/def_days/大盘RSV）→ 底部区扫描 → 打分 → **双路径推荐线**
    （防守日·总分≥18 ∥ 非防守日·个股分≥15，均须 ATR≤4）→ **旋转门冷却**（同票**5交易日**内重复过线
