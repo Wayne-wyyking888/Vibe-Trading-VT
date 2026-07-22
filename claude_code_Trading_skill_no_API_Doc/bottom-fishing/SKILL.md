@@ -164,5 +164,11 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
    新想法一律先面板走样本再进规则。
 8. **0 API / 真实数据 / 全程中文**；T+1次日才能卖；与 weekly-ashare 同账户运行时注意两边仓位合并计算总仓。
 
-## 研究出处
-方法论全链: bottom-fishing/README.md + weekly-ashare-rank/DOC.md §13-15 + 记忆 project_bottom_fishing_study。
+## 研究复现资源（仅在重校准/规则审计时读取）
+
+日常扫描不得执行研究脚本。用户要求重校准、追溯阈值来源或评估新 filter 时，先完整阅读
+`references/RESEARCH_LEDGER.md`，再从 `scripts/research/legacy_cc/` 或 `scripts/research/bottom_ml/`
+选择对应实验；必须保留原样本窗、幸存者偏差、前视隔离与“采纳/否决”状态，未经面板走样本复验不得改生产规则。
+
+方法论摘要见同目录 `README.md`；研究脚本、外部数据 hash 和 Claude Code provenance 见
+`references/RESEARCH_LEDGER.md`。

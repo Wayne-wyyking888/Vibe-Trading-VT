@@ -1,0 +1,193 @@
+﻿{
+    "schema_version":  1,
+    "files":  {
+                  "ab_400.py":  {
+                                    "original_absolute_path":  "C:\\Users\\18297\\AppData\\Local\\Temp\\claude\\c--Trading-analysis\\cfc901c9-5c57-49a6-b073-46c243757db5\\scratchpad\\ab_400.py",
+                                    "session_id":  "cfc901c9-5c57-49a6-b073-46c243757db5",
+                                    "sha256":  "771e4aca4ac13f9579952c4de043ff15a01b4f7314fa78c0e89ccc995c69fc4a",
+                                    "size":  1796,
+                                    "recovered_at":  "2026-07-22T08:16:45+08:00",
+                                    "source_kind":  "jsonl_write",
+                                    "source_record_absolute_path":  "C:\\Users\\18297\\.claude\\projects\\c--Trading-analysis\\cfc901c9-5c57-49a6-b073-46c243757db5.jsonl",
+                                    "source_record_line":  1180
+                                },
+                  "catalyst_study.py":  {
+                                            "original_absolute_path":  "C:\\Users\\18297\\AppData\\Local\\Temp\\claude\\c--Trading-analysis\\e21be88c-e82a-4cca-87ed-69420236c89f\\scratchpad\\catalyst_study.py",
+                                            "session_id":  "e21be88c-e82a-4cca-87ed-69420236c89f",
+                                            "sha256":  "a4df3bbe76d2ada0c146c090a11fad87a8852fe3096a82c14721a52b972461b5",
+                                            "size":  5886,
+                                            "recovered_at":  "2026-07-22T08:16:45+08:00",
+                                            "source_kind":  "surviving_temp_file"
+                                        },
+                  "flow_backtest.py":  {
+                                           "original_absolute_path":  "C:\\Users\\18297\\AppData\\Local\\Temp\\claude\\c--Trading-analysis\\cfc901c9-5c57-49a6-b073-46c243757db5\\scratchpad\\flow_backtest.py",
+                                           "session_id":  "cfc901c9-5c57-49a6-b073-46c243757db5",
+                                           "sha256":  "6f3b1c8208b4a3a50d485cbf4a3978fa21e89e68b6c0b718fc73609a7bf13452",
+                                           "size":  4443,
+                                           "recovered_at":  "2026-07-22T08:16:45+08:00",
+                                           "source_kind":  "surviving_temp_file"
+                                       },
+                  "history_trap_study.py":  {
+                                                "original_absolute_path":  "C:\\Users\\18297\\AppData\\Local\\Temp\\claude\\c--Trading-analysis\\cfc901c9-5c57-49a6-b073-46c243757db5\\scratchpad\\history_trap_study.py",
+                                                "session_id":  "cfc901c9-5c57-49a6-b073-46c243757db5",
+                                                "sha256":  "ea89dd84d611d322d291ab27255b22f75878f32b1610b155130429f5388c0d5b",
+                                                "size":  4418,
+                                                "recovered_at":  "2026-07-22T08:16:45+08:00",
+                                                "source_kind":  "surviving_temp_file"
+                                            },
+                  "m2_band_study.py":  {
+                                           "original_absolute_path":  "C:\\Users\\18297\\AppData\\Local\\Temp\\claude\\c--Trading-analysis\\cfc901c9-5c57-49a6-b073-46c243757db5\\scratchpad\\m2_band_study.py",
+                                           "session_id":  "cfc901c9-5c57-49a6-b073-46c243757db5",
+                                           "sha256":  "bff7fe01c3098a43f8a3d2a6fd587c7f79741e19e18d17d8d785985e25edd918",
+                                           "size":  2774,
+                                           "recovered_at":  "2026-07-22T08:16:45+08:00",
+                                           "source_kind":  "jsonl_write",
+                                           "source_record_absolute_path":  "C:\\Users\\18297\\.claude\\projects\\c--Trading-analysis\\cfc901c9-5c57-49a6-b073-46c243757db5.jsonl",
+                                           "source_record_line":  599
+                                       },
+                  "m2p_regime.py":  {
+                                        "original_absolute_path":  "C:\\Users\\18297\\AppData\\Local\\Temp\\claude\\c--Trading-analysis\\cfc901c9-5c57-49a6-b073-46c243757db5\\scratchpad\\m2p_regime.py",
+                                        "session_id":  "cfc901c9-5c57-49a6-b073-46c243757db5",
+                                        "sha256":  "efa007f32826ba8abbacb123c0d670c0822289d11d9f8043e679b288d790c992",
+                                        "size":  2499,
+                                        "recovered_at":  "2026-07-22T08:16:45+08:00",
+                                        "source_kind":  "jsonl_write",
+                                        "source_record_absolute_path":  "C:\\Users\\18297\\.claude\\projects\\c--Trading-analysis\\cfc901c9-5c57-49a6-b073-46c243757db5.jsonl",
+                                        "source_record_line":  514
+                                    },
+                  "m2p_validate.py":  {
+                                          "original_absolute_path":  "C:\\Users\\18297\\AppData\\Local\\Temp\\claude\\c--Trading-analysis\\cfc901c9-5c57-49a6-b073-46c243757db5\\scratchpad\\m2p_validate.py",
+                                          "session_id":  "cfc901c9-5c57-49a6-b073-46c243757db5",
+                                          "sha256":  "047c5c023bd492fb5115db7e0b6cc4657f3f483475bb98eca1f6925aa0473146",
+                                          "size":  2507,
+                                          "recovered_at":  "2026-07-22T08:16:45+08:00",
+                                          "source_kind":  "surviving_temp_file"
+                                      },
+                  "test_ind.py":  {
+                                      "original_absolute_path":  "C:/Users/18297/AppData/Local/Temp/claude/c--Trading-analysis/6b48ac26-3e56-408a-9d68-eb8c97209f7c/scratchpad/test_ind.py",
+                                      "session_id":  "6b48ac26-3e56-408a-9d68-eb8c97209f7c",
+                                      "sha256":  "90adfe8dc3dd42c2da93db9339da3e10ed629abd761c561c1f57f9efbbec9831",
+                                      "size":  371,
+                                      "recovered_at":  "2026-07-22T08:21:38+08:00",
+                                      "source_kind":  "jsonl_bash_heredoc",
+                                      "recovery_method":  "jsonl_bash_heredoc",
+                                      "source_jsonl_absolute_path":  "C:\\Users\\18297\\.claude\\projects\\c--Trading-analysis\\6b48ac26-3e56-408a-9d68-eb8c97209f7c.jsonl",
+                                      "source_jsonl_line":  305,
+                                      "source_timestamp":  "2026-07-01T02:30:42.521Z"
+                                  },
+                  "test_m1.py":  {
+                                     "original_absolute_path":  "C:/Users/18297/AppData/Local/Temp/claude/c--Trading-analysis/6b48ac26-3e56-408a-9d68-eb8c97209f7c/scratchpad/test_m1.py",
+                                     "session_id":  "6b48ac26-3e56-408a-9d68-eb8c97209f7c",
+                                     "sha256":  "57875c97da37cc1847f91f3d261ec99a251e02bb3fd34dc31289358a7f930889",
+                                     "size":  410,
+                                     "recovered_at":  "2026-07-22T08:21:38+08:00",
+                                     "source_kind":  "jsonl_bash_heredoc",
+                                     "recovery_method":  "jsonl_bash_heredoc",
+                                     "source_jsonl_absolute_path":  "C:\\Users\\18297\\.claude\\projects\\c--Trading-analysis\\6b48ac26-3e56-408a-9d68-eb8c97209f7c.jsonl",
+                                     "source_jsonl_line":  299,
+                                     "source_timestamp":  "2026-07-01T02:29:38.289Z"
+                                 },
+                  "test_m5.py":  {
+                                     "original_absolute_path":  "C:\\Users\\18297\\AppData\\Local\\Temp\\claude\\c--Trading-analysis\\6b48ac26-3e56-408a-9d68-eb8c97209f7c\\scratchpad\\test_m5.py",
+                                     "session_id":  "6b48ac26-3e56-408a-9d68-eb8c97209f7c",
+                                     "sha256":  "7eb600891a7b69d6d0e5e01e37fd645b4d973e10df44f1a54b08810e8b7f7175",
+                                     "size":  959,
+                                     "recovered_at":  "2026-07-22T08:16:45+08:00",
+                                     "source_kind":  "jsonl_write",
+                                     "source_record_absolute_path":  "C:\\Users\\18297\\.claude\\projects\\c--Trading-analysis\\6b48ac26-3e56-408a-9d68-eb8c97209f7c.jsonl",
+                                     "source_record_line":  431
+                                 },
+                  "trap_signal_study.py":  {
+                                               "original_absolute_path":  "C:\\Users\\18297\\AppData\\Local\\Temp\\claude\\c--Trading-analysis\\cfc901c9-5c57-49a6-b073-46c243757db5\\scratchpad\\trap_signal_study.py",
+                                               "session_id":  "cfc901c9-5c57-49a6-b073-46c243757db5",
+                                               "sha256":  "f5b131a2ab56bb29e0327ad811cdaddae8bc61285acde6d38304540671078543",
+                                               "size":  6991,
+                                               "recovered_at":  "2026-07-22T08:16:45+08:00",
+                                               "source_kind":  "jsonl_write",
+                                               "source_record_absolute_path":  "C:\\Users\\18297\\.claude\\projects\\c--Trading-analysis\\cfc901c9-5c57-49a6-b073-46c243757db5.jsonl",
+                                               "source_record_line":  933
+                                           },
+                  "u234_backtest.py":  {
+                                           "original_absolute_path":  "C:\\Users\\18297\\AppData\\Local\\Temp\\claude\\c--Trading-analysis\\cfc901c9-5c57-49a6-b073-46c243757db5\\scratchpad\\u234_backtest.py",
+                                           "session_id":  "cfc901c9-5c57-49a6-b073-46c243757db5",
+                                           "sha256":  "03ca6391c20765a4ab19b1d9744646f09c5e5983a5081d6332a7f7b2c9f0dcb7",
+                                           "size":  7176,
+                                           "recovered_at":  "2026-07-22T08:16:45+08:00",
+                                           "source_kind":  "jsonl_write",
+                                           "source_record_absolute_path":  "C:\\Users\\18297\\.claude\\projects\\c--Trading-analysis\\cfc901c9-5c57-49a6-b073-46c243757db5.jsonl",
+                                           "source_record_line":  1000
+                                       },
+                  "defense_study.py":  {
+                                           "original_absolute_path":  "C:\\Users\\18297\\AppData\\Local\\Temp\\claude\\c--Trading-analysis\\e21be88c-e82a-4cca-87ed-69420236c89f\\scratchpad\\defense_study.py",
+                                           "session_id":  "e21be88c-e82a-4cca-87ed-69420236c89f",
+                                           "sha256":  "c1ee4c305c7594a47a6c43f7611f02d80a141fb832f4cbcd39b910198bb8d97c",
+                                           "size":  6812,
+                                           "recovered_at":  "2026-07-22T08:15:01.4571821+08:00",
+                                           "source_kind":  "surviving_temp_file",
+                                           "semantic_owner":  "weekly-ashare-rank"
+                                       },
+                  "horizon2.py":  {
+                                      "original_absolute_path":  "C:\\Users\\18297\\AppData\\Local\\Temp\\claude\\c--Trading-analysis\\e21be88c-e82a-4cca-87ed-69420236c89f\\scratchpad\\horizon2.py",
+                                      "session_id":  "e21be88c-e82a-4cca-87ed-69420236c89f",
+                                      "sha256":  "acfa4556ce0beb49aa5f1dac482c7acda60e99383323f019a7376daa95be0067",
+                                      "size":  1722,
+                                      "recovered_at":  "2026-07-22T08:15:01.4571821+08:00",
+                                      "source_kind":  "surviving_temp_file",
+                                      "semantic_owner":  "weekly-ashare-rank"
+                                  },
+                  "blowup.py":  {
+                                    "original_absolute_path":  "C:\\Users\\18297\\AppData\\Local\\Temp\\claude\\c--Trading-analysis\\e21be88c-e82a-4cca-87ed-69420236c89f\\scratchpad\\blowup.py",
+                                    "session_id":  "e21be88c-e82a-4cca-87ed-69420236c89f",
+                                    "sha256":  "c341152c0f5193abff966276f5bb004c3a43317512e7c2ed467d4dfcdca4c699",
+                                    "size":  2397,
+                                    "recovered_at":  "2026-07-22T08:15:01.4571821+08:00",
+                                    "source_kind":  "surviving_temp_file",
+                                    "semantic_owner":  "weekly-ashare-rank"
+                                },
+                  "pair_prob.py":  {
+                                       "original_absolute_path":  "C:\\Users\\18297\\AppData\\Local\\Temp\\claude\\c--Trading-analysis\\e21be88c-e82a-4cca-87ed-69420236c89f\\scratchpad\\pair_prob.py",
+                                       "session_id":  "e21be88c-e82a-4cca-87ed-69420236c89f",
+                                       "sha256":  "ddfcd035fd340c3b347c5228f69fdd91d5c7aa8fbf0ee25400bf02964f642e20",
+                                       "size":  2854,
+                                       "recovered_at":  "2026-07-22T08:15:01.4571821+08:00",
+                                       "source_kind":  "surviving_temp_file",
+                                       "semantic_owner":  "weekly-ashare-rank"
+                                   },
+                  "sub3.py":  {
+                                  "original_absolute_path":  "C:\\Users\\18297\\AppData\\Local\\Temp\\claude\\c--Trading-analysis\\e21be88c-e82a-4cca-87ed-69420236c89f\\scratchpad\\sub3.py",
+                                  "session_id":  "e21be88c-e82a-4cca-87ed-69420236c89f",
+                                  "sha256":  "4485190a05c50fb9abb4c25c062f87922f9bedf4bf85d51ae9a73e6379b4530e",
+                                  "size":  3301,
+                                  "recovered_at":  "2026-07-22T08:15:01.4571821+08:00",
+                                  "source_kind":  "surviving_temp_file",
+                                  "semantic_owner":  "weekly-ashare-rank"
+                              },
+                  "filter_scan.py":  {
+                                         "original_absolute_path":  "C:\\Users\\18297\\AppData\\Local\\Temp\\claude\\c--Trading-analysis\\e21be88c-e82a-4cca-87ed-69420236c89f\\scratchpad\\filter_scan.py",
+                                         "session_id":  "e21be88c-e82a-4cca-87ed-69420236c89f",
+                                         "sha256":  "8d744fea2b67548a77f9fb6009bce42ac4afa8675c89807377b7c674337975e9",
+                                         "size":  4909,
+                                         "recovered_at":  "2026-07-22T08:15:01.4571821+08:00",
+                                         "source_kind":  "surviving_temp_file",
+                                         "semantic_owner":  "weekly-ashare-rank"
+                                     },
+                  "rule_check.py":  {
+                                        "original_absolute_path":  "C:\\Users\\18297\\AppData\\Local\\Temp\\claude\\c--Trading-analysis\\e21be88c-e82a-4cca-87ed-69420236c89f\\scratchpad\\rule_check.py",
+                                        "session_id":  "e21be88c-e82a-4cca-87ed-69420236c89f",
+                                        "sha256":  "94ebe9bdf6951d1b760f9a1ccee7466c690c7b1889da76c1351d1f1d29029647",
+                                        "size":  4408,
+                                        "recovered_at":  "2026-07-22T08:15:01.4571821+08:00",
+                                        "source_kind":  "surviving_temp_file",
+                                        "semantic_owner":  "weekly-ashare-rank"
+                                    },
+                  "postmortem.py":  {
+                                        "original_absolute_path":  "C:\\Users\\18297\\AppData\\Local\\Temp\\claude\\c--Trading-analysis\\e21be88c-e82a-4cca-87ed-69420236c89f\\scratchpad\\postmortem.py",
+                                        "session_id":  "e21be88c-e82a-4cca-87ed-69420236c89f",
+                                        "sha256":  "95cf0daeddb814be4eba6f32e09fdeef0da713c5e53a04fe9f15d4c1c2a8024d",
+                                        "size":  4725,
+                                        "recovered_at":  "2026-07-22T08:15:01.4571821+08:00",
+                                        "source_kind":  "surviving_temp_file",
+                                        "semantic_owner":  "weekly-ashare-rank"
+                                    }
+              }
+}

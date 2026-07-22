@@ -15,12 +15,17 @@ bottom-fishing/
 ├─ bottom_fishing.py     # 引擎: 扫描/打分/推荐线/执行方案/F10种子/影子日志/--review/HTML
 ├─ SKILL.md              # Codex skill 定义（安装到工作区 .agents/skills/bottom-fishing/）
 ├─ references/
-│  └─ WEB_EVIDENCE_PROTOCOL.md # 六维检索/官方源血缘/F10逐条对账/T后安全增量
+│  ├─ WEB_EVIDENCE_PROTOCOL.md # 六维检索/官方源血缘/F10逐条对账/T后安全增量
+│  └─ RESEARCH_LEDGER.md       # 规则→脚本→数据→偏差→采纳/否决 provenance
+├─ scripts/research/
+│  ├─ legacy_cc/          # 从 Claude Code scratchpad 原样抢救的历史实验
+│  └─ bottom_ml/          # CatBoost/purged-CV 源码；大 parquet 仍在外部数据目录
 ├─ README.md             # 研究存档: 全部方法论数字/否决清单/毒月专项
 ├─ DOC.md                # 本文件(操作文档)
 └─ reports/              # HTML报告(gitignore, bottom_cn_完整北京时间戳[_裁定版].html)
 C:\Trading_analysis\data\
 ├─ bottom_latest.json        # 最新一期结果(供回填/复查)
+├─ bottom_adjudication.json  # T日裁定、搜索审计和Codex结构化证据
 └─ bottom_shadow_log.jsonl   # 影子日志: 每笔过线票+def_days/idx_rsv影子字段+结算结果
 ```
 
@@ -73,5 +78,5 @@ UTC+8 的 `generated_at` / `adjudicated_at`。业务截止日 T 只写入正文�
   已兑现降级/"拿久等回来"——不要再试)。
 - 影子候选(强格子未进规则, 随影子日志复验): 防守持续≥9天、大盘RSV∈[15,40]。
 - 30笔了结后 --review 与回测口径(75.2%/13.9%)偏离>10pp → 回研究台重校准。
-- **研究存档一律进 README**（DOC=操作文档；README=研究链/否决清单/毒月专项）。最新：
-  README §CatBoost选股+毒月消息面对照 双实验（2026-07-16：ML选股进否决清单 · Agent②「红旗分型」）。
+- **研究结论摘要进 README，复现实验与 provenance 进 `references/RESEARCH_LEDGER.md`**；日常扫描不得执行
+  `scripts/research/`。最新：README §CatBoost选股+毒月消息面对照 双实验（2026-07-16：ML选股进否决清单 · Agent②「红旗分型」）。

@@ -19,6 +19,8 @@ claude_code_Trading_skill_no_API_Doc/
 ├── bottom-fishing/
 │   ├── SKILL.md
 │   ├── agents/openai.yaml
+│   ├── references/          # 网页证据协议 + 研究 provenance
+│   ├── scripts/research/    # bottom 历史实验 + bottom_ml 源码（不进入日常运行）
 │   └── 原引擎、文档、样例与报告
 ├── stock-diagnostic/
 │   ├── SKILL.md
@@ -27,6 +29,8 @@ claude_code_Trading_skill_no_API_Doc/
 └── weekly-ashare-rank/
     ├── SKILL.md
     ├── agents/openai.yaml
+    ├── references/          # 规则→实验→偏差→采纳/否决索引
+    ├── scripts/research/    # 从 Claude Code scratchpad/JSONL 抢救的研究快照
     └── 原引擎、权重、文档、状态与报告
 ```
 
@@ -67,6 +71,16 @@ python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" inst
 - 最终 JSON 必须包含 `codex_audit`，执行一次反方挑战和一次审计官复核。
 - HTML 必须经独立验收器验证；任何失败均标记“未通过”，不得发布为最终报告。
 - A 股 T/T+1、交易日和时间戳一律使用原引擎输出的北京时间口径。
+
+## 研究资产与 Claude Code 迁移
+
+- 日常运行不得执行 `scripts/research/`。只有重校准、规则审计或新 gate 走样本验证时，才按各 skill 的
+  `references/RESEARCH_LEDGER.md` 选择实验。
+- `legacy_cc/SOURCE_MANIFEST.json` 保存原始路径、Claude session、字节数与 SHA-256；能从会话记录确定时另存
+  恢复方式。改过的脚本不得继续冒用原 manifest 结论。
+- Bottom 的大 parquet 仍保留在 `C:\Trading_analysis\research\bottom_ml\`，skill 只携带源码和数据 hash。
+- Stock-diagnostic 的旧缓存只发现一次性诊断回填/补丁脚本，没有可独立复现的新研究链，因此不把这些会话胶水
+  合并进 skill；其生产规则和数据源口径已完整保留在现有 `SKILL.md`/`DOC.md`。
 
 ## 新增 skill
 

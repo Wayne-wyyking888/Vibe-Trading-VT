@@ -17,6 +17,7 @@ import json
 import math
 import pathlib
 import re
+import statistics
 import sys
 import tempfile
 from dataclasses import dataclass, field
@@ -32,6 +33,7 @@ DATA = pathlib.Path(r"C:\Trading_analysis\data")
 MANIFEST = HERE / "baseline_manifest.json"
 DATE_RE = re.compile(r"^20\d{2}-\d{2}-\d{2}$")
 CODE_RE = re.compile(r"(?<!\d)(?:00|30|60|68)\d{4}(?!\d)")
+WEEKLY_TRADABLE_CODE_RE = re.compile(r"^(?:00|30|60)\d{4}$")
 
 
 @dataclass
@@ -1753,13 +1755,20 @@ def validate_weekly_engine(obj: dict[str, Any], gate: dict[str, Any]) -> Result:
     candidates = list(obj.get("candidates") or [])
     out.check(_date(obj.get("as_of")) is not None, "weekly 引擎 as_of 无效")
     out.check("+08:00" in str(obj.get("generated_at", "")), "weekly 引擎 generated_at 非北京时间")
-    out.check(1 <= len(candidates) <= 20, "weekly 原始候选数不在 1~20")
+    # 默认 top=20；SKILL 的稀缺候选安全阀允许显式 top=30 后重验，禁止继续无界扩池。
+    out.check(1 <= len(candidates) <= 30, "weekly 原始候选数不在 1~30（默认20，安全阀最多30）")
     out.check(int(obj.get("universe_after_filter", 0) or 0) >= len(candidates), "weekly universe 计数错误")
     out.check(int(obj.get("scored", 0) or 0) >= len(candidates), "weekly scored 计数错误")
     out.check(bool(obj.get("spot_source")), "weekly 缺行情源")
     weights = obj.get("weights") or {}
     for c in candidates:
         code = str(c.get("code", ""))
+        out.check(bool(WEEKLY_TRADABLE_CODE_RE.fullmatch(code)),
+                  f"weekly 最终/原始候选含不可交易代码 {code or '<缺失>'}：仅允许 00/30/60 前缀；"
+                  "科创板 68*（含 688/689）必须排除")
+        persisted_stop = _num(c.get("stop"))
+        out.check(persisted_stop is not None and persisted_stop > 0,
+                  f"{code} 缺失已持久化的正值 stop；拒绝使用 recheck 旧工件兼容回退")
         out.check(str(c.get("last_date", "")) == str(obj.get("as_of", "")), f"{code} K线 T 不一致")
         comps = _weekly_components(c, weights)
         for field, value in zip(("mom", "vol_score", "tech", "tape_score", "pull_score"), comps[:5]):
@@ -1773,13 +1782,27 @@ def validate_weekly_engine(obj: dict[str, Any], gate: dict[str, Any]) -> Result:
                      - (6 if c.get("upsh_soft") else 0), 1)
         out.check(_close(c.get("rank_score"), rank, 0.051), f"{code} rank_score 重算失败")
         verify = c.get("verify") or {}
-        values = [_num(x) for x in (verify.get("sources") or {}).values()]
-        values = [x for x in values if x is not None]
+        raw_values = [_num(x) for x in (verify.get("sources") or {}).values()]
+        values = [x for x in raw_values if x is not None and x > 0]
+        out.check(len(values) == len(raw_values), f"{code} 跨源验价含缺失或非正数价格")
         dev = (max(values) - min(values)) / max(values) * 100 if len(values) >= 2 else None
-        out.check(len(values) >= 2 and dev is not None and dev <= 1.0 and
-                  str(verify.get("status", "")).startswith("一致"), f"{code} 联网烟测跨源验价未通过")
+        cross_source_ok = (len(values) >= 2 and dev is not None and dev <= 1.0 and
+                           str(verify.get("status", "")).startswith("一致"))
+        out.check(cross_source_ok, f"{code} 联网烟测跨源验价未通过")
         if dev is not None:
             out.check(_close(verify.get("dev_pct"), round(dev, 2), 0.011), f"{code} dev_pct 重算失败")
+        if cross_source_ok:
+            close = _num(c.get("close"))
+            consensus = statistics.median(values) if values else None
+            close_ok = close is not None and close > 0
+            consensus_ok = consensus is not None and consensus > 0
+            out.check(close_ok, f"{code} 引擎 close 缺失或非正数，无法核对跨源共识")
+            out.check(consensus_ok, f"{code} 跨源中位共识缺失或非正数")
+            if close_ok and consensus_ok:
+                close_dev = abs(close - consensus) / consensus * 100
+                out.check(close_dev <= 0.5,
+                          f"{code} 引擎 close 与跨源中位共识偏离 {close_dev:.2f}% > 0.5%；"
+                          "疑似 stale-cache，请使用 --refresh 重拉行情")
         out.check("recent_notices" in c and "forecast" in c and "has_fresh_event" in c,
                   f"{code} 公告/F10 种子字段缺失")
     out.merge(validate_market_gate_artifact(gate))
@@ -2550,6 +2573,63 @@ def strict_self_test() -> Result:
     })
     weekly["codex_audit"] = w_audit
     out.merge(validate_weekly(weekly, strict=True))
+
+    weekly_gate = copy.deepcopy(_load(DATA / "market_gate_latest.json"))
+    out.merge(validate_weekly_engine(weekly, weekly_gate))
+    if weekly.get("candidates"):
+        top30_engine = copy.deepcopy(weekly)
+        template = top30_engine["candidates"][0]
+        top30_engine["candidates"] = []
+        for idx in range(30):
+            row = copy.deepcopy(template)
+            row["code"] = f"600{idx:03d}"
+            top30_engine["candidates"].append(row)
+        top30_engine["universe_after_filter"] = max(int(top30_engine.get("universe_after_filter", 0) or 0), 30)
+        top30_engine["scored"] = max(int(top30_engine.get("scored", 0) or 0), 30)
+        out.check(validate_weekly_engine(top30_engine, weekly_gate).passed,
+                  "严格正例失效: weekly top30 安全阀被候选数门禁误拒绝")
+        top31_engine = copy.deepcopy(top30_engine)
+        extra = copy.deepcopy(template)
+        extra["code"] = "600030"
+        top31_engine["candidates"].append(extra)
+        top31_engine["universe_after_filter"] = max(int(top31_engine.get("universe_after_filter", 0) or 0), 31)
+        top31_engine["scored"] = max(int(top31_engine.get("scored", 0) or 0), 31)
+        top31_result = validate_weekly_engine(top31_engine, weekly_gate)
+        out.check(not top31_result.passed and any("安全阀最多30" in error for error in top31_result.errors),
+                  "严格负例失效: weekly top31 未被候选数门禁拒绝")
+
+        for blocked_code in ("688001", "689001"):
+            bad_engine = copy.deepcopy(weekly)
+            bad_engine["candidates"][0]["code"] = blocked_code
+            bad_code_result = validate_weekly_engine(bad_engine, weekly_gate)
+            out.check(not bad_code_result.passed and any(
+                "仅允许 00/30/60" in error and "688/689" in error for error in bad_code_result.errors
+            ), f"严格负例失效: weekly 科创板候选 {blocked_code} 未被个人可交易前缀门禁拦截")
+
+        bad_engine = copy.deepcopy(weekly)
+        bad_engine["candidates"][0].pop("stop", None)
+        missing_stop_result = validate_weekly_engine(bad_engine, weekly_gate)
+        out.check(not missing_stop_result.passed and any(
+            "缺失已持久化的正值 stop" in error and "旧工件兼容回退" in error
+            for error in missing_stop_result.errors
+        ), "严格负例失效: weekly 缺失 stop 未被复核兼容回退门禁拦截")
+
+        bad_engine = copy.deepcopy(weekly)
+        verify_prices = [
+            value for value in (
+                _num(x) for x in (bad_engine["candidates"][0].get("verify") or {}).get("sources", {}).values()
+            ) if value is not None and value > 0
+        ]
+        if len(verify_prices) >= 2:
+            bad_engine["candidates"][0]["close"] = statistics.median(verify_prices) * 1.006
+            stale_close_result = validate_weekly_engine(bad_engine, weekly_gate)
+            out.check(not stale_close_result.passed and any(
+                "stale-cache" in error and "--refresh" in error for error in stale_close_result.errors
+            ), "严格负例失效: weekly 引擎 close 偏离跨源中位共识未被拦截")
+        else:
+            out.check(False, "严格夹具失效: weekly 缺少至少两路正值验价，无法测试 close 共识门禁")
+    else:
+        out.check(False, "严格夹具失效: weekly 无候选，无法测试原始引擎硬门禁")
 
     # 严格负例：每类关键门禁至少注入一次错误且必须被拒绝。
     bad = copy.deepcopy(bottom)

@@ -1,0 +1,23 @@
+{
+  "schema": "trading-research-source-manifest/v1",
+  "mode": "faithful-source-copy",
+  "recovered_at": "2026-07-22T08:17:17+08:00",
+  "source_root": "C:\\Trading_analysis\\research\\bottom_ml",
+  "note": "Only source code is bundled with the skill. Large parquet inputs remain external and are pinned below by SHA-256.",
+  "scripts": {
+    "align_check.py": {"bytes": 2143, "sha256": "E4B3DEF5E16E8B7A6CDBE9F316521312DF3BA94EE8D03890DB8A8FD254BF0C33"},
+    "fetch_klines.py": {"bytes": 2624, "sha256": "DCEA7F95C5194DF36747B8E94A527B715A488ECC111B610C44521ECC3EE44C4B"},
+    "model.py": {"bytes": 8537, "sha256": "CD8653CEBD440A9032B066BCB142FDCAE80F707EE3F88F6524EBA01C948AF8EC"},
+    "panel_build.py": {"bytes": 7869, "sha256": "5CD1BD9F231E3877C7EDEE3D79846FFB86EFAA0BC516AF0183209140DC99B677"},
+    "probe.py": {"bytes": 1310, "sha256": "F44928B17D553CA900E571083EA7E7F03492DDC8733F423E99DE765DE30B961B"},
+    "select_poison.py": {"bytes": 2195, "sha256": "EB76EC2B3A2EDA71CC6D0DBCB9E232B79D8B44B0DA085247A8A311A69C9443FC"},
+    "select_winners.py": {"bytes": 1225, "sha256": "EEB5845F295609C8300B7602796DA0A3EF1E18624B222A55EC74C6BE792513BE"}
+  },
+  "external_datasets": {
+    "index_399006.parquet": {"bytes": 53862, "sha256": "7913D39E96205801709B085FBFFE39820B76788ACBA88F49F2BC957853ED4A19"},
+    "index_panel.parquet": {"bytes": 20329, "sha256": "8AF94A4DD953864B063351453077E021CB88969A254E92EFE0C68919B35ACE3D"},
+    "klines.parquet": {"bytes": 5819671, "sha256": "20073207B4378021ADFDC59F9E404582314C0A9F76708B7117E003EB35BACB6C"},
+    "meta.parquet": {"bytes": 12221, "sha256": "E3C05B0B6FC7E6F356281348686CF24D56DE36354A6377C96563CC1CA97494DB"},
+    "panel.parquet": {"bytes": 838472, "sha256": "6220C0C2215D023B870FE63F797720092F46772FFD4DB7A436377EFC8475D5C4"}
+  }
+}

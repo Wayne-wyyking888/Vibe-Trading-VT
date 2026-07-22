@@ -62,7 +62,7 @@ Codex 原生不提供旧式直接 `/bottom-fishing` 自定义命令；这是宿�
 
 ### weekly-ashare-rank
 
-- 默认 pool=400/top=20、N=3；免费源实际初筛252只、完成250只历史因子，Top20 全部完成跨源验价与公告/F10。
+- 默认 pool=400/top=20；本次验收样本显式使用 N=3。免费源实际初筛252只、完成250只历史因子，Top20 全部完成跨源验价与公告/F10。
 - T=2026-07-17；Agent⓪=0分/观望/总仓15%；289项通过。
 - 市场闸门：`C:\Trading_analysis\data\codex_smoke\market_gate_latest.json`
 - JSON：`C:\Trading_analysis\data\codex_smoke\rank_latest.json`
