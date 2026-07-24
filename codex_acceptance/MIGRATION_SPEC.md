@@ -78,11 +78,15 @@ Codex 工作区安装位置：`C:\Trading_analysis\.agents\skills`。三个目�
 人工裁定：严格区分基本面恶化硬否决、事件型红旗、系统性踩踏；旧闻或年份不明不得否决。
 裁定按 `✓ > ? > ✗` 分层，层内保持引擎分数降序。非 `✓` 票不得保留买入、止损或目标价位。
 
+Agent③市场预警：每次扫描固定覆盖排期宏观政策、国内监管与流动性、海外地缘与贸易、跨资产压力、
+长假信息缺口五域，按 T 日与 T 后分账并写入 `codex_audit.toxic_risk_warning`。当前只允许
+`mode=shadow`；warning 可进入报告级/个股级 alerts，但不得改分、裁定、仓位、推荐线或两个预算熔断。
+
 状态：`bottom_latest.json`、`bottom_adjudication.json`、`bottom_shadow_log.jsonl` 与 reports HTML。
 `--review` 的影子样本、裁定子集、滚动停做统计由原引擎执行。
 
 HTML 必须呈现 T、市况/防守天数、大盘 RSV、底部区数量、阈值/命中、冷却、dd250、F10、裁定层、
-alerts、执行纪律、影子期/真实口径和非投资建议。
+Agent③ shadow alerts、五域风险审计、执行纪律、影子期/真实口径和非投资建议。
 
 ## 5. stock-diagnostic 不可变项
 

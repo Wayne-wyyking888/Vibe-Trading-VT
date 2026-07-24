@@ -1,6 +1,8 @@
 # 抄底网页证据协议（bottom-search-audit/v1）
 
-本协议只约束过线票的消息面搜索、时点隔离与裁定证据，不修改量化分数、ATR gate、冷却或执行价位。
+本协议只约束 Agent② 对过线票的消息面搜索、时点隔离与裁定证据，不修改量化分数、ATR gate、冷却或执行价位。
+Agent③ 的市场级毒月 Web 风险 nowcast 使用独立的
+`TOXIC_RISK_WARNING_PROTOCOL.md`；两套审计共享 T 日前视纪律，但不得相互代替覆盖。
 
 ## 目录
 
@@ -14,6 +16,7 @@
 8. 查询模板
 9. 结构化 JSON 契约
 10. 裁定与发布门禁
+11. Agent③ 联动
 
 ## 1. 时间与身份锚定
 
@@ -259,3 +262,10 @@ python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" vali
 ```
 
 非零退出时不得运行 `--adjudicate`。最终验收必须再加 `--require-bottom-search`，防止 attach 或 HTML 阶段丢失搜索审计。
+
+## 11. Agent③ 联动
+
+完成本协议的候选级搜索后，必须再按 `TOXIC_RISK_WARNING_PROTOCOL.md` 完成五个市场风险域。
+`validate-bottom-search` 会同时要求 `codex_audit.bottom_search` 和
+`codex_audit.toxic_risk_warning`。市场级 `warning_id` 若映射到某候选，必须写入该票
+`rulings[code].alerts`；但 Agent③ 只增加 shadow warning，不改变 Agent② 的 ✓/?/✗。

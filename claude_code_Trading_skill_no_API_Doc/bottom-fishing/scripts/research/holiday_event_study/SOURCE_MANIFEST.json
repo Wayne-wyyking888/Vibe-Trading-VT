@@ -1,0 +1,72 @@
+{
+  "schema": "trading-research-source-manifest/v1",
+  "mode": "isolated-hypothesis-study",
+  "created_at": "2026-07-23",
+  "study": "bottom-fishing holiday event study 2024-2026",
+  "workflow_modified": false,
+  "source_files": {
+    "holiday_calendar.csv": {
+      "bytes": 4046,
+      "sha256": "50F94609F91C7FCB1F968E2607D1A3813420D0968D37B781E827422335F798C5"
+    },
+    "holiday_event_study.py": {
+      "bytes": 42852,
+      "sha256": "A2214356F8B57FECB6EABCCA6C5798A32DB6828371A5994F75EC6128786A2596"
+    },
+    "README.md": {
+      "bytes": 5503,
+      "sha256": "2BC050F710233E3EA7ACD93C6AACD2F3A389D4070AD8A8205D58E47B34FC144D"
+    }
+  },
+  "official_sources": {
+    "2024": "https://www.sse.com.cn/disclosure/announcement/general/c/c_20231226_5733939.shtml",
+    "2025": "https://www.sse.com.cn/disclosure/announcement/general/c/c_20241223_10767108.shtml",
+    "2026": "https://www.sse.com.cn/disclosure/announcement/general/c/c_20251222_10802507.shtml"
+  },
+  "external_datasets": {
+    "C:\\Trading_analysis\\research\\bottom_ml\\index_399006.parquet": {
+      "bytes": 53862,
+      "sha256": "7913D39E96205801709B085FBFFE39820B76788ACBA88F49F2BC957853ED4A19"
+    },
+    "C:\\Trading_analysis\\research\\bottom_ml\\index_panel.parquet": {
+      "bytes": 20329,
+      "sha256": "8AF94A4DD953864B063351453077E021CB88969A254E92EFE0C68919B35ACE3D"
+    },
+    "C:\\Trading_analysis\\research\\bottom_ml\\klines.parquet": {
+      "bytes": 5819671,
+      "sha256": "20073207B4378021ADFDC59F9E404582314C0A9F76708B7117E003EB35BACB6C"
+    },
+    "C:\\Trading_analysis\\research\\bottom_ml\\meta.parquet": {
+      "bytes": 12221,
+      "sha256": "E3C05B0B6FC7E6F356281348686CF24D56DE36354A6377C96563CC1CA97494DB"
+    },
+    "C:\\Trading_analysis\\research\\bottom_ml\\panel.parquet": {
+      "bytes": 838472,
+      "sha256": "6220C0C2215D023B870FE63F797720092F46772FFD4DB7A436377EFC8475D5C4"
+    }
+  },
+  "generated_outputs": {
+    "root": "C:\\Trading_analysis\\research\\bottom_holiday_event_study\\output",
+    "event_stats_cooldown5.csv": {
+      "bytes": 6905,
+      "sha256": "8D784C060C19213597A4DD57F774404AA163A625124AC869326D5E2220C87DAF"
+    },
+    "relative_day_stats.csv": {
+      "bytes": 3532,
+      "sha256": "353FADF16C2E38E61C41CA0E9B4BE368D471E51FF7F91D1DE08EF326BA1B50CA"
+    },
+    "results.json": {
+      "bytes": 116933,
+      "sha256": "1D511F9AB575FE469E1D04E0DC1DC8B4C48A8DFAE0E493730115FBD9F30BB14B"
+    },
+    "summary.md": {
+      "bytes": 5364,
+      "sha256": "CC67CEBCFD659364046F86A0214053614F8C761C99D1C0B6BD37302BF1E0C93E"
+    },
+    "toxic_month_holiday_attribution.csv": {
+      "bytes": 2297,
+      "sha256": "AD413D421D0DA46FAE6934EF39A4A4BE16E55119DB32B72CA552EB90FDC8A4CA"
+    }
+  },
+  "verdict": "节前风险只有弱提示，未通过事件级随机化、cluster区间与多重检验；节后相关性不成立。毒月内节日窗信号份额与雷份额几乎相等，删除1/3/5日窗口后真正因雷率跌破30%而消失的毒月为0，毒月不是节假日窗口制造。不进入生产workflow。"
+}

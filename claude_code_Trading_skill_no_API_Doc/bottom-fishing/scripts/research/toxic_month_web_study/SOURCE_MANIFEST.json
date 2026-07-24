@@ -1,0 +1,73 @@
+{
+  "schema": "trading-research-source-manifest/v1",
+  "mode": "isolated-hypothesis-study",
+  "created_at": "2026-07-23",
+  "study": "bottom-fishing toxic-month cluster, web attribution and early-warning design",
+  "workflow_modified": false,
+  "source_files": {
+    "README.md": {
+      "bytes": 2186,
+      "sha256": "DC6AEF3585D5420F5B2825F69E379AFE0CD485A477900F2BFA5666856B79E129"
+    },
+    "analyze_toxic_windows.py": {
+      "bytes": 10857,
+      "sha256": "6A49493B3FFD0F87AC8C13E0081F601CFD73BA8C0AEA9B51E12189DEB1CE7616"
+    },
+    "web_event_ledger.csv": {
+      "bytes": 8542,
+      "sha256": "ED2E22BF2071EB5602B2D9325D4DED04590B2A0143551B87F3FC278996CB7EB1"
+    },
+    "EARLY_WARNING_DESIGN.md": {
+      "bytes": 6826,
+      "sha256": "E9B7CCE574060CADB82E298B58A70CBF2968ED039AEA641BC28E3478486A8545"
+    }
+  },
+  "official_monitoring_seeds": {
+    "nbs_release_calendar": "https://www.stats.gov.cn/xw/tjxw/tzgg/202512/t20251224_1962137.html",
+    "nbs_data_releases": "https://www.stats.gov.cn/sj/zxfb/index.html",
+    "pboc_policy_announcements": "https://www.pbc.gov.cn/zhengcehuobisi/125207/125213/index.html",
+    "csrc_news": "https://www.csrc.gov.cn/csrc/c100028/common_list.shtml",
+    "sse_margin_summary": "https://www.sse.com.cn/market/othersdata/margin/sum/",
+    "fomc_calendar": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+    "eu_trade_news": "https://policy.trade.ec.europa.eu/news_en",
+    "bis_news": "https://www.bis.gov/news-updates"
+  },
+  "external_datasets": {
+    "C:\\Trading_analysis\\research\\bottom_ml\\index_399006.parquet": {
+      "bytes": 53862,
+      "sha256": "7913D39E96205801709B085FBFFE39820B76788ACBA88F49F2BC957853ED4A19"
+    },
+    "C:\\Trading_analysis\\research\\bottom_ml\\index_panel.parquet": {
+      "bytes": 20329,
+      "sha256": "8AF94A4DD953864B063351453077E021CB88969A254E92EFE0C68919B35ACE3D"
+    },
+    "C:\\Trading_analysis\\research\\bottom_ml\\klines.parquet": {
+      "bytes": 5819671,
+      "sha256": "20073207B4378021ADFDC59F9E404582314C0A9F76708B7117E003EB35BACB6C"
+    },
+    "C:\\Trading_analysis\\research\\bottom_ml\\meta.parquet": {
+      "bytes": 12221,
+      "sha256": "E3C05B0B6FC7E6F356281348686CF24D56DE36354A6377C96563CC1CA97494DB"
+    },
+    "C:\\Trading_analysis\\research\\bottom_ml\\panel.parquet": {
+      "bytes": 838472,
+      "sha256": "6220C0C2215D023B870FE63F797720092F46772FFD4DB7A436377EFC8475D5C4"
+    }
+  },
+  "generated_outputs": {
+    "root": "C:\\Trading_analysis\\research\\bottom_toxic_month_web_study\\output",
+    "toxic_window_metrics.csv": {
+      "bytes": 2828,
+      "sha256": "D914A5AB7ADBFE7D3D7A8229A5AA93AA03CAC63083DB22633495090AC697514E"
+    },
+    "industry_concentration.csv": {
+      "bytes": 15321,
+      "sha256": "EE47BD4BCB5B6FBFDA8165968A87F5E3BED37AFF6F61AE605EDBD4DE41625FEC"
+    },
+    "metadata.json": {
+      "bytes": 1189,
+      "sha256": "C2B0C6AA3CBF8E0D4556B8B7C00D41D7E0665C39F23B1688F27DCA16438FCD2F"
+    }
+  },
+  "verdict": "当前固定面板有10个严格毒月及2024-07一个边界月。11个月共1057笔止损，其中584笔（55.3%）集中在各月真实连续5个市场交易日的止损兑现窗；严格10个月为506/884（57.2%）。旧研究约61%的口径使用5个有信号日期，可能跨越超过5个真实交易日，不能继续混用。大样本毒月主要呈跨行业regime冲击，小样本月份易受重复信号和赛道轮动放大。Web只可对T日已公开的排期或持续风险做shadow nowcast，尚未完成无前视回放，不进入生产workflow。"
+}

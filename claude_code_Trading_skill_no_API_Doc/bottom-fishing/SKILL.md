@@ -1,6 +1,6 @@
 ---
 name: bottom-fishing
-description: A股底部区与超跌修复扫描（0 API、Codex 原生）。用于抄底、超跌、底部扫描、低吸扫描、bottom-fishing、错杀裁定、抄底复盘等请求；运行不可变 Python 引擎，执行双路径推荐线、ATR gate、5交易日冷却、官方源优先的多轮网页检索、F10逐条对账、T日证据与检索时点增量隔离、结构化搜索覆盖审计、✓/?/✗分层、影子日志、adjudicate/review，并在独立验收通过后输出原生 HTML。
+description: A股底部区与超跌修复扫描（0 API、Codex 原生）。用于抄底、超跌、底部扫描、低吸扫描、bottom-fishing、毒月风险预警、错杀裁定、抄底复盘等请求；运行不可变 Python 引擎，执行双路径推荐线、ATR gate、5交易日冷却、官方源优先的多轮网页检索、F10逐条对账、Agent③毒月Web风险nowcast、T日证据与检索时点增量隔离、结构化搜索覆盖审计、✓/?/✗分层、shadow warning、影子日志、adjudicate/review，并在独立验收通过后输出原生 HTML。
 ---
 
 # A股抄底扫描（0 API · Codex 原生 · 影子复验期）
@@ -24,7 +24,8 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
    ```
    人工裁定必须遵守 `C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\JUDGE_SCHEMA.md`，只用 Codex 网页检索，
    每个关键事实保留 URL、发布日期和北京时间检索日期；不调用 MCP、付费 API 或外部 agent。出现过线票时，裁定前还必须
-   **完整阅读** `references/WEB_EVIDENCE_PROTOCOL.md`，不得凭摘要或单轮泛搜跳过其中的覆盖与血缘门禁。
+   **完整阅读** `references/WEB_EVIDENCE_PROTOCOL.md`；无论是否有过线票，都必须完整阅读
+   `references/TOXIC_RISK_WARNING_PROTOCOL.md` 并运行 Agent③，不得凭摘要或单轮泛搜跳过覆盖、血缘与时点门禁。
 1. **跑引擎**（PowerShell；行情联网被沙箱阻断时按 Codex 权限流程申请一次网络执行；拉取约480只K线通常需要数分钟，网络慢时可能超过10分钟）：
    ```powershell
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" bottom --
@@ -49,7 +50,7 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
    **自动生成 ranked HTML**（`reports/bottom_cn_YYYY-MM-DD_HH-MM-SS.html`）→ bottom_latest.json。
    文件名中的日期和时分秒必须来自同一个完整北京时间 `generated_at`（UTC+8），严禁再用交易日 T 拼日期、
    再用北京时间拼时分秒；T 只在报告正文和 JSON 中作为“最新已收盘交易日”展示，不进入生成时间戳文件名。
-2. **Agent②「错杀裁定官」（我做，只对过线票，通常0-3只——本skill里人工信息唯一有增量的位置；毒月研究证明
+2. **Agent②「错杀裁定官」（我做，只对过线票，通常0-3只——个股消息面的人工增量位置；毒月研究证明
    输赢家量化特征完全相同，"为什么跌"只能靠消息面）**：按下面「红旗分型」判——核心不是"有没有F10红旗"，而是
    **"基本面是否在恶化"**（2026-07-16 毒月8v8消息面对照实证：⚠事件型红旗单独出现≈无区分力、恶化型才是毒月雷真
    源头，见README§CatBoost选股+毒月消息面对照双实验2026-07-16，n=16定性待面板量化）：
@@ -98,17 +99,36 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
       证据不足/存疑 = ?降级。
    ⑥ **纯regime踩踏免责**：全市场流动性危机砸的票（如2024-01微盘股）可无任何个股红旗，消息面对它无解——别硬编
       利空理由，据实写"无个股恶化证据·系系统性踩踏"，靠仓位/熔断兜底。
-3. **裁定同步进HTML（--adjudicate，2026-07-15 新增）**：把每只过线票的裁定写入
+3. **Agent③「毒月 Web 预警官」（我做，每次扫描必跑，0只过线也不能跳过）**：完整遵守
+   `references/TOXIC_RISK_WARNING_PROTOCOL.md`，把目标限定为**截至T的风险 nowcast**，禁止声称能预测尚未公开的黑天鹅。
+   固定覆盖 `排期宏观政策/国内监管与流动性/海外地缘与贸易/跨资产压力/长假信息缺口` 五域：
+   - **排期风险**：统计数据、LPR、FOMC、政策生效日、长假闭市等只给 med 黄色提示，
+     `direction_certainty=uncertain`，不得预判涨跌。
+   - **活跃风险**：战争—航运—油价、关税/出口管制、融资收缩、退市/ST恐慌、跨资产强平等，只有
+     `first_public_at≤T` 且截至T仍未结束才可 warning；high 必须有官方源和至少两个独立 `origin_id`。
+   - **候选暴露**：只有行业、产品、成本或海外收入能明确映射时，才把同一 `warning_id` 下沉到个股；
+     泛化市场恐慌不得复制成每票红条。Agent③只加 warning，**不改变 Agent② 的 ✓/?/✗**。
+   - **T后隔离**：检索日晚于T时五域都做末端扫描；突发风险只进 `post_t_safety_items`，
+     `used_in_asof_t_warning=false`，HTML 明示“T后”，不得倒灌成事前命中。
+   - **结构化落盘**：写入 `codex_audit.toxic_risk_warning`，固定
+     `version=bottom-toxic-risk-warning/v1`、`mode=shadow`、五域 coverage、sources、queries、
+     warnings、by_code、post-T 增量和 clear_reason。每条 warning/delta 同步到顶层 `alerts`；
+     映射候选的再同步到 `rulings[code].alerts`，都带 `warning_id/level/text/shadow/post_t`。
+   Agent③尚未完成无前视 shadow 样本验证，**不得改分、禁买、降级、调仓位或替代两个预算熔断**。
+4. **裁定与预警同步进HTML（--adjudicate，2026-07-15 新增）**：把每只过线票的裁定和 Agent③预警写入
    `C:\Trading_analysis\data\bottom_adjudication.json`（格式
    `{"T":"引擎T日","alerts":[组合级警示],"rulings":{"代码":{"verdict":"✓|?|✗","why":"理由+日期来源",
-   "alerts":[{"level":"high|med","text":"警示"}]}},"codex_audit":{"bottom_search":{...}}}`——搜索审计必须严格遵守
-   `references/WEB_EVIDENCE_PROTOCOL.md`；**凡影响大的点必须抽成 alerts 高亮**（P9利好兑现/
+   "alerts":[{"level":"high|med","text":"警示"}]}},"codex_audit":{"bottom_search":{...},
+   "toxic_risk_warning":{...}}}`——搜索审计必须严格遵守
+   `references/WEB_EVIDENCE_PROTOCOL.md` 和 `references/TOXIC_RISK_WARNING_PROTOCOL.md`；
+   **凡影响大的点必须抽成 alerts 高亮**（P9利好兑现/
    见光死、低价股滑点、重复过线旋转门、硬否决项等），high=红条/med=琥珀条，别埋在 why 长文里），然后跑：
    ```powershell
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" validate-bottom-search --result "C:\Trading_analysis\data\bottom_latest.json" --audit "C:\Trading_analysis\data\bottom_adjudication.json"
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" bottom -- --adjudicate
    ```
-   `validate-bottom-search` 非零退出时禁止 adjudicate：先补齐搜索、来源链、F10逐条对账或T+隔离记录，不能删字段绕过。
+   `validate-bottom-search` 会同时验 Agent② 与 Agent③；非零退出时禁止 adjudicate：先补齐搜索、来源链、
+   F10逐条对账、五域 coverage、alert 映射或T+隔离记录，不能删字段绕过。
    引擎自动：**分层重排**（✓>?>✗，层内仍按引擎总分——纪律：不造未经走样本校准的新数值权重）→
    ?/✗票撤除买入方案（P13-3：非买入票不给价，卡片保留供对照，✗票置灰）→ 重出裁定版HTML
    （严格命名为 `bottom_cn_YYYY-MM-DD_HH-MM-SS_裁定版.html`，时间取带 `+08:00` 的
@@ -116,7 +136,8 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
    两条战绩，长期检验Agent②消息面裁定是否真有增量。T不一致会拒绝合并（防脏裁定）；
    生成后按 HTML 正文中的 T **自动删除同T旧版HTML**（含旧裁定版），reports 里每个 T 只留最新裁定版；
    文件名本身只表达完整北京时间生成时点，不再承担 T 的语义。
-4. **Agent④式复核并通过 Codex 硬门禁后才输出最终表**：引擎表 + 裁定列（✓错杀可入 / ✗恶化·否决 / ?存疑降级），检查
+5. **Agent④式复核并通过 Codex 硬门禁后才输出最终表**：引擎表 + 裁定列（✓错杀可入 / ✗恶化·否决 / ?存疑降级）+
+   Agent③ shadow warning，检查
    价格新鲜度(引擎T=最近已收盘日)、数字来源可追溯；否决票在文字报告注明理由（HTML卡片保留供对照）。
    `bottom_adjudication.json` 顶层除原字段外必须加入 `codex_audit`。先对每个 `✓` 票执行独立跨源验价，
    并把输出的 `price_verification_by_code` 并入 `codex_audit`；没有 `✓` 时输出为空对象即可：
@@ -128,7 +149,7 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" validate --skill bottom-fishing --json "C:\Trading_analysis\data\bottom_latest.json" --html "<裁定版HTML绝对路径>" --require-bottom-search
    ```
    任一命令非零退出即标记“未通过”，不得把该 HTML 当最终报告；验收器不提供最终报告降级开关。
-5. **复盘对账**：用户说"抄底复盘/对账"时跑：
+6. **复盘对账**：用户说"抄底复盘/对账"时跑：
    ```powershell
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" bottom -- --review
    ```
@@ -146,13 +167,17 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
    成交即挂（**跌停封死风险高于动量票，所以单票≤3.5%仓，硬上限**）；买入日收盘≤-5% → 次日开盘无条件离场
    （崩盘快刀·本skill适用性已单独验证：过线票买入日崩概率仅0.5%，崩后继续持有 胜21%/雷79%/EV-5.29% vs
    次日出确定-5.58%——期望≈打平，保留此刀的理由是截断79%的深尾路径+与weekly-ashare纪律统一，成本≈0）。
-5. **毒月防御（2026-07-14 扩展研究定版，2023-11~2026-07 面板4505笔）**：本策略**市况依赖**——
-   **2024式阴跌熊市全年EV为负（51.6%胜/42.7%雷）**；毒月解剖：雷的61%集中在同一周、78%来自反复过线的同批票、
+5. **毒月防御（2026-07-14 扩展研究定版，2026-07-23 真实交易日口径复核）**：本策略**市况依赖**——
+   **2024式阴跌熊市全年EV为负（51.6%胜/42.7%雷）**；毒月解剖旧稿的“61%集中在同一周”
+   使用5个**有信号日期**、可能跨越超过5个市场交易日；按真实连续5个市场交易日复算，
+   10个严格毒月止损兑现窗覆盖506/884=57.2%，连同2024-07边界月为584/1057=55.3%，后续只能引用新口径。
+   行业复核显示大样本毒月以跨行业 regime 冲击为主，小样本月易被重复信号/赛道轮动放大；
    **毒月内输家与赢家个股特征完全相同（分数/ATR/回撤全一样）→ 选股端无解**；牛熊闸门(MA250)已测无效
    （2024年线上子样本29.6%胜更差，纯regime混淆）。防御只有两个预算型熔断，都必须执行：
    ① 月度预算：抄底累计亏损达账户-3% → 当月停做；
    ② 滚动停做开关（--review 自动检测）：近20笔了结雷率≥30% → 暂停抄底至回落<20%。
-6. **影子复验期**：累计30笔了结前，报告顶部必须标"影子期：建议纸面跟踪或仓位减半"；30笔后 --review 实测
+6. **影子复验期**：累计30笔了结前，报告顶部必须标"影子期：建议纸面跟踪或仓位减半"；Agent③独立保持
+   `mode=shadow`，在完成无前视回放、误报率、机会成本与预注册样本前只显示 warning，不影响任何交易字段。30笔后 --review 实测
    与回测口径偏离>10pp → 回到研究台重校准。def_days/idx_rsv 继续随每笔记录，但两格子已被含2024面板
    证伪（防守≥9天全期EV-0.41·2024内40.7胜/51.7雷；大盘RSV15-40无增量）——**只记录、不作预期依据**。
 7. **已被数据否决、禁止再加**：资金流(叠加后反向)、多元学习权重(OOS全灭)、K线企稳形态(安慰剂)、
@@ -167,7 +192,8 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
 ## 研究复现资源（仅在重校准/规则审计时读取）
 
 日常扫描不得执行研究脚本。用户要求重校准、追溯阈值来源或评估新 filter 时，先完整阅读
-`references/RESEARCH_LEDGER.md`，再从 `scripts/research/legacy_cc/` 或 `scripts/research/bottom_ml/`
+`references/RESEARCH_LEDGER.md`，再从 `scripts/research/legacy_cc/`、`scripts/research/bottom_ml/`、
+`scripts/research/holiday_event_study/` 或 `scripts/research/toxic_month_web_study/`
 选择对应实验；必须保留原样本窗、幸存者偏差、前视隔离与“采纳/否决”状态，未经面板走样本复验不得改生产规则。
 
 方法论摘要见同目录 `README.md`；研究脚本、外部数据 hash 和 Claude Code provenance 见

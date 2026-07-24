@@ -128,6 +128,12 @@ bottom-fishing 启用 `bottom_search` 后按其 F10 ledger 执行：T 前实质�
 启用 bottom search 后，候选级“已查全”由六维 coverage/query 图证明；若某 `?` 票所有维度均为
 `no_relevant_hit/blocked`，允许该票没有 fact，严禁为满足旧的 facts 覆盖规则虚构“无证据事实”。
 
+同时必须写入 Agent③ 的
+`codex_audit.toxic_risk_warning`，版本固定为 `bottom-toxic-risk-warning/v1`。完整五域覆盖、
+T/T后隔离、来源门槛、候选暴露和 HTML alert 联动见
+`claude_code_Trading_skill_no_API_Doc/bottom-fishing/references/TOXIC_RISK_WARNING_PROTOCOL.md`。
+该对象固定 `mode=shadow`，只增加风险提示，不改变分数、推荐线、✓/?/✗、仓位或预算熔断。
+
 ```json
 {
   "fact_id": "fact-600000-001",
@@ -295,4 +301,21 @@ python C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py valida
 若引擎 0 只过线票，`bottom_search` 仍须保留版本、T、两个时点和固定分类，并以非空 `empty_reason` 说明空手；
 `sources=[]`、`queries=[]`、`coverage_by_code={}`、`f10_seed_ledger=[]`、`post_t_safety_by_code={}`，
 `market_coverage={"status":"no_relevant_hit","query_ids":[],"fact_ids":[],"reason":"非空的空手说明"}`。
-不得虚构候选、查询或事实凑 schema。
+不得虚构候选、查询或事实凑 schema。Agent③不因零候选而跳过：`toxic_risk_warning.by_code={}`，
+但仍须完成五个市场风险域并把全局 shadow warning 写入顶层 `alerts`；若确无命中则
+`overall_status=clear`、`warnings=[]` 且 `clear_reason` 非空。
+
+Agent③ alert 最小格式：
+
+```json
+{
+  "warning_id": "toxic-warning-001",
+  "level": "med|high",
+  "text": "必须明确写 shadow/影子；T后条目还必须写“T后”",
+  "shadow": true,
+  "post_t": false
+}
+```
+
+每条 T 日 warning/T 后 delta 都必须以同一 ID 进入顶层 `alerts`；映射到候选的还必须进入
+`rulings[code].alerts`。`by_code.exposure` 按关联项最高等级机械重算为 `none|watch|high`。

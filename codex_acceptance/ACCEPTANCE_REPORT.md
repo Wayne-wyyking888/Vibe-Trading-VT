@@ -10,6 +10,19 @@
 本报告验证的是迁移 workflow。烟测产物不是经过当期完整网页研究后的投资最终报告，不得当作买卖建议。
 新对话实际生成的最终报告仍必须逐次通过 `codex_audit` 与 HTML 强门禁。
 
+## 2026-07-23 Agent③ 毒月 Web 预警增量
+
+bottom-fishing 已增加 Agent③ 五域市场风险 nowcast：
+
+- 新契约 `bottom-toxic-risk-warning/v1` 固定 `mode=shadow`，不修改九个不可变业务核心文件；
+- `validate-bottom-search` 同时验 Agent②个股搜索和 Agent③五域覆盖、T/T后隔离、来源 origin、
+  报告级/个股级 alert 联动；
+- `augment-report` 生成 Agent③ 独立审计表，最终 HTML 验收检查 warning 来源链接和可见文本；
+- 当前只显示风险 warning，不改量化分数、✓/?/✗、仓位、推荐线或预算熔断。
+
+本次增量复验：baseline 41项、fixtures 351项、self-test 2398项、rerender-test 399项、
+install-check 15项全部通过；skill-creator `quick_validate.py` 返回 `Skill is valid!`。
+
 ## Codex 触发方式
 
 - `/skills` → 选择 `bottom-fishing`、`stock-diagnostic` 或 `weekly-ashare-rank`；

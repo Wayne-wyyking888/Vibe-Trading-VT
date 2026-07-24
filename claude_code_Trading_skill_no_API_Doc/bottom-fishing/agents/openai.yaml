@@ -1,6 +1,4 @@
 interface:
-  display_name: "A股抄底扫描"
-  short_description: "底部量化扫描、官方源多轮搜索、错杀裁定、复盘与审计"
-  default_prompt: "使用 $bottom-fishing 扫描最新已收盘A股底部机会，完成官方源多轮搜索、时点隔离、错杀裁定和审计HTML。"
-policy:
-  allow_implicit_invocation: true
+  display_name: "A股抄底与毒月预警"
+  short_description: "A股底部量化扫描、错杀裁定、毒月Web预警、复盘与审计"
+  default_prompt: "使用 $bottom-fishing 扫描最新已收盘A股底部机会，完成错杀裁定、毒月Web风险预警、时点隔离与审计HTML。"
