@@ -415,10 +415,93 @@ TOXIC_RISK_FAMILIES = {
     "cross_asset",
     "other_market",
 }
+TOXIC_EVALUATION_FIELDS = {
+    "fact_basis",
+    "consensus",
+    "consensus_source_refs",
+    "base_case",
+    "confidence",
+    "upside_scenario",
+    "downside_scenario",
+    "transmission_paths",
+    "watch_variables",
+    "invalidators",
+    "inference_boundary",
+}
+TOXIC_GENERIC_INFERENCES = {
+    "uncertain",
+    "unknown",
+    "不确定",
+    "方向不确定",
+    "待观察",
+    "需关注",
+}
+TOXIC_PRECISION_RE = re.compile(
+    r"(?:\d+(?:\.\d+)?\s*%|\d+(?:\.\d+)?\s*(?:bp|bps|个基点))",
+    re.I,
+)
 
 
 def _string_list(value: Any) -> list[str]:
     return [str(x) for x in value] if isinstance(value, list) else []
+
+
+def _validate_toxic_evaluation(out: Result, value: Any, tag: str,
+                               allowed_source_refs: set[str], runtime: bool = False) -> None:
+    """Require evidence-bounded inference rather than a bare "uncertain" label."""
+    out.check(isinstance(value, dict), f"{tag} 必须是对象")
+    if not isinstance(value, dict):
+        return
+    out.check(TOXIC_EVALUATION_FIELDS <= set(value), f"{tag} 缺完整推断字段")
+    forbidden = {"score_delta", "verdict", "position", "position_pct", "trade_action", "action"}
+    out.check(not (forbidden & set(value)), f"{tag} 不得夹带改分、裁定、仓位或交易动作")
+
+    text_fields = (
+        "fact_basis",
+        "consensus",
+        "base_case",
+        "upside_scenario",
+        "downside_scenario",
+        "inference_boundary",
+    )
+    texts = {name: str(value.get(name, "")).strip() for name in text_fields}
+    for name, text_value in texts.items():
+        out.check(bool(text_value), f"{tag}.{name} 为空")
+    normalized_base = re.sub(r"[\s。；，,.!?！？]+", "", texts["base_case"]).lower()
+    out.check(normalized_base not in {
+        re.sub(r"[\s。；，,.!?！？]+", "", item).lower()
+        for item in TOXIC_GENERIC_INFERENCES
+    }, f"{tag}.base_case 不能只写“不确定/待观察”，必须给证据约束下的基准推断")
+    out.check(len(normalized_base) >= 8, f"{tag}.base_case 过短，无法构成可审计推断")
+    out.check(str(value.get("confidence", "")) in {"low", "medium", "high"},
+              f"{tag}.confidence 必须是 low/medium/high")
+
+    for name in ("transmission_paths", "watch_variables", "invalidators"):
+        items = _string_list(value.get(name))
+        out.check(isinstance(value.get(name), list) and bool(items) and
+                  all(str(item).strip() for item in items),
+                  f"{tag}.{name} 必须是非空字符串数组")
+
+    consensus_refs = _string_list(value.get("consensus_source_refs"))
+    out.check(isinstance(value.get("consensus_source_refs"), list),
+              f"{tag}.consensus_source_refs 必须是数组")
+    out.check(set(consensus_refs) <= allowed_source_refs,
+              f"{tag}.consensus_source_refs 超出本评估可用来源")
+    no_consensus = any(marker in texts["consensus"] for marker in
+                       ("无可靠共识", "未形成可靠共识", "未找到可靠共识", "缺少可靠共识"))
+    out.check(bool(consensus_refs) or no_consensus,
+              f"{tag}.consensus 必须引用共识来源，或明确说明未找到可靠共识")
+    precision_text = " ".join(texts.values())
+    out.check(not TOXIC_PRECISION_RE.search(precision_text) or bool(consensus_refs),
+              f"{tag} 含百分比/基点等精确预期时必须给 consensus_source_refs")
+
+    boundary = texts["inference_boundary"]
+    out.check(("shadow" in boundary.lower() or "影子" in boundary) and "不改" in boundary,
+              f"{tag}.inference_boundary 必须明确 shadow 且不改交易字段")
+    if runtime:
+        out.check("T" in boundary and any(marker in boundary for marker in
+                                          ("不倒灌", "不用于T", "不进入T", "与T日裁定隔离")),
+                  f"{tag}.inference_boundary 必须明确运行时点信息不倒灌 T 日裁定")
 
 
 def _bottom_verdicts(result_obj: dict[str, Any], audit_doc: dict[str, Any] | None) -> dict[str, str]:
@@ -486,10 +569,10 @@ def validate_toxic_risk_warning(result_obj: dict[str, Any], document: dict[str, 
     required_fields = {
         "version", "T", "cutoff_beijing", "retrieved_at_beijing", "mode", "overall_status",
         "required_domains", "sources", "queries", "coverage", "warnings", "by_code",
-        "post_t_safety_items", "clear_reason",
+        "post_t_safety_items", "runtime_evaluation", "clear_reason",
     }
     out.check(required_fields <= set(warning), "toxic_risk_warning 缺必需字段")
-    out.check(warning.get("version") == "bottom-toxic-risk-warning/v1",
+    out.check(warning.get("version") == "bottom-toxic-risk-warning/v2",
               "toxic_risk_warning.version 错误")
     out.check(warning.get("mode") == "shadow", "Agent③ 目前只能使用 shadow 模式")
 
@@ -567,8 +650,8 @@ def validate_toxic_risk_warning(result_obj: dict[str, Any], document: dict[str, 
             continue
         out.check({"warning_id", "level", "risk_family", "status", "scope", "first_public_at",
                    "event_start", "event_end", "direction_certainty", "why", "affected_industries",
-                   "codes", "source_refs", "query_ids", "shadow"} <= set(item),
-                  f"{tag} 缺必需字段")
+                   "codes", "source_refs", "query_ids", "evaluation", "shadow"} <= set(item),
+                   f"{tag} 缺必需字段")
         warning_id = str(item.get("warning_id", ""))
         out.check(bool(warning_id) and warning_id not in warning_by_id, f"{tag}.warning_id 缺失或重复")
         if warning_id and warning_id not in warning_by_id:
@@ -620,6 +703,7 @@ def validate_toxic_risk_warning(result_obj: dict[str, Any], document: dict[str, 
         if level == "high":
             out.check(official and len(origins) >= 2,
                       f"{tag} high warning 必须含官方源及至少两个独立 origin")
+        _validate_toxic_evaluation(out, item.get("evaluation"), f"{tag}.evaluation", set(refs))
         out.check(item.get("shadow") is True, f"{tag}.shadow 必须为 true")
 
     deltas = warning.get("post_t_safety_items") or []
@@ -631,8 +715,9 @@ def validate_toxic_risk_warning(result_obj: dict[str, Any], document: dict[str, 
         if not isinstance(item, dict):
             continue
         out.check({"delta_id", "level", "risk_family", "published_at", "why", "codes",
-                   "source_refs", "query_ids", "used_in_asof_t_warning", "shadow"} <= set(item),
-                  f"{tag} 缺必需字段")
+                   "source_refs", "query_ids", "evaluation", "used_in_asof_t_warning",
+                   "shadow"} <= set(item),
+                   f"{tag} 缺必需字段")
         delta_id = str(item.get("delta_id", ""))
         out.check(bool(delta_id) and delta_id not in delta_by_id and delta_id not in warning_by_id,
                   f"{tag}.delta_id 缺失或重复")
@@ -659,6 +744,8 @@ def validate_toxic_risk_warning(result_obj: dict[str, Any], document: dict[str, 
             out.check(official and len(origins) >= 2,
                       f"{tag} high T后 warning 必须含官方源及至少两个独立 origin")
         out.check(bool(_string_list(item.get("query_ids"))), f"{tag}.query_ids 不能为空")
+        _validate_toxic_evaluation(out, item.get("evaluation"), f"{tag}.evaluation", set(refs),
+                                   runtime=True)
         out.check(item.get("used_in_asof_t_warning") is False,
                   f"{tag}.used_in_asof_t_warning 必须为 false")
         out.check(item.get("shadow") is True, f"{tag}.shadow 必须为 true")
@@ -791,18 +878,124 @@ def validate_toxic_risk_warning(result_obj: dict[str, Any], document: dict[str, 
     }
     out.check(covered_warning_ids == set(warning_by_id),
               "Agent③ warnings 必须全部进入风险域 coverage")
-    used_source_refs = {
-        ref for item in list(warning_by_id.values()) + list(delta_by_id.values())
-        for ref in _string_list(item.get("source_refs"))
-    }
-    out.check(used_source_refs == set(source_by_ref),
-              "Agent③ sources 必须全部且仅由 warning/delta 引用")
-
     if retrieved_date and t_date and retrieved_date > t_date:
         for domain in TOXIC_WARNING_DOMAINS:
             out.check(any(query.get("phase") == "post_t_safety" and query.get("domain") == domain
                           for query in query_by_id.values()),
                       f"Agent③ 缺 {domain} 的 T 后末端扫描")
+
+    runtime_evaluation = warning.get("runtime_evaluation") or {}
+    out.check(isinstance(runtime_evaluation, dict) and
+              set(runtime_evaluation) == set(TOXIC_WARNING_DOMAINS),
+              "Agent③ runtime_evaluation 必须精确覆盖五个风险域")
+    runtime_warning_ids: set[str] = set()
+    runtime_delta_ids: set[str] = set()
+    runtime_source_refs: set[str] = set()
+    runtime_blocked = False
+    for domain in TOXIC_WARNING_DOMAINS:
+        item = runtime_evaluation.get(domain) or {}
+        tag = f"toxic_risk_warning.runtime_evaluation.{domain}"
+        out.check(isinstance(item, dict) and {
+            "status", "evaluated_at_beijing", "latest_source_published_at", "query_ids",
+            "warning_ids", "delta_ids", "source_refs", "evaluation",
+        } <= set(item), f"{tag} 缺必需字段")
+        if not isinstance(item, dict):
+            continue
+
+        evaluated_dt = _beijing_datetime(item.get("evaluated_at_beijing"))
+        out.check(evaluated_dt is not None and evaluated_dt == retrieved_dt,
+                  f"{tag}.evaluated_at_beijing 必须等于实际检索完成时点")
+        query_ids = _string_list(item.get("query_ids"))
+        domain_query_ids = {
+            query_id for query_id, query in query_by_id.items()
+            if query.get("domain") == domain
+        }
+        out.check(bool(query_ids) and set(query_ids) == domain_query_ids,
+                  f"{tag}.query_ids 必须完整纳入本域全部查询")
+        selected_queries = [query_by_id.get(query_id) for query_id in query_ids]
+        out.check(any(query and query.get("phase") == "as_of_t" for query in selected_queries),
+                  f"{tag} 缺 as_of_t 查询")
+        if retrieved_date and t_date and retrieved_date > t_date:
+            post_queries = [query for query in selected_queries
+                            if query and query.get("phase") == "post_t_safety"]
+            post_variants = {
+                str(query.get("query_text", "")).strip()
+                for query in post_queries
+            }
+            out.check(len(post_variants) >= 2,
+                      f"{tag} T 后最新扫描至少需要两种不同查询文本")
+            out.check(all(_date(query.get("date_to")) == retrieved_date for query in post_queries) and
+                      any(_date(query.get("executed_at_beijing")) == retrieved_date
+                          for query in post_queries),
+                      f"{tag} 缺截至实际运行日的 T 后最新扫描")
+        else:
+            out.check(any(query and _date(query.get("executed_at_beijing")) == retrieved_date
+                          for query in selected_queries),
+                      f"{tag} 缺实际运行日查询")
+
+        warning_ids = _string_list(item.get("warning_ids"))
+        delta_ids = _string_list(item.get("delta_ids"))
+        expected_warning_ids = set(_string_list((coverage.get(domain) or {}).get("warning_ids")))
+        expected_delta_ids = {
+            delta_id
+            for query in selected_queries if query
+            for delta_id in _string_list(query.get("selected_delta_ids"))
+        }
+        out.check(set(warning_ids) == expected_warning_ids,
+                  f"{tag}.warning_ids 未完整承接本域 T 日 warning")
+        out.check(set(delta_ids) == expected_delta_ids,
+                  f"{tag}.delta_ids 未完整承接本域 T 后增量")
+        runtime_warning_ids.update(warning_ids)
+        runtime_delta_ids.update(delta_ids)
+
+        has_blocked_query = any(query and query.get("outcome") == "blocked"
+                                for query in selected_queries)
+        expected_status = ("blocked" if has_blocked_query else
+                           "hit" if warning_ids or delta_ids else "no_relevant_hit")
+        status = str(item.get("status", ""))
+        out.check(status == expected_status, f"{tag}.status 未按最新查询和采用条目重算")
+        runtime_blocked = runtime_blocked or status == "blocked"
+
+        refs = _string_list(item.get("source_refs"))
+        runtime_source_refs.update(refs)
+        expected_refs = {
+            ref
+            for item_id in warning_ids + delta_ids
+            for ref in _string_list(
+                (warning_by_id.get(item_id) or delta_by_id.get(item_id) or {}).get("source_refs")
+            )
+        }
+        out.check(expected_refs <= set(refs) <= set(source_by_ref),
+                  f"{tag}.source_refs 必须覆盖本域采用条目且只能引用登记来源")
+        for ref in refs:
+            source = source_by_ref.get(ref) or {}
+            source_url = str(source.get("access_url", ""))
+            source_phase = str(source.get("phase", ""))
+            out.check(any(query and query.get("phase") == source_phase and
+                          source_url in _string_list(query.get("reviewed_urls"))
+                          for query in selected_queries),
+                      f"{tag}.source_refs 来源未出现在本域同阶段查询 reviewed_urls: {ref}")
+        published_dates = [
+            _date((source_by_ref.get(ref) or {}).get("published_at"))
+            for ref in refs
+        ]
+        published_dates = [date for date in published_dates if date is not None]
+        latest = item.get("latest_source_published_at")
+        expected_latest = str(max(published_dates)) if published_dates else None
+        out.check((latest in (None, "") and expected_latest is None) or str(latest) == expected_latest,
+                  f"{tag}.latest_source_published_at 未指向本域最新采用来源")
+        _validate_toxic_evaluation(out, item.get("evaluation"), f"{tag}.evaluation", set(refs),
+                                   runtime=True)
+    out.check(runtime_warning_ids == set(warning_by_id),
+              "Agent③ 每条 T 日 warning 都必须进入五域运行时点评估")
+    out.check(runtime_delta_ids == set(delta_by_id),
+              "Agent③ 每条 T 后增量都必须进入五域运行时点评估")
+    item_source_refs = {
+        ref for item in list(warning_by_id.values()) + list(delta_by_id.values())
+        for ref in _string_list(item.get("source_refs"))
+    }
+    out.check(item_source_refs | runtime_source_refs == set(source_by_ref),
+              "Agent③ sources 必须全部且仅由 warning/delta/五域运行时点评估引用")
 
     by_code = warning.get("by_code") or {}
     out.check(isinstance(by_code, dict) and set(by_code) == codes,
@@ -867,7 +1060,8 @@ def validate_toxic_risk_warning(result_obj: dict[str, Any], document: dict[str, 
     overall = str(warning.get("overall_status", ""))
     out.check(overall in {"clear", "watch", "elevated"}, "toxic_risk_warning.overall_status 无效")
     all_levels = [str(item.get("level", "")) for item in list(warning_by_id.values()) + list(delta_by_id.values())]
-    expected_overall = "elevated" if "high" in all_levels else "watch" if all_levels or blocked else "clear"
+    expected_overall = ("elevated" if "high" in all_levels else
+                        "watch" if all_levels or blocked or runtime_blocked else "clear")
     out.check(overall == expected_overall, "toxic_risk_warning.overall_status 未按 warning/blocked 重算")
     if overall == "clear":
         out.check(bool(str(warning.get("clear_reason", "")).strip()),
@@ -2291,11 +2485,24 @@ def validate_html(skill: str, obj: dict[str, Any], html_path: pathlib.Path, stri
         if require_bottom_search or isinstance(toxic_warning, dict):
             out.check(isinstance(toxic_warning, dict), "HTML 最终验收要求 Agent③ toxic_risk_warning")
             if isinstance(toxic_warning, dict):
+                toxic_version = str(toxic_warning.get("version", ""))
+                expected_toxic_version = ("bottom-toxic-risk-warning/v2"
+                                          if require_bottom_search else toxic_version)
                 out.check("Agent③ 毒月 Web 风险预警" in plain and
-                          "bottom-toxic-risk-warning/v1" in plain,
+                          bool(expected_toxic_version) and expected_toxic_version in plain,
                           "HTML 缺 Agent③ 毒月 Web 风险预警附录")
+                if require_bottom_search or toxic_version == "bottom-toxic-risk-warning/v2":
+                    out.check("运行时点五域综合评估" in plain and "不倒灌 T 日裁定" in plain,
+                              "HTML 缺 Agent③ 运行时点完整评估与 T 日隔离说明")
                 out.check("真实连续5个市场交易日" in plain and "57.2%" in plain and "55.3%" in plain,
                           "HTML 缺毒月集中窗新口径校正说明")
+                if require_bottom_search or toxic_version == "bottom-toxic-risk-warning/v2":
+                    for domain, runtime_item in (toxic_warning.get("runtime_evaluation") or {}).items():
+                        evaluation = (runtime_item or {}).get("evaluation") or {}
+                        out.check(str(domain) in plain and
+                                  str(evaluation.get("base_case", "")) in plain and
+                                  str(evaluation.get("consensus", "")) in plain,
+                                  f"HTML 缺 Agent③ {domain} 的运行时点共识/基准推断")
                 for idx, source in enumerate(toxic_warning.get("sources") or []):
                     out.check(str(source.get("access_url", "")) in link_targets,
                               f"HTML Agent③附录缺 sources[{idx}] access_url")
@@ -2418,6 +2625,23 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
 
     def esc(value: Any) -> str:
         return html.escape(str(value if value is not None else ""), quote=True)
+
+    def toxic_evaluation_html(value: Any) -> str:
+        evaluation = value if isinstance(value, dict) else {}
+        paths = "；".join(str(x) for x in evaluation.get("transmission_paths") or []) or "无"
+        watches = "；".join(str(x) for x in evaluation.get("watch_variables") or []) or "无"
+        invalidators = "；".join(str(x) for x in evaluation.get("invalidators") or []) or "无"
+        return (
+            f"<b>事实：</b>{esc(evaluation.get('fact_basis'))}<br>"
+            f"<b>共识：</b>{esc(evaluation.get('consensus'))}<br>"
+            f"<b>基准情景：</b>{esc(evaluation.get('base_case'))} "
+            f"[{esc(evaluation.get('confidence'))}]<br>"
+            f"<b>上行情景：</b>{esc(evaluation.get('upside_scenario'))}<br>"
+            f"<b>下行情景：</b>{esc(evaluation.get('downside_scenario'))}<br>"
+            f"<b>传导：</b>{esc(paths)}<br><b>观察：</b>{esc(watches)}<br>"
+            f"<b>失效条件：</b>{esc(invalidators)}<br>"
+            f"<b>推断边界：</b>{esc(evaluation.get('inference_boundary'))}"
+        )
 
     fact_rows = []
     for fact in audit.get("facts") or []:
@@ -2552,6 +2776,7 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
                 f"<tr><td>{esc(item.get('warning_id'))}</td><td>{esc(item.get('level'))}</td>"
                 f"<td>{esc(item.get('risk_family'))}/{esc(item.get('status'))}</td>"
                 f"<td>{esc(item.get('first_public_at'))}</td><td>{esc(item.get('why'))}</td>"
+                f"<td>{toxic_evaluation_html(item.get('evaluation'))}</td>"
                 f"<td>{source_links}</td></tr>"
             )
         delta_rows = []
@@ -2566,7 +2791,25 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
             delta_rows.append(
                 f"<tr><td>{esc(item.get('delta_id'))}</td><td>{esc(item.get('level'))}</td>"
                 f"<td>{esc(item.get('published_at'))}</td><td>{esc(item.get('why'))}</td>"
+                f"<td>{toxic_evaluation_html(item.get('evaluation'))}</td>"
                 f"<td>{source_links}</td></tr>"
+            )
+        runtime_rows = []
+        for domain in TOXIC_WARNING_DOMAINS:
+            item = (toxic_warning.get("runtime_evaluation") or {}).get(domain) or {}
+            source_links = " ".join(
+                f"<a href='{esc(source.get('access_url'))}'>{esc(source.get('publisher'))}</a>"
+                for ref in item.get("source_refs") or []
+                for source in [next((row for row in toxic_warning.get("sources") or []
+                                     if row.get("source_ref") == ref), {})]
+                if source
+            ) or "无命中来源"
+            runtime_rows.append(
+                f"<tr><td>{esc(domain)}</td><td>{esc(item.get('status'))}</td>"
+                f"<td>{esc(item.get('evaluated_at_beijing'))}<br>"
+                f"最新采用来源：{esc(item.get('latest_source_published_at') or '无命中来源')}<br>"
+                f"{source_links}</td>"
+                f"<td>{toxic_evaluation_html(item.get('evaluation'))}</td></tr>"
             )
         code_rows = [
             f"<tr><td>{esc(code)}</td><td>{esc(item.get('exposure'))}</td>"
@@ -2588,14 +2831,17 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
             f"<p><b>clear边界：</b>{esc(toxic_warning.get('clear_reason') or '不适用')}</p>"
             "<table><tr><th>风险域</th><th>状态</th><th>查询</th><th>覆盖结论</th></tr>"
             + "".join(coverage_rows) + "</table>"
+            "<h4>运行时点五域综合评估（最新公开信息；不倒灌 T 日裁定）</h4>"
+            "<table><tr><th>风险域</th><th>状态</th><th>评估时点/最新来源</th><th>证据约束推断</th></tr>"
+            + "".join(runtime_rows) + "</table>"
             "<h4>T日可见 warning</h4><table><tr><th>ID</th><th>等级</th><th>类别/状态</th>"
-            "<th>首次公开</th><th>因果链</th><th>来源</th></tr>"
+            "<th>首次公开</th><th>因果链</th><th>事件评估</th><th>来源</th></tr>"
             + "".join(warning_rows) + "</table>"
             "<h4>候选暴露映射</h4><table><tr><th>代码</th><th>暴露</th><th>T日 warning</th>"
             "<th>T后增量</th><th>理由</th></tr>"
             + "".join(code_rows) + "</table>"
             "<h4>T 后安全增量</h4><table><tr><th>ID</th><th>等级</th><th>公开日</th>"
-            "<th>说明</th><th>来源</th></tr>"
+            "<th>说明</th><th>增量评估</th><th>来源</th></tr>"
             + "".join(delta_rows) + "</table>"
         )
     price_rows = []
@@ -2742,6 +2988,25 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
                         active: bool) -> tuple[dict[str, Any], list[dict[str, Any]],
                                                dict[str, list[dict[str, Any]]]]:
     """Build a complete Agent③ fixture without network or production writes."""
+    def test_evaluation(label: str, refs: list[str], runtime: bool = False) -> dict[str, Any]:
+        boundary = "仅作shadow影子情景推断，不改分数、裁定、仓位或预算熔断。"
+        if runtime:
+            boundary += "运行时点信息与T日裁定隔离，不倒灌。"
+        return {
+            "fact_basis": f"{label}已按测试查询和来源核验事实边界。",
+            "consensus": ("采用所列来源形成当前主流共识。" if refs else
+                          "未找到可靠共识来源，因此不把单一叙事冒充市场共识。"),
+            "consensus_source_refs": list(refs),
+            "base_case": f"{label}的基准情景是维持观察，按后续变量变化更新风险状态。",
+            "confidence": "medium" if refs else "low",
+            "upside_scenario": "若压力变量缓和，风险溢价回落，相关资产可能获得修复窗口。",
+            "downside_scenario": "若压力变量强化，风险溢价和波动可能上升并沿传导链扩散。",
+            "transmission_paths": ["事件变化→风险偏好→流动性与行业估值"],
+            "watch_variables": ["官方后续公告", "关键市场价格与流动性指标"],
+            "invalidators": ["官方信息否定当前事实基础", "关键压力变量持续反向变化"],
+            "inference_boundary": boundary,
+        }
+
     warning_id = "toxic-warning-001"
     delta_id = "toxic-delta-001"
     source_url = "https://example.com/official-market-risk"
@@ -2754,6 +3019,15 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
         "published_at": t,
         "phase": "as_of_t",
     }] if active else [])
+    sources.append({
+        "source_ref": "toxic-source-scheduled",
+        "access_url": "https://example.com/official-calendar",
+        "publisher": "官方日历机构",
+        "source_kind": "official_direct",
+        "origin_id": "toxic-origin-scheduled",
+        "published_at": t,
+        "phase": "as_of_t",
+    })
     warnings = ([{
         "warning_id": warning_id,
         "level": "med",
@@ -2769,6 +3043,7 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
         "codes": list(codes),
         "source_refs": ["toxic-source-001"],
         "query_ids": ["toxic-q-external-1"],
+        "evaluation": test_evaluation("截至T的外部冲击", ["toxic-source-001"]),
         "shadow": True,
     }] if active else [])
     has_post_delta = bool(active and _date(retrieved) and _date(t) and _date(retrieved) > _date(t))
@@ -2792,6 +3067,7 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
         "codes": list(codes),
         "source_refs": ["toxic-source-delta"],
         "query_ids": ["toxic-q-external-geopolitics-trade-delta"],
+        "evaluation": test_evaluation("T后贸易风险增量", ["toxic-source-delta"], runtime=True),
         "used_in_asof_t_warning": False,
         "shadow": True,
     }] if has_post_delta else [])
@@ -2830,18 +3106,61 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
     if _date(retrieved) and _date(t) and _date(retrieved) > _date(t):
         for domain in TOXIC_WARNING_DOMAINS:
             slug = domain.replace("_", "-")
-            selected_delta = has_post_delta and domain == "external_geopolitics_trade"
-            queries.append({
-                "query_id": f"toxic-q-{slug}-delta", "domain": domain, "phase": "post_t_safety",
-                "query_text": f"{domain} T后末端扫描", "date_from": str(_date(t) + dt.timedelta(days=1)),
-                "date_to": retrieved, "executed_at_beijing": executed,
-                "outcome": "selected" if selected_delta else "no_relevant_hit",
-                "reviewed_urls": [delta_url] if selected_delta else ["https://example.com/latest-market"],
-                "selected_warning_ids": [], "selected_delta_ids": [delta_id] if selected_delta else [],
-                "notes": "采用T后执行安全增量" if selected_delta else "T后至检索时点未发现新的重大风险增量",
-            })
+            for variant in (1, 2):
+                selected_delta = (has_post_delta and domain == "external_geopolitics_trade" and
+                                  variant == 1)
+                qid = (f"toxic-q-{slug}-delta" if variant == 1 else
+                       f"toxic-q-{slug}-delta-{variant}")
+                queries.append({
+                    "query_id": qid, "domain": domain, "phase": "post_t_safety",
+                    "query_text": f"{domain} T后末端扫描变体{variant}",
+                    "date_from": str(_date(t) + dt.timedelta(days=1)),
+                    "date_to": retrieved, "executed_at_beijing": executed,
+                    "outcome": "selected" if selected_delta else "no_relevant_hit",
+                    "reviewed_urls": ([delta_url] if selected_delta else
+                                      [f"https://example.com/latest-market/{variant}"]),
+                    "selected_warning_ids": [],
+                    "selected_delta_ids": [delta_id] if selected_delta else [],
+                    "notes": ("采用T后执行安全增量" if selected_delta else
+                              "T后至检索时点完成独立变体，未发现新的重大风险增量"),
+                })
+    source_lookup = {str(item["source_ref"]): item for item in sources}
+    warning_lookup = {str(item["warning_id"]): item for item in warnings}
+    delta_lookup = {str(item["delta_id"]): item for item in post_items}
+    runtime_evaluation: dict[str, dict[str, Any]] = {}
+    for domain in TOXIC_WARNING_DOMAINS:
+        domain_queries = [item for item in queries if item.get("domain") == domain]
+        warning_ids = list((coverage.get(domain) or {}).get("warning_ids") or [])
+        delta_ids = [
+            delta_id
+            for query in domain_queries
+            for delta_id in query.get("selected_delta_ids") or []
+        ]
+        refs = list(dict.fromkeys(
+            ref
+            for item_id in warning_ids + delta_ids
+            for ref in (warning_lookup.get(item_id) or delta_lookup.get(item_id) or {}).get(
+                "source_refs", []
+            )
+        ))
+        if domain == "scheduled_macro_policy":
+            refs.append("toxic-source-scheduled")
+        published = [_date(source_lookup[ref]["published_at"]) for ref in refs if ref in source_lookup]
+        published = [date for date in published if date is not None]
+        runtime_evaluation[domain] = {
+            "status": ("blocked" if any(query.get("outcome") == "blocked"
+                                        for query in domain_queries) else
+                       "hit" if warning_ids or delta_ids else "no_relevant_hit"),
+            "evaluated_at_beijing": executed,
+            "latest_source_published_at": str(max(published)) if published else None,
+            "query_ids": [str(query["query_id"]) for query in domain_queries],
+            "warning_ids": warning_ids,
+            "delta_ids": delta_ids,
+            "source_refs": refs,
+            "evaluation": test_evaluation(f"{domain}运行时点", refs, runtime=True),
+        }
     toxic = {
-        "version": "bottom-toxic-risk-warning/v1",
+        "version": "bottom-toxic-risk-warning/v2",
         "T": t,
         "cutoff_beijing": f"{t} 23:59:59+08:00",
         "retrieved_at_beijing": executed,
@@ -2860,6 +3179,7 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
             for code in codes
         },
         "post_t_safety_items": post_items,
+        "runtime_evaluation": runtime_evaluation,
         "clear_reason": "" if active else "五个固定风险域完成检索，未命中截至T的重大活跃风险；不代表未来无风险。",
     }
     global_alerts = ([{"warning_id": warning_id, "level": "med",
@@ -3105,6 +3425,46 @@ def strict_self_test() -> Result:
     bad_search["codex_audit"]["toxic_risk_warning"]["warnings"][0]["first_public_at"] = "2026-01-11"
     out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
               "严格负例失效: T 后事件倒灌为事前 warning 未被拦截")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    del bad_search["codex_audit"]["toxic_risk_warning"]["runtime_evaluation"]
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: Agent③ 五域运行时点评估缺失未被拦截")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    runtime_item = bad_search["codex_audit"]["toxic_risk_warning"]["runtime_evaluation"][
+        "scheduled_macro_policy"
+    ]
+    runtime_item["evaluation"]["base_case"] = "方向不确定"
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: Agent③ 只写方向不确定而未推断未被拦截")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    toxic = bad_search["codex_audit"]["toxic_risk_warning"]
+    for post_query in toxic["queries"]:
+        if (post_query["domain"] == "scheduled_macro_policy" and
+                post_query["phase"] == "post_t_safety"):
+            post_query["executed_at_beijing"] = "2026-01-10 23:00:00+08:00"
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: Agent③ 未检索到实际运行日最新时点未被拦截")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    toxic = bad_search["codex_audit"]["toxic_risk_warning"]
+    removed_query_id = "toxic-q-scheduled-macro-policy-delta-2"
+    toxic["queries"] = [query for query in toxic["queries"]
+                        if query["query_id"] != removed_query_id]
+    toxic["runtime_evaluation"]["scheduled_macro_policy"]["query_ids"].remove(removed_query_id)
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: Agent③ T后最新扫描只有一种查询变体未被拦截")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    runtime_item = bad_search["codex_audit"]["toxic_risk_warning"]["runtime_evaluation"][
+        "external_geopolitics_trade"
+    ]
+    runtime_item["evaluation"]["consensus"] = "市场最普遍预期概率为80%。"
+    runtime_item["evaluation"]["consensus_source_refs"] = []
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: Agent③ 无来源精确概率推断未被拦截")
 
     bad_search = copy.deepcopy(search_audit_doc)
     bad_search["rulings"]["600000"]["alerts"] = []
@@ -3492,7 +3852,7 @@ def main() -> None:
     bottom_engine.add_argument("--html")
     bottom_search = sub.add_parser(
         "validate-bottom-search",
-        help="裁定写入前校验 Agent②个股搜索与 Agent③毒月预警的覆盖、来源和时点隔离",
+        help="裁定写入前校验 Agent②个股搜索与 Agent③五域最新检索、证据约束推断和T/T后隔离",
     )
     bottom_search.add_argument("--result", required=True)
     bottom_search.add_argument("--audit", required=True)

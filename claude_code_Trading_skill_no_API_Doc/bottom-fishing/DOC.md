@@ -63,8 +63,10 @@ UTC+8 的 `generated_at` / `adjudicated_at`。业务截止日 T 只写入正文�
 - **Agent③=毒月 Web 预警官（每次扫描必跑，零候选也不跳过）**：
   固定搜索排期宏观政策、国内监管与流动性、海外地缘与贸易、跨资产压力、长假信息缺口五域。
   T日已公开且仍活跃的风险可形成报告级 warning；只有行业/产品/成本/海外收入暴露能够明确对应时才下沉到个股。
-  排期事件只给 med 黄色提示；high 要求官方源和至少两个独立 origin。检索日晚于T时五域都补 T 后末端扫描，
-  新突发只进安全增量并在 HTML 标“T后”。当前固定 `mode=shadow`，不改分、不禁买、不影响 Agent② 裁定。
+  排期事件只给 med 黄色提示；high 要求官方源和至少两个独立 origin。每次运行都把五域检索到实际完成时点，
+  每条事件及五域综合必须写事实、共识、基准/上下行情景、传导链、观察变量和失效条件。T 后新突发只进安全增量，
+  但必须进入运行时点评估并在 HTML 标“T后”；不倒灌T日裁定。当前固定 `mode=shadow`，不改分、不禁买、
+  不影响 Agent② 裁定。
   结构化数据写入 `codex_audit.toxic_risk_warning`，详见
   `references/TOXIC_RISK_WARNING_PROTOCOL.md`。
 - Agent④=复核官: 价格新鲜度/来源可追溯/口径一致。
@@ -85,7 +87,7 @@ python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" vali
 | 执行三刀 | T+1开盘进场(高开>3%放弃) / -8%条件单成交即挂 / 买入日收≤-5%次日开盘出 |
 | 目标 | +5%落袋半仓 / +10%清(EV最优) / 最晚T+20收盘离场 |
 | 毒月熔断 | 月度亏损-3%停做 ∥ 近20笔雷率≥30%停(--review自动检测) |
-| Agent③预警 | 五域Web nowcast；只进HTML shadow warning，不改变分数/裁定/仓位 |
+| Agent③预警 | 五域搜索至实际运行时点并作证据约束推断；只进HTML shadow warning，不改变分数/裁定/仓位 |
 | 口径引用 | 胜率必须带"走样本75.2~77.8%·月度45~92%大摆·2024式熊市全年EV为负"全套披露 |
 | 影子期 | 累计30笔了结前: 纸面跟踪或仓位减半 |
 

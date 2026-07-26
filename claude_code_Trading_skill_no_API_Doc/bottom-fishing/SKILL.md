@@ -1,6 +1,6 @@
 ---
 name: bottom-fishing
-description: A股底部区与超跌修复扫描（0 API、Codex 原生）。用于抄底、超跌、底部扫描、低吸扫描、bottom-fishing、毒月风险预警、错杀裁定、抄底复盘等请求；运行不可变 Python 引擎，执行双路径推荐线、ATR gate、5交易日冷却、官方源优先的多轮网页检索、F10逐条对账、Agent③毒月Web风险nowcast、T日证据与检索时点增量隔离、结构化搜索覆盖审计、✓/?/✗分层、shadow warning、影子日志、adjudicate/review，并在独立验收通过后输出原生 HTML。
+description: A股底部区与超跌修复扫描（0 API、Codex 原生）。用于抄底、超跌、底部扫描、低吸扫描、bottom-fishing、毒月风险预警、错杀裁定、抄底复盘等请求；运行不可变 Python 引擎，执行双路径推荐线、ATR gate、5交易日冷却、官方源优先的多轮网页检索、F10逐条对账、Agent③五域最新风险检索与证据约束推断、T日证据与运行时点增量隔离、结构化搜索覆盖审计、✓/?/✗分层、shadow warning、影子日志、adjudicate/review，并在独立验收通过后输出原生 HTML。
 ---
 
 # A股抄底扫描（0 API · Codex 原生 · 影子复验期）
@@ -100,19 +100,27 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
    ⑥ **纯regime踩踏免责**：全市场流动性危机砸的票（如2024-01微盘股）可无任何个股红旗，消息面对它无解——别硬编
       利空理由，据实写"无个股恶化证据·系系统性踩踏"，靠仓位/熔断兜底。
 3. **Agent③「毒月 Web 预警官」（我做，每次扫描必跑，0只过线也不能跳过）**：完整遵守
-   `references/TOXIC_RISK_WARNING_PROTOCOL.md`，把目标限定为**截至T的风险 nowcast**，禁止声称能预测尚未公开的黑天鹅。
+   `references/TOXIC_RISK_WARNING_PROTOCOL.md`，同时维护**截至T的无前视风险 nowcast**和**截至本次实际
+   检索完成时点的最新五域评估**；后者可用 T 后公开信息，但必须隔离并禁止倒灌 T 日裁定。禁止声称能预测尚未公开的黑天鹅。
    固定覆盖 `排期宏观政策/国内监管与流动性/海外地缘与贸易/跨资产压力/长假信息缺口` 五域：
+   - **全域最新检索**：FOMC、PMI 只是例子，不是事件白名单。每次运行都要把五域从 T+1 搜到实际完成时点，
+     每域至少使用两种不同查询文本，纳入当时最新公开的重大变化；不得只复述上次报告已有事件，
+     或以“未确定”替代检索和判断。
+   - **逐项证据约束推断**：每条 warning、每条 T 后 delta、每个五域运行时点综合都必须分开写
+     `事实/当前共识/基准情景+置信度/上下行情景/传导链/观察变量/失效条件/推断边界`。
+     有市场定价、调查或可靠机构来源才可写精确概率/基点；否则只给定性置信度。推断不是交易指令。
    - **排期风险**：统计数据、LPR、FOMC、政策生效日、长假闭市等只给 med 黄色提示，
-     `direction_certainty=uncertain`，不得预判涨跌。
+     `direction_certainty=uncertain`；但仍须评估当前最普遍预期和条件式市场传导，不能只写“方向不确定”。
    - **活跃风险**：战争—航运—油价、关税/出口管制、融资收缩、退市/ST恐慌、跨资产强平等，只有
      `first_public_at≤T` 且截至T仍未结束才可 warning；high 必须有官方源和至少两个独立 `origin_id`。
    - **候选暴露**：只有行业、产品、成本或海外收入能明确映射时，才把同一 `warning_id` 下沉到个股；
      泛化市场恐慌不得复制成每票红条。Agent③只加 warning，**不改变 Agent② 的 ✓/?/✗**。
-   - **T后隔离**：检索日晚于T时五域都做末端扫描；突发风险只进 `post_t_safety_items`，
-     `used_in_asof_t_warning=false`，HTML 明示“T后”，不得倒灌成事前命中。
+   - **T后隔离**：检索日晚于T时五域都做截至实际运行日的末端扫描；突发风险只进
+     `post_t_safety_items`，`used_in_asof_t_warning=false`，但必须进入 `runtime_evaluation` 被综合评价；
+     HTML 明示“T后”和运行时点评估，不得倒灌成事前命中。
    - **结构化落盘**：写入 `codex_audit.toxic_risk_warning`，固定
-     `version=bottom-toxic-risk-warning/v1`、`mode=shadow`、五域 coverage、sources、queries、
-     warnings、by_code、post-T 增量和 clear_reason。每条 warning/delta 同步到顶层 `alerts`；
+     `version=bottom-toxic-risk-warning/v2`、`mode=shadow`、五域 coverage、sources、queries、
+     warnings、by_code、post-T 增量、五域 `runtime_evaluation` 和 clear_reason。每条 warning/delta 同步到顶层 `alerts`；
      映射候选的再同步到 `rulings[code].alerts`，都带 `warning_id/level/text/shadow/post_t`。
    Agent③尚未完成无前视 shadow 样本验证，**不得改分、禁买、降级、调仓位或替代两个预算熔断**。
 4. **裁定与预警同步进HTML（--adjudicate，2026-07-15 新增）**：把每只过线票的裁定和 Agent③预警写入
