@@ -11,10 +11,11 @@
 2. 五个固定风险域
 3. T 日与 T 后隔离
 4. 完整检索与证据约束推断
-5. warning 等级和来源门槛
-6. 候选暴露映射与 HTML
-7. 结构化 JSON 契约
-8. 发布门禁
+5. 五域合并后的A股走势映射
+6. warning 等级和来源门槛
+7. 候选暴露映射与 HTML
+8. 结构化 JSON 契约
+9. 发布门禁
 
 ## 1. 角色边界
 
@@ -26,6 +27,7 @@ Agent③ 在每次 bottom 扫描中独立执行市场级 Web 检索：
 - 从 T+1 搜索到实际运行时点，把新事实隔离为执行时点安全增量；
 - 对每条 warning、每条 T 后 delta 和五个风险域分别输出事实、共识、基准情景、上下行情景、
   传导链、观察变量、失效条件、置信度和推断边界；
+- 合并五域，明确输出这些信息反映到A股下一交易日及未来1—5个交易日的大概路径；
 - 没有命中时保存完整 coverage 和 `clear_reason`。
 
 Agent②继续负责公司基本面、财务信用、治理和资本事件裁定。Agent③不得以泛化市场叙事否决个股，
@@ -87,7 +89,29 @@ Agent③不能用“方向不确定”“待观察”结束分析。每条 `warn
 `no_relevant_hit` 也必须写运行时点基准判断，例如“截至检索时点未发现重大新增压力，但不等于风险不存在”，
 并列出观察变量和失效条件。
 
-## 5. warning 等级和来源门槛
+## 5. 五域合并后的A股走势映射
+
+完成五个 `runtime_evaluation` 后，必须再写一个顶层 `ashare_runtime_outlook`。它不是重复宏观事件预测，
+而是回答：“这些已知信息综合反映到A股，大概是什么走势和结构？”
+
+- `domain_impacts` 必须精确覆盖五域；每域写 `positive|neutral|negative|mixed`，并用
+  `mechanism` 直说如何传到A股，不能停在“全球风险资产可能波动”。
+- `next_session` 明确下一交易日的 `bias`、路径和定性置信度。
+- `next_1_5_sessions` 明确未来1—5个交易日的 `bias`、路径和定性置信度。
+- `index_style_implications` 写指数与风格相对强弱，例如大盘/小盘、价值/成长、防御/进攻。
+- `sector_beneficiaries` / `sector_pressures` 分开写相对受益与承压板块；没有明确映射时直说没有，
+  不得为了填表强造板块。
+- `opening_triggers` 写开盘前和开盘后优先核对的海外股指、商品、汇率、利率、官方消息等。
+- `upside_conditions` / `downside_conditions` / `invalidators` 写偏强、偏弱及推翻当前判断的条件。
+- `plain_language_verdict` 必须包含“A股”，用一句白话明确偏强、偏弱、震荡、分化、修复或承压。
+- `inference_boundary` 明确为运行时点 shadow 推断，不改市况、分数、裁定、仓位或熔断，也不倒灌T日。
+
+允许方向判断，不允许伪精确。Agent③尚无经过预注册验证的A股择时概率模型，因此不得在
+`ashare_runtime_outlook` 编造上涨/下跌概率、预计涨跌幅或指数目标点位；只使用
+`low|medium|high` 定性置信度。若五域信号互相抵消，就写“震荡/分化/mixed”并说明主导条件，
+不能退回“方向不确定”。
+
+## 6. warning 等级和来源门槛
 
 风险族枚举：
 
@@ -114,7 +138,7 @@ other_market
 的基准情景和条件情景。`direction_certainty=uncertain` 表示事件结果未落定，不等于免除分析。
 不能只写“外围不稳”“消息面偏空”等无法核验的泛化判断。
 
-## 6. 候选暴露映射与 HTML
+## 7. 候选暴露映射与 HTML
 
 每个候选都在 `by_code` 中占一项：
 
@@ -144,10 +168,12 @@ other_market
 }
 ```
 
-HTML 必须单列“运行时点五域综合评估（最新公开信息；不倒灌 T 日裁定）”，显示每域检索完成时点、
-最新采用来源日期、共识、基准情景、上下行情景、传导链、观察变量、失效条件和推断边界。
+HTML 顶部“市况”正下方必须先显示“Agent③ A股走势映射（运行时点 shadow）”白话卡片，包括
+下一交易日、未来1—5日、指数/风格、相对受益/承压板块、开盘触发和推断边界。底部继续单列
+“A股走势综合审计（五域合并）”和“运行时点五域综合评估（最新公开信息；不倒灌 T 日裁定）”，
+显示逐域A股机制、检索完成时点、最新采用来源日期、共识、基准情景、条件情景和失效条件。
 
-## 7. 结构化 JSON 契约
+## 8. 结构化 JSON 契约
 
 `bottom_adjudication.json.codex_audit` 增加：
 
@@ -293,6 +319,42 @@ HTML 必须单列“运行时点五域综合评估（最新公开信息；不倒
         }
       }
     },
+    "ashare_runtime_outlook": {
+      "evaluated_at_beijing": "YYYY-MM-DD HH:MM:SS+08:00",
+      "basis_domains": [
+        "scheduled_macro_policy",
+        "domestic_regulatory_liquidity",
+        "external_geopolitics_trade",
+        "cross_asset_stress",
+        "holiday_information_gap"
+      ],
+      "source_refs": ["五域运行时点评估采用来源的完整并集"],
+      "domain_impacts": {
+        "scheduled_macro_policy": {
+          "direction": "positive|neutral|negative|mixed",
+          "mechanism": "本域如何反映到A股"
+        }
+      },
+      "next_session": {
+        "bias": "positive|neutral_positive|range_bound|neutral_negative|negative|mixed",
+        "path": "A股下一交易日大概路径",
+        "confidence": "low|medium|high"
+      },
+      "next_1_5_sessions": {
+        "bias": "positive|neutral_positive|range_bound|neutral_negative|negative|mixed",
+        "path": "A股未来1—5个交易日大概路径",
+        "confidence": "low|medium|high"
+      },
+      "index_style_implications": ["指数与风格映射"],
+      "sector_beneficiaries": ["相对受益板块或明确写未识别"],
+      "sector_pressures": ["相对承压板块或明确写未识别"],
+      "opening_triggers": ["开盘优先核对变量"],
+      "upside_conditions": ["转强条件"],
+      "downside_conditions": ["转弱条件"],
+      "invalidators": ["推翻当前A股基准判断的条件"],
+      "plain_language_verdict": "A股更可能……",
+      "inference_boundary": "运行时点shadow推断，不改交易字段且不倒灌T日裁定"
+    },
     "clear_reason": "clear 时必须非空；说明检索边界，不得声称风险不存在"
   }
 }
@@ -301,7 +363,7 @@ HTML 必须单列“运行时点五域综合评估（最新公开信息；不倒
 `overall_status` 机械重算：存在 `high` 为 `elevated`；否则有 `med` 或任何风险域 `blocked` 为 `watch`；
 其余为 `clear`。`by_code.exposure` 同样按关联条目的最高等级重算。
 
-## 8. 发布门禁
+## 9. 发布门禁
 
 写完裁定文件后运行：
 
@@ -312,10 +374,11 @@ python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" vali
 ```
 
 该命令同时验证 Agent② `bottom_search` 和 Agent③ `toxic_risk_warning`。Agent③缺五域运行时点评估、
-缺事件推断、只写“方向不确定”、末端扫描未覆盖至实际运行日、无来源精确概率或发生 T 后倒灌时均失败。
+缺事件推断、只写“方向不确定”、末端扫描未覆盖至实际运行日、无来源精确概率、缺A股走势综合、
+没有逐域说明如何反映到A股、编造A股精确涨跌概率/幅度/点位或发生 T 后倒灌时均失败。
 任一失败都不得运行 `--adjudicate`。最终 `augment-report` 会生成 Agent③ 独立审计表，
-`validate --require-bottom-search` 还会检查运行时点共识/基准情景、warning 来源链接和报告/个股 alert
-文本确实出现在 HTML。不可变核心 HTML 中遗留的旧“61%”
+`validate --require-bottom-search` 还会检查A股白话综合确实位于顶部市况下、运行时点共识/基准情景、
+warning 来源链接和报告/个股 alert 文本确实出现在 HTML。不可变核心 HTML 中遗留的旧“61%”
 集中窗口径由该附录强制校正为真实连续5个市场交易日的57.2%（严格10月）/55.3%（含边界月），
 最终报告不得再引用旧数值。
 

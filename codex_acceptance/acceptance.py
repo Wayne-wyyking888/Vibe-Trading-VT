@@ -440,6 +440,48 @@ TOXIC_PRECISION_RE = re.compile(
     r"(?:\d+(?:\.\d+)?\s*%|\d+(?:\.\d+)?\s*(?:bp|bps|个基点))",
     re.I,
 )
+ASHARE_OUTLOOK_FIELDS = {
+    "evaluated_at_beijing",
+    "basis_domains",
+    "source_refs",
+    "domain_impacts",
+    "next_session",
+    "next_1_5_sessions",
+    "index_style_implications",
+    "sector_beneficiaries",
+    "sector_pressures",
+    "opening_triggers",
+    "upside_conditions",
+    "downside_conditions",
+    "invalidators",
+    "plain_language_verdict",
+    "inference_boundary",
+}
+ASHARE_OUTLOOK_BIASES = {
+    "positive",
+    "neutral_positive",
+    "range_bound",
+    "neutral_negative",
+    "negative",
+    "mixed",
+}
+ASHARE_DOMAIN_DIRECTIONS = {"positive", "neutral", "negative", "mixed"}
+ASHARE_DIRECTION_WORDS = (
+    "偏强",
+    "偏弱",
+    "震荡",
+    "分化",
+    "上涨",
+    "下跌",
+    "修复",
+    "承压",
+    "反复",
+    "横盘",
+)
+ASHARE_UNCALIBRATED_PRECISION_RE = re.compile(
+    r"(?:\d+(?:\.\d+)?\s*%|\b\d{3,5}(?:\.\d+)?\s*点)",
+    re.I,
+)
 
 
 def _string_list(value: Any) -> list[str]:
@@ -502,6 +544,93 @@ def _validate_toxic_evaluation(out: Result, value: Any, tag: str,
         out.check("T" in boundary and any(marker in boundary for marker in
                                           ("不倒灌", "不用于T", "不进入T", "与T日裁定隔离")),
                   f"{tag}.inference_boundary 必须明确运行时点信息不倒灌 T 日裁定")
+
+
+def _validate_ashare_runtime_outlook(out: Result, value: Any, retrieved_dt: dt.datetime | None,
+                                     runtime_source_refs: set[str]) -> None:
+    """Require a direct five-domain synthesis into qualitative A-share paths."""
+    tag = "toxic_risk_warning.ashare_runtime_outlook"
+    out.check(isinstance(value, dict), f"{tag} 必须是对象")
+    if not isinstance(value, dict):
+        return
+    out.check(ASHARE_OUTLOOK_FIELDS <= set(value), f"{tag} 缺A股走势综合字段")
+    forbidden = {"score_delta", "verdict", "position", "position_pct", "trade_action", "action"}
+    out.check(not (forbidden & set(value)), f"{tag} 不得夹带改分、裁定、仓位或交易动作")
+
+    evaluated_dt = _beijing_datetime(value.get("evaluated_at_beijing"))
+    out.check(evaluated_dt is not None and evaluated_dt == retrieved_dt,
+              f"{tag}.evaluated_at_beijing 必须等于实际检索完成时点")
+    basis_domains = _string_list(value.get("basis_domains"))
+    out.check(set(basis_domains) == set(TOXIC_WARNING_DOMAINS) and
+              len(basis_domains) == len(TOXIC_WARNING_DOMAINS),
+              f"{tag}.basis_domains 必须精确覆盖五域")
+    source_refs = _string_list(value.get("source_refs"))
+    out.check(isinstance(value.get("source_refs"), list) and
+              set(source_refs) == runtime_source_refs,
+              f"{tag}.source_refs 必须完整承接五域运行时点评估来源")
+
+    domain_impacts = value.get("domain_impacts") or {}
+    out.check(isinstance(domain_impacts, dict) and
+              set(domain_impacts) == set(TOXIC_WARNING_DOMAINS),
+              f"{tag}.domain_impacts 必须逐域说明如何反映到A股")
+    for domain in TOXIC_WARNING_DOMAINS:
+        impact = domain_impacts.get(domain) or {}
+        impact_tag = f"{tag}.domain_impacts.{domain}"
+        out.check(isinstance(impact, dict) and {"direction", "mechanism"} <= set(impact),
+                  f"{impact_tag} 缺 direction/mechanism")
+        if not isinstance(impact, dict):
+            continue
+        out.check(str(impact.get("direction", "")) in ASHARE_DOMAIN_DIRECTIONS,
+                  f"{impact_tag}.direction 无效")
+        mechanism = str(impact.get("mechanism", "")).strip()
+        out.check("A股" in mechanism and len(mechanism) >= 10,
+                  f"{impact_tag}.mechanism 必须直说本域如何反映到A股")
+
+    outlook_texts: list[str] = []
+    for horizon in ("next_session", "next_1_5_sessions"):
+        item = value.get(horizon) or {}
+        horizon_tag = f"{tag}.{horizon}"
+        out.check(isinstance(item, dict) and {"bias", "path", "confidence"} <= set(item),
+                  f"{horizon_tag} 缺 bias/path/confidence")
+        if not isinstance(item, dict):
+            continue
+        out.check(str(item.get("bias", "")) in ASHARE_OUTLOOK_BIASES,
+                  f"{horizon_tag}.bias 无效")
+        path = str(item.get("path", "")).strip()
+        out.check("A股" in path and len(path) >= 10,
+                  f"{horizon_tag}.path 必须明确A股方向和可能路径")
+        out.check(str(item.get("confidence", "")) in {"low", "medium", "high"},
+                  f"{horizon_tag}.confidence 必须是 low/medium/high")
+        outlook_texts.append(path)
+
+    list_fields = (
+        "index_style_implications",
+        "sector_beneficiaries",
+        "sector_pressures",
+        "opening_triggers",
+        "upside_conditions",
+        "downside_conditions",
+        "invalidators",
+    )
+    for name in list_fields:
+        items = _string_list(value.get(name))
+        out.check(isinstance(value.get(name), list) and bool(items) and
+                  all(str(item).strip() for item in items),
+                  f"{tag}.{name} 必须是非空字符串数组")
+        outlook_texts.extend(items)
+
+    verdict = str(value.get("plain_language_verdict", "")).strip()
+    out.check("A股" in verdict and any(word in verdict for word in ASHARE_DIRECTION_WORDS) and
+              len(verdict) >= 12,
+              f"{tag}.plain_language_verdict 必须用白话直说A股偏强/偏弱/震荡等预期")
+    boundary = str(value.get("inference_boundary", "")).strip()
+    out.check(("shadow" in boundary.lower() or "影子" in boundary) and "不改" in boundary and
+              "T" in boundary and any(marker in boundary for marker in
+                                      ("不倒灌", "不用于T", "不进入T", "与T日裁定隔离")),
+              f"{tag}.inference_boundary 必须明确shadow、不改交易字段且不倒灌T日裁定")
+    outlook_texts.extend([verdict, boundary])
+    out.check(not ASHARE_UNCALIBRATED_PRECISION_RE.search(" ".join(outlook_texts)),
+              f"{tag} 未经A股方向校准不得编造涨跌概率、涨跌幅或指数目标点位")
 
 
 def _bottom_verdicts(result_obj: dict[str, Any], audit_doc: dict[str, Any] | None) -> dict[str, str]:
@@ -569,7 +698,7 @@ def validate_toxic_risk_warning(result_obj: dict[str, Any], document: dict[str, 
     required_fields = {
         "version", "T", "cutoff_beijing", "retrieved_at_beijing", "mode", "overall_status",
         "required_domains", "sources", "queries", "coverage", "warnings", "by_code",
-        "post_t_safety_items", "runtime_evaluation", "clear_reason",
+        "post_t_safety_items", "runtime_evaluation", "ashare_runtime_outlook", "clear_reason",
     }
     out.check(required_fields <= set(warning), "toxic_risk_warning 缺必需字段")
     out.check(warning.get("version") == "bottom-toxic-risk-warning/v2",
@@ -996,6 +1125,8 @@ def validate_toxic_risk_warning(result_obj: dict[str, Any], document: dict[str, 
     }
     out.check(item_source_refs | runtime_source_refs == set(source_by_ref),
               "Agent③ sources 必须全部且仅由 warning/delta/五域运行时点评估引用")
+    _validate_ashare_runtime_outlook(out, warning.get("ashare_runtime_outlook"), retrieved_dt,
+                                     runtime_source_refs)
 
     by_code = warning.get("by_code") or {}
     out.check(isinstance(by_code, dict) and set(by_code) == codes,
@@ -2494,6 +2625,21 @@ def validate_html(skill: str, obj: dict[str, Any], html_path: pathlib.Path, stri
                 if require_bottom_search or toxic_version == "bottom-toxic-risk-warning/v2":
                     out.check("运行时点五域综合评估" in plain and "不倒灌 T 日裁定" in plain,
                               "HTML 缺 Agent③ 运行时点完整评估与 T 日隔离说明")
+                    outlook = toxic_warning.get("ashare_runtime_outlook") or {}
+                    out.check(raw.count(ASHARE_OUTLOOK_START) == 1 and
+                              raw.count(ASHARE_OUTLOOK_END) == 1 and
+                              "Agent③ A股走势映射（运行时点 shadow）" in plain,
+                              "HTML 顶部缺 Agent③ A股走势映射")
+                    out.check(str(outlook.get("plain_language_verdict", "")) in plain and
+                              str((outlook.get("next_session") or {}).get("path", "")) in plain and
+                              str((outlook.get("next_1_5_sessions") or {}).get("path", "")) in plain,
+                              "HTML 顶部缺A股白话结论或T+1/未来1—5日路径")
+                    env_match = re.search(r"(?is)<div\s+class\s*=\s*['\"]?env\b.*?</div>", raw)
+                    first_card = re.search(r"(?is)<div\s+class\s*=\s*['\"]?card\b", raw)
+                    outlook_pos = raw.find(ASHARE_OUTLOOK_START)
+                    if env_match and first_card:
+                        out.check(env_match.end() <= outlook_pos < first_card.start(),
+                                  "Agent③ A股走势映射必须放在顶部市况下、候选卡片前")
                 out.check("真实连续5个市场交易日" in plain and "57.2%" in plain and "55.3%" in plain,
                           "HTML 缺毒月集中窗新口径校正说明")
                 if require_bottom_search or toxic_version == "bottom-toxic-risk-warning/v2":
@@ -2579,6 +2725,8 @@ def brand_report(path: pathlib.Path) -> Result:
 
 AUDIT_START = "<!-- codex-audit-v1:start -->"
 AUDIT_END = "<!-- codex-audit-v1:end -->"
+ASHARE_OUTLOOK_START = "<!-- codex-agent3-ashare-outlook:start -->"
+ASHARE_OUTLOOK_END = "<!-- codex-agent3-ashare-outlook:end -->"
 
 
 def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Result:
@@ -2622,6 +2770,8 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
         return out
     raw = path.read_text(encoding="utf-8-sig")
     raw = re.sub(re.escape(AUDIT_START) + r".*?" + re.escape(AUDIT_END), "", raw, flags=re.S)
+    raw = re.sub(re.escape(ASHARE_OUTLOOK_START) + r".*?" +
+                 re.escape(ASHARE_OUTLOOK_END), "", raw, flags=re.S)
 
     def esc(value: Any) -> str:
         return html.escape(str(value if value is not None else ""), quote=True)
@@ -2642,6 +2792,73 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
             f"<b>失效条件：</b>{esc(invalidators)}<br>"
             f"<b>推断边界：</b>{esc(evaluation.get('inference_boundary'))}"
         )
+
+    ashare_outlook_top_html = ""
+    ashare_outlook_audit_html = ""
+    if skill == "bottom-fishing" and isinstance(toxic_warning, dict):
+        outlook = toxic_warning.get("ashare_runtime_outlook")
+        if isinstance(outlook, dict):
+            next_session = outlook.get("next_session") or {}
+            next_days = outlook.get("next_1_5_sessions") or {}
+
+            def joined(name: str) -> str:
+                return "；".join(str(x) for x in outlook.get(name) or []) or "无"
+
+            ashare_outlook_top_html = (
+                ASHARE_OUTLOOK_START
+                + "<section id='agent3-ashare-outlook' style='margin:10px 0 12px;padding:12px 14px;"
+                  "border:2px solid #7c3aed;border-radius:10px;background:#f5f3ff;color:#312e81'>"
+                  "<div style='font-weight:800;font-size:16px;margin-bottom:6px'>"
+                  "Agent③ A股走势映射（运行时点 shadow）</div>"
+                + f"<div style='font-size:14px;margin-bottom:7px'><b>一句话：</b>"
+                  f"{esc(outlook.get('plain_language_verdict'))}</div>"
+                  "<table style='width:100%;border-collapse:collapse;font-size:12.5px;background:#fff'>"
+                  "<tr><th style='border:1px solid #c4b5fd;padding:6px'>窗口</th>"
+                  "<th style='border:1px solid #c4b5fd;padding:6px'>倾向/置信度</th>"
+                  "<th style='border:1px solid #c4b5fd;padding:6px'>大概路径</th></tr>"
+                + f"<tr><td style='border:1px solid #ddd6fe;padding:6px'>下一交易日</td>"
+                  f"<td style='border:1px solid #ddd6fe;padding:6px'>{esc(next_session.get('bias'))}/"
+                  f"{esc(next_session.get('confidence'))}</td>"
+                  f"<td style='border:1px solid #ddd6fe;padding:6px'>{esc(next_session.get('path'))}</td></tr>"
+                  f"<tr><td style='border:1px solid #ddd6fe;padding:6px'>未来1—5个交易日</td>"
+                  f"<td style='border:1px solid #ddd6fe;padding:6px'>{esc(next_days.get('bias'))}/"
+                  f"{esc(next_days.get('confidence'))}</td>"
+                  f"<td style='border:1px solid #ddd6fe;padding:6px'>{esc(next_days.get('path'))}</td></tr>"
+                  "</table>"
+                + f"<div style='font-size:12.5px;margin-top:7px'><b>指数/风格：</b>"
+                  f"{esc(joined('index_style_implications'))}<br><b>相对受益：</b>"
+                  f"{esc(joined('sector_beneficiaries'))}<br><b>相对承压：</b>"
+                  f"{esc(joined('sector_pressures'))}<br><b>开盘先看：</b>"
+                  f"{esc(joined('opening_triggers'))}</div>"
+                + f"<div style='font-size:11.5px;color:#5b21b6;margin-top:6px'>"
+                  f"{esc(outlook.get('inference_boundary'))}</div></section>"
+                + ASHARE_OUTLOOK_END
+            )
+            impact_rows = []
+            for domain in TOXIC_WARNING_DOMAINS:
+                impact = (outlook.get("domain_impacts") or {}).get(domain) or {}
+                impact_rows.append(
+                    f"<tr><td>{esc(domain)}</td><td>{esc(impact.get('direction'))}</td>"
+                    f"<td>{esc(impact.get('mechanism'))}</td></tr>"
+                )
+            ashare_outlook_audit_html = (
+                "<h4>A股走势综合审计（五域合并）</h4>"
+                f"<p><b>下一交易日：</b>{esc(next_session.get('bias'))}/"
+                f"{esc(next_session.get('confidence'))} — {esc(next_session.get('path'))}<br>"
+                f"<b>未来1—5日：</b>{esc(next_days.get('bias'))}/"
+                f"{esc(next_days.get('confidence'))} — {esc(next_days.get('path'))}<br>"
+                f"<b>白话结论：</b>{esc(outlook.get('plain_language_verdict'))}</p>"
+                "<table><tr><th>风险域</th><th>对A股方向</th><th>反映机制</th></tr>"
+                + "".join(impact_rows) + "</table>"
+                f"<p><b>指数/风格：</b>{esc(joined('index_style_implications'))}<br>"
+                f"<b>相对受益：</b>{esc(joined('sector_beneficiaries'))}<br>"
+                f"<b>相对承压：</b>{esc(joined('sector_pressures'))}<br>"
+                f"<b>开盘触发：</b>{esc(joined('opening_triggers'))}<br>"
+                f"<b>偏强条件：</b>{esc(joined('upside_conditions'))}<br>"
+                f"<b>偏弱条件：</b>{esc(joined('downside_conditions'))}<br>"
+                f"<b>失效条件：</b>{esc(joined('invalidators'))}<br>"
+                f"<b>推断边界：</b>{esc(outlook.get('inference_boundary'))}</p>"
+            )
 
     fact_rows = []
     for fact in audit.get("facts") or []:
@@ -2829,7 +3046,8 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
             "不得继续引用；按真实连续5个市场交易日，严格10个毒月为57.2%，"
             "含2024-07边界月为55.3%。</p>"
             f"<p><b>clear边界：</b>{esc(toxic_warning.get('clear_reason') or '不适用')}</p>"
-            "<table><tr><th>风险域</th><th>状态</th><th>查询</th><th>覆盖结论</th></tr>"
+            + ashare_outlook_audit_html
+            + "<table><tr><th>风险域</th><th>状态</th><th>查询</th><th>覆盖结论</th></tr>"
             + "".join(coverage_rows) + "</table>"
             "<h4>运行时点五域综合评估（最新公开信息；不倒灌 T 日裁定）</h4>"
             "<table><tr><th>风险域</th><th>状态</th><th>评估时点/最新来源</th><th>证据约束推断</th></tr>"
@@ -2877,6 +3095,14 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
           "</section>"
         + AUDIT_END
     )
+    if ashare_outlook_top_html:
+        env_match = re.search(r"(?is)<div\s+class\s*=\s*['\"]?env\b.*?</div>", raw)
+        heading_match = re.search(r"(?is)<h2\b[^>]*>.*?</h2>", raw)
+        body_match = re.search(r"(?is)<body\b[^>]*>", raw)
+        insertion_at = (env_match.end() if env_match else
+                        heading_match.end() if heading_match else
+                        body_match.end() if body_match else 0)
+        raw = raw[:insertion_at] + ashare_outlook_top_html + raw[insertion_at:]
     if "</body>" in raw.lower():
         match = re.search(r"</body>", raw, flags=re.I)
         assert match is not None
@@ -2885,6 +3111,9 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
         raw += appendix
     path.write_text(raw, encoding="utf-8")
     out.check(AUDIT_START in raw and AUDIT_END in raw, "审计附录写入失败")
+    if ashare_outlook_top_html:
+        out.check(raw.count(ASHARE_OUTLOOK_START) == 1 and raw.count(ASHARE_OUTLOOK_END) == 1,
+                  "顶部 Agent③ A股走势映射写入失败")
     return out
 
 
@@ -3159,6 +3388,66 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
             "source_refs": refs,
             "evaluation": test_evaluation(f"{domain}运行时点", refs, runtime=True),
         }
+    runtime_refs = list(dict.fromkeys(
+        ref
+        for item in runtime_evaluation.values()
+        for ref in item.get("source_refs") or []
+    ))
+    domain_impacts = {
+        "scheduled_macro_policy": {
+            "direction": "mixed",
+            "mechanism": "A股在排期事件落地前更可能观望，落地后再按利率和增长预期选择方向。",
+        },
+        "domestic_regulatory_liquidity": {
+            "direction": "neutral",
+            "mechanism": "A股暂未出现国内监管或流动性失序信号，系统性下跌缺少本域催化。",
+        },
+        "external_geopolitics_trade": {
+            "direction": "negative" if active else "neutral",
+            "mechanism": ("A股风险偏好可能受外部冲击压制，能源与防御板块相对占优。" if active else
+                          "A股暂未发现新的外部冲击，海外因素不构成当前单边驱动。"),
+        },
+        "cross_asset_stress": {
+            "direction": "negative" if active else "neutral",
+            "mechanism": ("A股可能通过商品价格和全球风险偏好承压，成长风格波动更大。" if active else
+                          "A股暂未受到跨资产强平信号推动，维持中性映射。"),
+        },
+        "holiday_information_gap": {
+            "direction": "neutral",
+            "mechanism": "A股不存在长假闭市累积信息冲击，普通周末不额外改变基准路径。",
+        },
+    }
+    ashare_outlook = {
+        "evaluated_at_beijing": executed,
+        "basis_domains": list(TOXIC_WARNING_DOMAINS),
+        "source_refs": runtime_refs,
+        "domain_impacts": domain_impacts,
+        "next_session": {
+            "bias": "neutral_negative" if active else "range_bound",
+            "path": ("A股下一交易日更可能震荡偏弱并伴随能源防御方向相对占优。" if active else
+                     "A股下一交易日更可能维持震荡，缺少五域风险推动的单边方向。"),
+            "confidence": "medium" if active else "low",
+        },
+        "next_1_5_sessions": {
+            "bias": "mixed" if active else "range_bound",
+            "path": ("A股未来一至五个交易日更可能反复分化，待外部压力变量确认后再选择方向。" if active else
+                     "A股未来一至五个交易日基准为区间震荡，后续数据可能改变风格方向。"),
+            "confidence": "medium" if active else "low",
+        },
+        "index_style_implications": ["大盘防御风格相对成长风格更稳" if active else
+                                     "指数和风格暂缺五域层面的明确单边映射"],
+        "sector_beneficiaries": ["能源、航运与防御方向相对受益" if active else
+                                 "未识别五域风险带来的明确相对受益板块"],
+        "sector_pressures": ["高估值成长与成本敏感行业相对承压" if active else
+                             "未识别五域风险带来的明确相对承压板块"],
+        "opening_triggers": ["核对海外风险消息、商品价格、人民币和主要海外股指"],
+        "upside_conditions": ["外部压力缓和且国内流动性保持稳定"],
+        "downside_conditions": ["外部冲击升级并通过商品或汇率放大风险厌恶"],
+        "invalidators": ["开盘前出现足以反转外部风险方向的官方新信息"],
+        "plain_language_verdict": ("A股更像震荡偏弱和板块分化，不是全面单边下跌。" if active else
+                                   "A股更像区间震荡，五域信息暂不支持明确偏强或偏弱。"),
+        "inference_boundary": "仅作shadow影子走势推断，不改分数、裁定、仓位或熔断；与T日裁定隔离，不倒灌。",
+    }
     toxic = {
         "version": "bottom-toxic-risk-warning/v2",
         "T": t,
@@ -3180,6 +3469,7 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
         },
         "post_t_safety_items": post_items,
         "runtime_evaluation": runtime_evaluation,
+        "ashare_runtime_outlook": ashare_outlook,
         "clear_reason": "" if active else "五个固定风险域完成检索，未命中截至T的重大活跃风险；不代表未来无风险。",
     }
     global_alerts = ([{"warning_id": warning_id, "level": "med",
@@ -3407,9 +3697,10 @@ def strict_self_test() -> Result:
                 if isinstance(alert, dict)
             )
         warning_html_path.write_text(
-            "<html><body><p>非投资建议</p><p>600000</p>"
+            "<html><body><h2>测试抄底报告</h2><div class=env><b>市况: 测试</b></div>"
+            "<div class=card><p>非投资建议</p><p>600000</p>"
             + "".join(f"<div>{html.escape(text)}</div>" for text in visible_alerts)
-            + "</body></html>",
+            + "</div></body></html>",
             encoding="utf-8",
         )
         out.merge(augment_report(warning_html_path, combined_search, "bottom-fishing"))
@@ -3465,6 +3756,29 @@ def strict_self_test() -> Result:
     runtime_item["evaluation"]["consensus_source_refs"] = []
     out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
               "严格负例失效: Agent③ 无来源精确概率推断未被拦截")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    del bad_search["codex_audit"]["toxic_risk_warning"]["ashare_runtime_outlook"]
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: Agent③ 缺A股走势综合未被拦截")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    outlook = bad_search["codex_audit"]["toxic_risk_warning"]["ashare_runtime_outlook"]
+    del outlook["domain_impacts"]["cross_asset_stress"]
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: Agent③ A股走势综合漏一个风险域未被拦截")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    outlook = bad_search["codex_audit"]["toxic_risk_warning"]["ashare_runtime_outlook"]
+    outlook["plain_language_verdict"] = "继续观察，方向不确定。"
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: Agent③ 未直说A股走势预期未被拦截")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    outlook = bad_search["codex_audit"]["toxic_risk_warning"]["ashare_runtime_outlook"]
+    outlook["next_session"]["path"] = "A股下一交易日上涨概率为70%，预计收涨。"
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: Agent③ 未校准A股精确涨跌概率未被拦截")
 
     bad_search = copy.deepcopy(search_audit_doc)
     bad_search["rulings"]["600000"]["alerts"] = []
@@ -3852,7 +4166,7 @@ def main() -> None:
     bottom_engine.add_argument("--html")
     bottom_search = sub.add_parser(
         "validate-bottom-search",
-        help="裁定写入前校验 Agent②个股搜索与 Agent③五域最新检索、证据约束推断和T/T后隔离",
+        help="裁定写入前校验 Agent②个股搜索与 Agent③五域最新检索、A股走势映射和T/T后隔离",
     )
     bottom_search.add_argument("--result", required=True)
     bottom_search.add_argument("--audit", required=True)

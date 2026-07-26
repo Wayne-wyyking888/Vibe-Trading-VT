@@ -134,7 +134,10 @@ bottom-fishing 启用 `bottom_search` 后按其 F10 ledger 执行：T 前实质�
 `claude_code_Trading_skill_no_API_Doc/bottom-fishing/references/TOXIC_RISK_WARNING_PROTOCOL.md`。
 该对象固定 `mode=shadow`，只增加风险提示，不改变分数、推荐线、✓/?/✗、仓位或预算熔断。
 每条 warning/delta 和 `runtime_evaluation` 的五个域都必须写事实、共识、基准情景与置信度、
-上下行情景、传导链、观察变量、失效条件和推断边界；不能只写“方向不确定”。
+ 上下行情景、传导链、观察变量、失效条件和推断边界；不能只写“方向不确定”。
+五域完成后还必须写 `ashare_runtime_outlook`：逐域解释如何反映到A股，并明确下一交易日、未来1—5日、
+指数/风格、相对受益与承压板块、开盘触发和一句白话走势结论。该综合只允许定性置信度，禁止未经校准的
+涨跌概率、涨跌幅或指数目标点位；HTML白话卡片必须位于顶部“市况”正下方。
 
 ```json
 {
@@ -306,7 +309,8 @@ python C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py valida
 不得虚构候选、查询或事实凑 schema。Agent③不因零候选而跳过：`toxic_risk_warning.by_code={}`，
 但仍须完成五个市场风险域并把全局 shadow warning 写入顶层 `alerts`；若确无命中则
 `overall_status=clear`、`warnings=[]` 且 `clear_reason` 非空。即便没有命中，
-`runtime_evaluation` 仍须精确覆盖五域，说明截至实际检索时点的基准判断、观察变量和失效条件。
+`runtime_evaluation` 仍须精确覆盖五域，说明截至实际检索时点的基准判断、观察变量和失效条件；
+`ashare_runtime_outlook` 仍须给出“无明确单边风险驱动”条件下的A股基准路径，不能省略。
 
 Agent③ alert 最小格式：
 

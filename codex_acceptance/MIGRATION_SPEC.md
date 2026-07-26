@@ -80,7 +80,8 @@ Codex 工作区安装位置：`C:\Trading_analysis\.agents\skills`。三个目�
 
 Agent③市场预警：每次扫描固定覆盖排期宏观政策、国内监管与流动性、海外地缘与贸易、跨资产压力、
 长假信息缺口五域，检索到本次实际运行时点，对每条事件及五域综合输出证据约束下的共识、基准/条件情景、
-传导链、观察变量和失效条件，并按 T 日与 T 后分账写入 `codex_audit.toxic_risk_warning`。当前只允许
+传导链、观察变量和失效条件，再合并映射A股下一交易日和未来1—5日的大概走势、风格与板块结构；
+按 T 日与 T 后分账写入 `codex_audit.toxic_risk_warning`。顶部白话卡片置于“市况”正下方。当前只允许
 `mode=shadow`；warning 可进入报告级/个股级 alerts，但不得改分、裁定、仓位、推荐线或两个预算熔断。
 
 状态：`bottom_latest.json`、`bottom_adjudication.json`、`bottom_shadow_log.jsonl` 与 reports HTML。

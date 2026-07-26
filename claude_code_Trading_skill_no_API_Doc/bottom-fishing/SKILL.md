@@ -1,6 +1,6 @@
 ---
 name: bottom-fishing
-description: A股底部区与超跌修复扫描（0 API、Codex 原生）。用于抄底、超跌、底部扫描、低吸扫描、bottom-fishing、毒月风险预警、错杀裁定、抄底复盘等请求；运行不可变 Python 引擎，执行双路径推荐线、ATR gate、5交易日冷却、官方源优先的多轮网页检索、F10逐条对账、Agent③五域最新风险检索与证据约束推断、T日证据与运行时点增量隔离、结构化搜索覆盖审计、✓/?/✗分层、shadow warning、影子日志、adjudicate/review，并在独立验收通过后输出原生 HTML。
+description: A股底部区与超跌修复扫描（0 API、Codex 原生）。用于抄底、超跌、底部扫描、低吸扫描、bottom-fishing、毒月风险预警、错杀裁定、抄底复盘等请求；运行不可变 Python 引擎，执行双路径推荐线、ATR gate、5交易日冷却、官方源优先的多轮网页检索、F10逐条对账、Agent③五域最新风险检索、证据约束推断与A股走势映射、T日证据与运行时点增量隔离、结构化搜索覆盖审计、✓/?/✗分层、shadow warning、影子日志、adjudicate/review，并在独立验收通过后输出原生 HTML。
 ---
 
 # A股抄底扫描（0 API · Codex 原生 · 影子复验期）
@@ -109,6 +109,10 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
    - **逐项证据约束推断**：每条 warning、每条 T 后 delta、每个五域运行时点综合都必须分开写
      `事实/当前共识/基准情景+置信度/上下行情景/传导链/观察变量/失效条件/推断边界`。
      有市场定价、调查或可靠机构来源才可写精确概率/基点；否则只给定性置信度。推断不是交易指令。
+   - **五域合并映射到A股**：完成五域后必须输出 `ashare_runtime_outlook`，直说这些信息反映到
+     A股下一交易日和未来1—5个交易日大概是偏强、偏弱、震荡还是分化，并列指数/风格、相对受益与承压板块、
+     开盘触发、上下行情景和失效条件。不得用“风险资产或有波动”代替A股结论，不得编造未经校准的涨跌概率、
+     涨跌幅或指数点位。把白话综合卡片放在最终HTML顶部“市况”正下方，完整五域依据仍留在底部审计。
    - **排期风险**：统计数据、LPR、FOMC、政策生效日、长假闭市等只给 med 黄色提示，
      `direction_certainty=uncertain`；但仍须评估当前最普遍预期和条件式市场传导，不能只写“方向不确定”。
    - **活跃风险**：战争—航运—油价、关税/出口管制、融资收缩、退市/ST恐慌、跨资产强平等，只有
@@ -120,7 +124,8 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
      HTML 明示“T后”和运行时点评估，不得倒灌成事前命中。
    - **结构化落盘**：写入 `codex_audit.toxic_risk_warning`，固定
      `version=bottom-toxic-risk-warning/v2`、`mode=shadow`、五域 coverage、sources、queries、
-     warnings、by_code、post-T 增量、五域 `runtime_evaluation` 和 clear_reason。每条 warning/delta 同步到顶层 `alerts`；
+     warnings、by_code、post-T 增量、五域 `runtime_evaluation`、`ashare_runtime_outlook` 和 clear_reason。
+     每条 warning/delta 同步到顶层 `alerts`；
      映射候选的再同步到 `rulings[code].alerts`，都带 `warning_id/level/text/shadow/post_t`。
    Agent③尚未完成无前视 shadow 样本验证，**不得改分、禁买、降级、调仓位或替代两个预算熔断**。
 4. **裁定与预警同步进HTML（--adjudicate，2026-07-15 新增）**：把每只过线票的裁定和 Agent③预警写入
