@@ -1,9 +1,12 @@
-# Agent③ 毒月 Web 风险预警协议（bottom-toxic-risk-warning/v2）
+# Agent③ 毒月 Web 风险预警协议（bottom-toxic-risk-warning/v3）
 
 本协议把毒月研究接入日常扫描，但只产生 `shadow warning`：不修改量化分数、推荐线、排序、仓位、
 ✓/?/✗ 裁定或预算熔断。Agent③同时维护两本账：截至 T 的无前视风险 nowcast，以及截至本次实际检索
 完成时点的最新五域评估。后一本账必须纳入 T 后公开信息并给出证据约束下的推断，但不得倒灌 T 日裁定。
 不承诺预测尚未公开的黑天鹅或“下一个毒月”。
+
+运行 v3 时还必须完整阅读同目录 `AGENT3_SECTOR_MAPPING_PROTOCOL.md`。本文件负责五域风险、T/T后隔离和
+warning；该文件负责外盘/宏观预测输入、分窗口A股板块调用与候选股票双向下沉。两份协议共同构成发布契约。
 
 ## 目录
 
@@ -91,16 +94,21 @@ Agent③不能用“方向不确定”“待观察”结束分析。每条 `warn
 
 ## 5. 五域合并后的A股走势映射
 
-完成五个 `runtime_evaluation` 后，必须再写一个顶层 `ashare_runtime_outlook`。它不是重复宏观事件预测，
+完成五个 `runtime_evaluation` 和八类 `predictive_input_coverage` 后，必须再写一个顶层
+`ashare_runtime_outlook`。它不是重复宏观事件预测，
 而是回答：“这些已知信息综合反映到A股，大概是什么走势和结构？”
 
 - `domain_impacts` 必须精确覆盖五域；每域写 `positive|neutral|negative|mixed`，并用
   `mechanism` 直说如何传到A股，不能停在“全球风险资产可能波动”。
-- `next_session` 明确下一交易日的 `bias`、路径和定性置信度。
+- `opening_auction` 明确竞价/开盘缺口的 `bias`、路径和定性置信度。
+- `intraday_followthrough` 明确开盘后延续或回吐的 `bias`、路径和定性置信度。
+- `next_session` 保留下一交易日综合 `bias`、路径和定性置信度，不得替代两个日内窗口。
 - `next_1_5_sessions` 明确未来1—5个交易日的 `bias`、路径和定性置信度。
 - `index_style_implications` 写指数与风格相对强弱，例如大盘/小盘、价值/成长、防御/进攻。
-- `sector_beneficiaries` / `sector_pressures` 分开写相对受益与承压板块；没有明确映射时直说没有，
-  不得为了填表强造板块。
+- `sector_calls` 作为板块结论唯一事实源，每条都写方向、行业键、预测窗口、括号原因、驱动/反向信号、
+  主导驱动、置信度、来源、失效条件和关联候选。
+- `sector_beneficiaries` / `sector_pressures` 只能由 `sector_calls` 机械派生为
+  `板块名（原因1；原因2）`；没有明确映射时写协议规定的未识别占位，不得手写第二套结论。
 - `opening_triggers` 写开盘前和开盘后优先核对的海外股指、商品、汇率、利率、官方消息等。
 - `upside_conditions` / `downside_conditions` / `invalidators` 写偏强、偏弱及推翻当前判断的条件。
 - `plain_language_verdict` 必须包含“A股”，用一句白话明确偏强、偏弱、震荡、分化、修复或承压。
@@ -149,6 +157,12 @@ other_market
 行业预警只有在候选行业、产品、成本或海外收入暴露能够明确对应时才下沉。市场恐慌不能机械复制成
 所有候选的同一条个股红色警示。
 
+v3 的 `by_code` 另须包含 `sector_context[]`。当 `sector_calls[].industry_matches` 精确命中候选行业，或
+`candidate_codes` 通过客户、供应商、竞争者、成本或海外收入关系显式纳入候选时，必须把同一 `call_id`
+唯一双向下沉到股票卡片。股票 context 必须显示方向、产业关系、窗口、置信度、股票级原因、来源和失效条件；
+正面或一般板块映射使用独立中性信息块，不得伪装成 warning alert。完整契约见
+`AGENT3_SECTOR_MAPPING_PROTOCOL.md`。
+
 每条 T 日 warning 和 T 后 delta 都必须：
 
 1. 以同一 `warning_id`/`delta_id` 写入裁定文件顶层 `alerts`，形成报告级横幅；
@@ -169,7 +183,8 @@ other_market
 ```
 
 HTML 顶部“市况”正下方必须先显示“Agent③ A股走势映射（运行时点 shadow）”白话卡片，包括
-下一交易日、未来1—5日、指数/风格、相对受益/承压板块、开盘触发和推断边界。底部继续单列
+开盘、开盘后延续/回吐、下一交易日综合、未来1—5日、指数/风格、相对受益/承压板块 bullet、
+开盘触发和推断边界。底部继续单列
 “A股走势综合审计（五域合并）”和“运行时点五域综合评估（最新公开信息；不倒灌 T 日裁定）”，
 显示逐域A股机制、检索完成时点、最新采用来源日期、共识、基准情景、条件情景和失效条件。
 
@@ -180,7 +195,7 @@ HTML 顶部“市况”正下方必须先显示“Agent③ A股走势映射（�
 ```json
 {
   "toxic_risk_warning": {
-    "version": "bottom-toxic-risk-warning/v2",
+    "version": "bottom-toxic-risk-warning/v3",
     "T": "YYYY-MM-DD",
     "cutoff_beijing": "YYYY-MM-DD 23:59:59+08:00",
     "retrieved_at_beijing": "YYYY-MM-DD HH:MM:SS+08:00",
@@ -201,9 +216,40 @@ HTML 顶部“市况”正下方必须先显示“Agent③ A股走势映射（�
         "source_kind": "official_direct|verified_official_mirror|independent_media|independent_research|unverified_secondary",
         "origin_id": "稳定去重键",
         "published_at": "YYYY-MM-DD",
+        "published_at_beijing": "YYYY-MM-DD HH:MM:SS+08:00",
         "phase": "as_of_t|post_t_safety"
       }
     ],
+    "market_signals": [
+      {
+        "signal_id": "market-signal-001",
+        "coverage_category": "us_equity_sectors",
+        "family": "overseas_equity_sector",
+        "phase": "post_t_safety",
+        "observed_at_beijing": "YYYY-MM-DD HH:MM:SS+08:00",
+        "market_session_date": "YYYY-MM-DD",
+        "instrument": "海外行业指数或关键公司",
+        "direction": "positive|neutral|negative|mixed",
+        "value_text": "已观察事实",
+        "benchmark": "相对基准",
+        "surprise": "预期差或不适用",
+        "shock_type": "demand|supply|discount_rate|policy|risk_aversion|mixed|not_applicable|unknown",
+        "horizons": ["opening_auction"],
+        "source_refs": ["toxic-source-001"],
+        "query_ids": ["toxic-query-001"],
+        "freshness": "fresh|stale",
+        "summary": "对A股行业可能具有信息含量的原因"
+      }
+    ],
+    "predictive_input_coverage": {
+      "us_equity_sectors": {
+        "status": "hit|no_relevant_hit|blocked|not_open",
+        "signal_ids": ["market-signal-001"],
+        "query_ids": ["toxic-query-001"],
+        "as_of_beijing": "YYYY-MM-DD HH:MM:SS+08:00",
+        "reason": "覆盖结论"
+      }
+    },
     "queries": [
       {
         "query_id": "toxic-query-001",
@@ -217,6 +263,7 @@ HTML 顶部“市况”正下方必须先显示“Agent③ A股走势映射（�
         "reviewed_urls": ["https://..."],
         "selected_warning_ids": [],
         "selected_delta_ids": [],
+        "selected_signal_ids": ["market-signal-001"],
         "notes": "采用、未命中或受阻说明"
       }
     ],
@@ -265,7 +312,18 @@ HTML 顶部“市况”正下方必须先显示“Agent③ A股走势映射（�
         "exposure": "none|watch|high",
         "warning_ids": [],
         "post_t_delta_ids": [],
-        "reason": "暴露映射理由"
+        "reason": "暴露映射理由",
+        "sector_context": [
+          {
+            "call_id": "sector-call-001",
+            "relation": "direct_sector|customer|supplier|competitor|input_cost|overseas_revenue|sector_only",
+            "direction": "beneficiary|pressure",
+            "relevance": "direct|indirect|sector_only",
+            "reason": "股票级映射理由",
+            "source_refs": ["toxic-source-001"],
+            "invalidators": ["股票级失效条件"]
+          }
+        ]
       }
     },
     "post_t_safety_items": [
@@ -303,6 +361,7 @@ HTML 顶部“市况”正下方必须先显示“Agent③ A股走势映射（�
         "query_ids": ["本域全部 as_of_t 与 post_t_safety 查询"],
         "warning_ids": [],
         "delta_ids": [],
+        "signal_ids": ["market-signal-001"],
         "source_refs": [],
         "evaluation": {
           "fact_basis": "截至实际检索时点的事实综合",
@@ -340,14 +399,25 @@ HTML 顶部“市况”正下方必须先显示“Agent③ A股走势映射（�
         "path": "A股下一交易日大概路径",
         "confidence": "low|medium|high"
       },
+      "opening_auction": {
+        "bias": "positive|neutral_positive|range_bound|neutral_negative|negative|mixed",
+        "path": "A股竞价/开盘大概路径",
+        "confidence": "low|medium|high"
+      },
+      "intraday_followthrough": {
+        "bias": "positive|neutral_positive|range_bound|neutral_negative|negative|mixed",
+        "path": "A股开盘后延续或回吐路径",
+        "confidence": "low|medium|high"
+      },
       "next_1_5_sessions": {
         "bias": "positive|neutral_positive|range_bound|neutral_negative|negative|mixed",
         "path": "A股未来1—5个交易日大概路径",
         "confidence": "low|medium|high"
       },
       "index_style_implications": ["指数与风格映射"],
-      "sector_beneficiaries": ["相对受益板块或明确写未识别"],
-      "sector_pressures": ["相对承压板块或明确写未识别"],
+      "sector_calls": ["完整对象见 AGENT3_SECTOR_MAPPING_PROTOCOL.md"],
+      "sector_beneficiaries": ["由sector_calls派生的板块名（原因）"],
+      "sector_pressures": ["由sector_calls派生的板块名（原因）"],
       "opening_triggers": ["开盘优先核对变量"],
       "upside_conditions": ["转强条件"],
       "downside_conditions": ["转弱条件"],
@@ -374,8 +444,9 @@ python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" vali
 ```
 
 该命令同时验证 Agent② `bottom_search` 和 Agent③ `toxic_risk_warning`。Agent③缺五域运行时点评估、
-缺事件推断、只写“方向不确定”、末端扫描未覆盖至实际运行日、无来源精确概率、缺A股走势综合、
-没有逐域说明如何反映到A股、编造A股精确涨跌概率/幅度/点位或发生 T 后倒灌时均失败。
+缺八类预测输入覆盖、缺事件推断、只写“方向不确定”、末端扫描未覆盖至实际运行日、无来源精确概率、
+缺分窗口A股走势综合、板块 bullet 无括号原因、板块与候选股票未双向下沉、没有逐域说明如何反映到A股、
+编造A股精确涨跌概率/幅度/点位或发生 T 后倒灌时均失败。最终发布只接受 v3；历史 v2 仅保留非严格读取兼容。
 任一失败都不得运行 `--adjudicate`。最终 `augment-report` 会生成 Agent③ 独立审计表，
 `validate --require-bottom-search` 还会检查A股白话综合确实位于顶部市况下、运行时点共识/基准情景、
 warning 来源链接和报告/个股 alert 文本确实出现在 HTML。不可变核心 HTML 中遗留的旧“61%”
