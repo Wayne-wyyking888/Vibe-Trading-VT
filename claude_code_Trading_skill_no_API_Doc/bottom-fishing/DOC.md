@@ -42,11 +42,28 @@ python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" bott
 东财快照(经weekly引擎get_spot,带缓存/新浪兜底) → 剔ST/科创/北交 → 腾讯qfq日K(140根/只) →
 底部区(回撤≥20%+60位≤25) → 修复确认打分 → 双路径推荐线 → F10种子(东财datacenter,仅过线票) →
 Agent②个股六维裁定 + Agent③市场五域风险nowcast → 裁定/预警HTML → 执行方案(权威交易日历给真实买入/离场日期)
-→ stdout+JSON+HTML+影子日志。
+→ stdout+JSON+HTML+影子日志 → Agent②/③完成后，仅在裁定版附加候选股 ETF 持仓/走势相似度只读区块。
 指数: 创业板(防守日/def_days/大盘RSV, 后两者为影子字段不进规则)。
 
 报告文件名严格使用 `bottom_cn_YYYY-MM-DD_HH-MM-SS[_裁定版].html`：日期与时分秒均来自同一个
 UTC+8 的 `generated_at` / `adjudicated_at`。业务截止日 T 只写入正文与 JSON，不再与生成时钟混拼。
+
+## ETF 持仓与走势相似度（报告只读层）
+
+- 作用阶段：初扫 JSON/HTML 不含 ETF 信息，不给 Agent②/③读取；只有完成裁定后的最终候选卡片才附加。
+- 位置：每只最终候选卡片的 F10 行下方、操作计划上方；若 F10 源失败而原卡片没有 F10 行，则放在同一信息槽、
+  仍位于操作计划前。HTML 只展示最相关前5只且不提供全部展开表，观察池不请求、不展示。
+- 持仓口径：东方财富公开机构持仓反查中的最近完整基金报告期，只保留有沪深场内代码且名称/类型可确认的 ETF，
+  排除 ETF 联接基金；全部已识别名单只保留在结构化 JSON 供审计。这里的“持有”是定期披露口径，不是基金盘中实时仓位；一/三季报可能
+  只披露主要持仓，较新但尚在披露中的报告期只提示而不混用。
+- 走势排序：先按该股票占 ETF 净值比例选前80只计算；截至引擎 T 日取最近60个共同交易日，以前复权收盘的
+  日对数收益 Pearson 相关系数降序，相关相同再按归一化价格路径 RMSE 升序。HTML 只显示前5只；未进入80只
+  上限的 ETF 仍保留在 JSON 完整名单并标记未计算。
+- 隔离：增强层在 Agent②/③完成且原 renderer 写完裁定版 JSON/HTML 后运行，结构化字段为 `etf_holdings_meta` 与
+  `candidates[].etf_holdings`，固定 `used_in_recommendation=false`。它不属于 Agent①/②/③ 的输入，不改变任何
+  推荐、裁定或风险控制；请求失败只令本区块显示不可用。
+- 缓存：`C:\Trading_analysis\data\cache\ashare_weekly\bottom_etf`；完整报告期元数据6小时、持仓名单7天，
+  日线按目标 T 是否已覆盖决定复用。公开持仓来源页：`https://data.eastmoney.com/zlsj/jj.html`。
 
 ## 角色分工（LLM侧, 见SKILL.md）
 - Agent①=引擎(全自动)。
@@ -89,6 +106,7 @@ python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" vali
 | 目标 | +5%落袋半仓 / +10%清(EV最优) / 最晚T+20收盘离场 |
 | 毒月熔断 | 月度亏损-3%停做 ∥ 近20笔雷率≥30%停(--review自动检测) |
 | Agent③预警 | 五域搜索至实际运行时点并映射A股T+1/未来1—5日；顶部shadow卡片，不改变分数/裁定/仓位 |
+| ETF信息块 | 最近完整披露期持仓 + 截至T的60日收益相关排序；F10下只读展示，不进入三个Agent或交易规则 |
 | 口径引用 | 胜率必须带"走样本75.2~77.8%·月度45~92%大摆·2024式熊市全年EV为负"全套披露 |
 | 影子期 | 累计30笔了结前: 纸面跟踪或仓位减半 |
 

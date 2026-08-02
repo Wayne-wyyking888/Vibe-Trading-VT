@@ -2295,6 +2295,77 @@ BOTTOM_WEIGHTS = {
     "fresh_low": -3.1,
 }
 
+BOTTOM_ETF_VERSION = "bottom-etf-holdings/v1"
+BOTTOM_ETF_STATUSES = {"ok", "partial", "no_etf", "blocked"}
+
+
+def validate_bottom_etf(obj: dict[str, Any]) -> Result:
+    """校验只读 ETF 持仓/走势增强字段，不触碰推荐资格与分数。"""
+    out = Result("bottom.etf-holdings")
+    meta = obj.get("etf_holdings_meta") or {}
+    if meta.get("version") != BOTTOM_ETF_VERSION:
+        return out
+    out.check(meta.get("used_in_recommendation") is False, "ETF 信息必须声明不参与推荐")
+    out.check(meta.get("status") in {"ok", "blocked", "no_candidates"}, "顶层 ETF status 无效")
+    cap = _num(meta.get("similarity_max_etfs_by_holding_weight"))
+    out.check(cap is not None and 1 <= cap <= 300, "ETF 相似度计算上限无效")
+    html_top = _num(meta.get("html_top"))
+    out.check(html_top == 5, "ETF HTML 必须只展示相关性最高的前5只")
+    out.check("Pearson" in str(meta.get("similarity_metric", "")), "ETF 相似度口径未声明 Pearson")
+
+    t = str(obj.get("T", ""))
+    for candidate in obj.get("candidates") or []:
+        code = str(candidate.get("code") or "?")
+        payload = candidate.get("etf_holdings") or {}
+        out.check(payload.get("version") == BOTTOM_ETF_VERSION, f"{code} 缺 ETF version")
+        out.check(payload.get("used_in_recommendation") is False, f"{code} ETF 信息不得参与推荐")
+        status = str(payload.get("status") or "")
+        out.check(status in BOTTOM_ETF_STATUSES, f"{code} ETF status 无效: {status}")
+        if status == "blocked":
+            out.check(bool(str(payload.get("error") or "").strip()), f"{code} ETF blocked 缺错误说明")
+            continue
+
+        report_date = str(payload.get("report_date") or "")
+        out.check(bool(DATE_RE.match(report_date)), f"{code} ETF 报告期格式错误")
+        out.check(payload.get("complete") is True, f"{code} ETF 未使用完整披露期")
+        out.check(_valid_http_url(payload.get("source_url")), f"{code} ETF 持仓来源 URL 无效")
+        all_etfs = list(payload.get("all_etfs") or [])
+        ranked = list(payload.get("ranked") or [])
+        holding_count = _num(payload.get("holding_etf_count"))
+        success_count = _num(payload.get("similarity_success_count"))
+        out.check(holding_count is not None and int(holding_count) == len(all_etfs),
+                  f"{code} holding_etf_count 与名单不一致")
+        all_codes = [str(row.get("code") or "") for row in all_etfs]
+        out.check(len(all_codes) == len(set(all_codes)) and all(re.fullmatch(r"\d{6}", x) for x in all_codes),
+                  f"{code} ETF 名单含重复或非法代码")
+        ranked_codes = [str(row.get("code") or "") for row in ranked]
+        out.check(set(ranked_codes).issubset(set(all_codes)), f"{code} 相似度榜含非持仓 ETF")
+        out.check(success_count is not None and int(success_count) == len(ranked),
+                  f"{code} similarity_success_count 与榜单不一致")
+        if status == "no_etf":
+            out.check(not all_etfs and not ranked, f"{code} no_etf 状态仍有 ETF 行")
+        if status == "ok":
+            out.check(bool(all_etfs) and bool(ranked), f"{code} ok 状态缺持仓或相似度结果")
+
+        sort_keys: list[tuple[float, float, float, str]] = []
+        for index, row in enumerate(ranked, 1):
+            correlation = _num(row.get("correlation"))
+            rmse = _num(row.get("path_rmse"))
+            days = _num(row.get("common_return_days"))
+            out.check(row.get("similarity_rank") == index, f"{code} ETF 相似度名次不连续")
+            out.check(correlation is not None and -1 <= correlation <= 1,
+                      f"{code} ETF {row.get('code')} correlation 越界")
+            out.check(rmse is not None and rmse >= 0, f"{code} ETF {row.get('code')} path_rmse 无效")
+            out.check(days is not None and 40 <= days <= 60,
+                      f"{code} ETF {row.get('code')} 共同收益日数越界")
+            window_end = str(row.get("window_end") or "")
+            out.check(bool(DATE_RE.match(window_end)) and window_end <= t,
+                      f"{code} ETF {row.get('code')} 相似度窗口越过 T 日")
+            if correlation is not None and rmse is not None:
+                sort_keys.append((-correlation, rmse, -(row.get("holding_weight_pct") or -1), str(row.get("code"))))
+        out.check(sort_keys == sorted(sort_keys), f"{code} ETF 榜单未按相关降序/RMSE升序排列")
+    return out
+
 
 def validate_bottom(obj: dict[str, Any], strict: bool = True, require_search: bool = False) -> Result:
     out = Result("bottom-fishing")
@@ -2326,6 +2397,7 @@ def validate_bottom(obj: dict[str, Any], strict: bool = True, require_search: bo
         out.check(str(row.get("T", t)) == t, f"{code} 的 T 与顶层不一致")
     out.check(all(bool(x.get("qualified")) for x in candidates), "candidates 中出现未过线票")
     out.check(not any(bool(x.get("qualified")) for x in observe), "observe 中出现过线票")
+    out.merge(validate_bottom_etf(obj))
 
     if obj.get("adjudicated"):
         allowed = {"✓", "?", "✗"}
@@ -2997,6 +3069,43 @@ def validate_html(skill: str, obj: dict[str, Any], html_path: pathlib.Path, stri
     out.check("非投资建议" in plain or "不构成投资" in plain, "HTML 缺风险/非投资建议声明")
     if skill == "bottom-fishing":
         bottom_audit = obj.get("codex_audit") or {}
+        etf_meta = obj.get("etf_holdings_meta") or {}
+        if etf_meta.get("version") == BOTTOM_ETF_VERSION:
+            html_top = int(_num(etf_meta.get("html_top"), 5) or 5)
+            for row in obj.get("candidates") or []:
+                code = str(row.get("code") or "")
+                start_marker = f"<!-- codex-bottom-etf:{code}:start -->"
+                end_marker = f"<!-- codex-bottom-etf:{code}:end -->"
+                start = raw.find(start_marker)
+                end = raw.find(end_marker, start + len(start_marker))
+                out.check(raw.count(start_marker) == 1 and raw.count(end_marker) == 1 and end > start,
+                          f"HTML ETF 区块缺失、重复或未闭合: {code}")
+                block = raw[start:end] if start >= 0 and end > start else ""
+                block_plain = _plain_html(block)
+                out.check("ETF持仓与走势相似度" in block_plain,
+                          f"HTML ETF 区块缺标题: {code}")
+                payload = row.get("etf_holdings") or {}
+                if payload.get("source_url"):
+                    out.check(str(payload.get("source_url")) in link_targets,
+                              f"HTML ETF 区块缺持仓来源: {code}")
+                ranked = list(payload.get("ranked") or [])[:html_top]
+                visible_positions = [block_plain.find(str(item.get("code") or "")) for item in ranked]
+                out.check(all(position >= 0 for position in visible_positions),
+                          f"HTML ETF 区块缺相似度榜代码: {code}")
+                out.check(visible_positions == sorted(visible_positions),
+                          f"HTML ETF 可见顺序与 JSON 排名不一致: {code}")
+                code_pos = raw.rfind(code, 0, start) if start >= 0 else -1
+                f10_pos = raw.rfind("F10:", code_pos, start) if code_pos >= 0 and start >= 0 else -1
+                out.check(code_pos >= 0 and (f10_pos < 0 or f10_pos >= code_pos) and
+                          (f10_pos < 0 or f10_pos < start),
+                          f"HTML ETF 区块未放在 {code} 的 F10 后（或F10缺失时的同一信息槽）")
+                next_card = raw.find("<div class=card", end) if end >= 0 else -1
+                observation = raw.find("<h3>观察池", end) if end >= 0 else -1
+                limits = [position for position in (next_card, observation) if position >= 0]
+                card_limit = min(limits) if limits else len(raw)
+                plan_pos = raw.find("<div class=plan>", end, card_limit) if end >= 0 else -1
+                out.check(end >= 0 and (plan_pos > end or plan_pos == -1),
+                          f"HTML ETF 区块未放在 {code} 的操作计划前/无计划卡片末尾")
         search = bottom_audit.get("bottom_search")
         toxic_warning = bottom_audit.get("toxic_risk_warning")
         if require_bottom_search or isinstance(search, dict):
@@ -4842,6 +4951,14 @@ def strict_self_test() -> Result:
 
 
 def _load_module(path: pathlib.Path, name: str):
+    # pandas 3 会探测可选 pyarrow；若本机安全策略只拦其 DLL，生产引擎又不使用
+    # Arrow I/O，应将它按“未安装”处理，避免无关可选包阻断重渲染验收。
+    try:
+        import pyarrow.compute  # type: ignore[import-not-found]  # noqa: F401, PLC0415
+    except (ImportError, OSError):
+        for module_name in [item for item in sys.modules if item == "pyarrow" or item.startswith("pyarrow.")]:
+            sys.modules.pop(module_name, None)
+        sys.modules["pyarrow"] = None
     spec = importlib.util.spec_from_file_location(name, path)
     if spec is None or spec.loader is None:
         raise RuntimeError(f"无法加载 {path}")

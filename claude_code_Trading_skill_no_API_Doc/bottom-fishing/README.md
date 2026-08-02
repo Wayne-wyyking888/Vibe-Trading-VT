@@ -10,6 +10,23 @@ python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" bott
 ```
 无参数设计：阈值是研究定版，改动须先过走样本（见下）。
 
+## HTML 中的 ETF 持仓信息块（2026-08-02）
+
+每只最终裁定候选的 F10 下方会附加一个独立的“ETF持仓与走势相似度”区块。初扫 JSON/HTML 固定不含 ETF，
+避免 Agent②/③在取证与裁定时看到它；模块只在 Agent②/③完成、原 renderer 生成裁定版后运行，
+固定 `used_in_recommendation=false`，因此不进入 Agent①量化、Agent②裁定或 Agent③预警，也不改变候选、分数、
+✓/?/✗、排序、价位、仓位和熔断。公开数据失败时仅本区块降级，推荐流程继续保持原结果。
+
+“持有该股的 ETF”采用东方财富公开机构持仓库的**最近完整报告期**，排除联接基金；完整名单只保留在结构化 JSON
+供审计，HTML 不提供全部展开表。基金披露是
+季度/半年度/年度口径，不是盘中实时仓位，一/三季报也可能不是全量持仓。较新的未完整报告期只作提示，不与完整期
+混用。走势排名只在按持仓占净值排序的前80只 ETF 中计算，以股票 T 日为截止，取最近60个共同交易日的前复权
+日对数收益 Pearson 相关系数降序，同分按归一化路径 RMSE 升序；HTML 只显示最相关前5只。
+
+实现与验收位于 `codex_acceptance/bottom_etf.py`、`test_bottom_etf.py` 和 `acceptance.py`；缓存位于
+`C:\Trading_analysis\data\cache\ashare_weekly\bottom_etf`。持仓页面口径说明：
+`https://data.eastmoney.com/zlsj/jj.html`。
+
 ## 方法论（研究链摘要，面板=476股×401日≈19万股票日，赛跑口径=T+1开盘进场后先到+X%还是先砸-8%）
 
 1. **底部区** = 距60日高点回撤≥20% 且 60日位≤25（占全部股票日10.9%，基线胜70.6%/雷22.9%）。

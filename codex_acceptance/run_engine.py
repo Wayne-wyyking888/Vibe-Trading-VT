@@ -16,10 +16,14 @@ from __future__ import annotations
 
 import datetime as dt
 import importlib.util
+import json
 import pathlib
 import re
 import sys
 from types import ModuleType
+
+from bottom_etf import VERSION as BOTTOM_ETF_VERSION
+from bottom_etf import enrich_bottom_result, inject_etf_sections
 
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -41,7 +45,18 @@ ENTRIES = {
 }
 
 
+def _mask_broken_optional_pyarrow() -> None:
+    """把无法加载 DLL 的可选 pyarrow 视为未安装；生产引擎不使用 Arrow I/O。"""
+    try:
+        import pyarrow.compute  # type: ignore[import-not-found]  # noqa: F401, PLC0415
+    except (ImportError, OSError):
+        for module_name in [name for name in sys.modules if name == "pyarrow" or name.startswith("pyarrow.")]:
+            sys.modules.pop(module_name, None)
+        sys.modules["pyarrow"] = None
+
+
 def _load(path: pathlib.Path, name: str) -> ModuleType:
+    _mask_broken_optional_pyarrow()
     spec = importlib.util.spec_from_file_location(name, path)
     if spec is None or spec.loader is None:
         raise RuntimeError(f"无法加载引擎：{path}")
@@ -74,7 +89,7 @@ def _bottom_report_t(path: pathlib.Path) -> str | None:
     return match.group(1) if match else None
 
 
-def _install_bottom_cn_report_naming(mod: ModuleType) -> None:
+def _install_bottom_cn_report_naming(mod: ModuleType, *, similarity_max: int | None = None) -> None:
     """强制 bottom 报告使用同一 UTC+8 时点中的完整日期和时分秒。
 
     原引擎文件名为 ``bottom_<T>_<北京时分秒>[_裁定版].html``，日期与时钟
@@ -85,7 +100,46 @@ def _install_bottom_cn_report_naming(mod: ModuleType) -> None:
     cn_tz = dt.timezone(dt.timedelta(hours=8))
 
     def render_html_cn(result: dict, *args, **kwargs):
+        # 先让不可变引擎完整写出原 JSON/HTML；ETF 增强只在其后附加，原 renderer
+        # 与全部推荐/裁定逻辑都不会看到新增字段。
+        result.pop("etf_holdings_meta", None)
+        for row in result.get("candidates") or []:
+            row.pop("etf_holdings", None)
         legacy_path = pathlib.Path(original(result, *args, **kwargs))
+        # 初扫产物是 Agent②/③ 的输入，故绝不附带 ETF 信息；只在三个 Agent
+        # 已完成后的裁定版报告追加，确保不仅不打分，也不会形成信息影响。
+        if result.get("adjudicated"):
+            try:
+                enrich_bottom_result(
+                    result,
+                    CACHE / "bottom_etf",
+                    similarity_max=similarity_max,
+                    log=print,
+                )
+            except Exception as exc:  # noqa: BLE001
+                result["etf_holdings_meta"] = {
+                    "version": BOTTOM_ETF_VERSION,
+                    "status": "blocked",
+                    "used_in_recommendation": False,
+                    "error": str(exc)[:300],
+                }
+                for row in result.get("candidates") or []:
+                    row["etf_holdings"] = {
+                        "version": BOTTOM_ETF_VERSION,
+                        "status": "blocked",
+                        "used_in_recommendation": False,
+                        "error": str(exc)[:300],
+                        "all_etfs": [],
+                        "ranked": [],
+                    }
+            raw_html = legacy_path.read_text(encoding="utf-8")
+            enhanced_html = inject_etf_sections(raw_html, result)
+            if enhanced_html != raw_html:
+                legacy_path.write_text(enhanced_html, encoding="utf-8")
+            # 原引擎在 render_html 前写 JSON；增强层在此同步新增的只读 ETF 字段。
+            out_json = pathlib.Path(mod.OUT_JSON)
+            out_json.parent.mkdir(parents=True, exist_ok=True)
+            out_json.write_text(json.dumps(result, ensure_ascii=False, indent=1), encoding="utf-8")
         field = "adjudicated_at" if result.get("adjudicated") else "generated_at"
         raw = result.get(field)
         if not raw:
@@ -131,7 +185,7 @@ def main() -> int:
     mod = _load(path, f"codex_entry_{entry.replace('-', '_')}")
     _redirect_cache(mod)
     if entry in {"bottom", "bottom-smoke"}:
-        _install_bottom_cn_report_naming(mod)
+        _install_bottom_cn_report_naming(mod, similarity_max=20 if entry == "bottom-smoke" else None)
     sys.argv = [str(path), *passthrough]
 
     if entry == "bottom-smoke":

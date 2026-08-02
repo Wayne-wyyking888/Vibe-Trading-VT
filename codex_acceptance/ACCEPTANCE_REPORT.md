@@ -23,6 +23,29 @@ bottom-fishing 已增加 Agent③ 五域市场风险 nowcast：
 本次增量复验：baseline 41项、fixtures 351项、self-test 2398项、rerender-test 399项、
 install-check 15项全部通过；skill-creator `quick_validate.py` 返回 `Skill is valid!`。
 
+## 2026-08-02 bottom ETF 只读信息块增量
+
+bottom-fishing 初扫 JSON/HTML 固定不含 ETF 信息；Agent②/③完成后，裁定版候选卡片才在原 renderer 结束后于 F10 下方附加
+`bottom-etf-holdings/v1` 信息块：
+
+- 以东方财富公开机构持仓库最近完整报告期反查场内 ETF，排除联接基金；完整名单只留 JSON，HTML 只显示
+  走势最相关前5只，不提供全部展开表；
+- 相似度截至股票 T 日，使用最近60个共同交易日前复权日对数收益 Pearson 相关降序，同分按归一化路径
+  RMSE 升序；默认只对持仓占净值最高的前80只计算；
+- 固定 `used_in_recommendation=false`，且初扫不请求/不落 ETF、裁定版原 renderer 先运行。ETF 字段不进入 Agent①/②/③，不改候选、分数、
+  裁定、排序、价位、仓位、冷却或熔断；源失败只令信息块降级；
+- 结构化验收检查完整披露期、ETF 去重、榜单子集、T 日截止、相关范围、排序、HTML 唯一性和
+  “F10 后/计划前”位置，并强制 HTML 展示上限等于5。
+
+真实只读烟测：`300059`、T=`2026-07-31`，自动选中完整报告期 `2026-03-31`，识别108只场内 ETF；
+5只小样本相似度请求全部成功。定向单元/隔离/HTML负例共11项通过；baseline 41项、fixtures 295项、
+self-test 3025项、rerender-test 191项、install-check 15项通过。原九个 hash 锁定业务核心文件未改变。
+
+复验还发现本机已安装的可选 `pyarrow` DLL 被 Windows Application Control 阻断，而三个生产引擎不使用
+Arrow I/O。启动器和临时重渲染器现只在 `pyarrow.compute` 导入失败时将其视为未安装；正常
+`run_engine.py bottom -- --help` 与无特殊命令的 rerender-test 均已恢复通过。研究目录中显式读取 Parquet 的
+脚本不走此兼容层，仍要求可用的 Arrow/DuckDB 环境。
+
 ## Codex 触发方式
 
 - `/skills` → 选择 `bottom-fishing`、`stock-diagnostic` 或 `weekly-ashare-rank`；

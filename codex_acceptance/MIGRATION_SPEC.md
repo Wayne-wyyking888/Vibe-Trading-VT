@@ -47,6 +47,9 @@ Codex 工作区安装位置：`C:\Trading_analysis\.agents\skills`。三个目�
 
 `run_engine.py` 只把 weekly 数据客户端的用户主目录缓存重定向到：
 `C:\Trading_analysis\data\cache\ashare_weekly`。它不改业务计算。原引擎的正式状态文件路径保持不变。
+若本机已安装的可选 `pyarrow.compute` 因 DLL/应用控制策略无法导入，启动层将其按“未安装”处理；三个生产
+引擎不使用 Arrow I/O，因此该兼容只解除 pandas 的可选依赖探测，不改行情、因子或 renderer。显式 Parquet
+研究脚本不走此兼容层。
 
 最终人工裁定必须含 `codex_audit`，契约见 `JUDGE_SCHEMA.md`：
 
@@ -57,7 +60,9 @@ Codex 工作区安装位置：`C:\Trading_analysis\.agents\skills`。三个目�
 - 单源、日期不符、偏差大或缓存过期不得标“已验证”；weekly 在多源彼此一致后，还必须校验引擎 `close`
   与多源中位数偏差≤0.5%，超限即按脏缓存要求 `--refresh` 整次重跑。
 
-最终 HTML 由原 renderer 生成，再非侵入式追加 Codex 审计附录；原卡片、字段与排序不删不改。
+最终 HTML 由原 renderer 生成，再非侵入式追加 Codex 审计附录；bottom 初扫产物不含 ETF 字段，另在 Agent②/③
+完成后的裁定版原 renderer 结束后给候选卡片
+F10 下方附加只读 ETF 持仓/走势相似度区块。原卡片、字段与排序不删不改。
 
 ## 4. bottom-fishing 不可变项
 
@@ -88,7 +93,12 @@ Agent③市场预警：每次扫描固定覆盖排期宏观政策、国内监管
 `--review` 的影子样本、裁定子集、滚动停做统计由原引擎执行。
 
 HTML 必须呈现 T、市况/防守天数、大盘 RSV、底部区数量、阈值/命中、冷却、dd250、F10、裁定层、
-Agent③ shadow alerts、五域风险审计、执行纪律、影子期/真实口径和非投资建议。
+Agent③ shadow alerts、五域风险审计、执行纪律、影子期/真实口径和非投资建议。每张候选卡片还必须在 F10 后、
+操作计划前显示 `bottom-etf-holdings/v1` 只读区块（原卡片无 F10 行时使用同一信息槽）：最近完整公开报告期的场内 ETF 持仓名单，以及截至 T 最近
+60个共同交易日前复权日收益 Pearson 相关排序（同分以路径 RMSE 升序）；HTML 只显示最相关前5只且不提供
+全部展开表，完整披露名单只留在 JSON。结构化字段固定
+`used_in_recommendation=false`；ETF 请求失败只允许信息块降级，不得改变或阻断任何 Agent、候选、分数、裁定、
+排序、价位、仓位、冷却或熔断。
 
 ## 5. stock-diagnostic 不可变项
 
