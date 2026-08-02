@@ -873,6 +873,20 @@ def _validate_ashare_runtime_outlook(out: Result, value: Any, retrieved_dt: dt.d
                       f"{call_tag} 提及候选所属行业却未把全部候选下沉")
             out.check(call.get("shadow") is True, f"{call_tag}.shadow 必须为 true")
 
+        style_text = "；".join(_string_list(value.get("index_style_implications")))
+        beneficiary_claim = any(marker in style_text for marker in
+                                ("相对更稳", "相对占优", "相对更强", "受益", "占优"))
+        pressure_claim = (any(marker in style_text for marker in ("承压", "相对更弱", "压制")) or
+                          bool(re.search(r"受.{0,24}(?:约束|压制)", style_text)))
+        if beneficiary_claim:
+            out.check(any(isinstance(call, dict) and call.get("direction") == "beneficiary"
+                          for call in calls),
+                      f"{tag} 已写相对受益/占优判断却未结构化 beneficiary sector_call")
+        if pressure_claim:
+            out.check(any(isinstance(call, dict) and call.get("direction") == "pressure"
+                          for call in calls),
+                      f"{tag} 已写相对承压/约束判断却未结构化 pressure sector_call")
+
         expected_beneficiaries = [
             _sector_call_display(call) for call in calls
             if isinstance(call, dict) and call.get("direction") == "beneficiary"
@@ -1649,6 +1663,16 @@ def validate_bottom_search(result_obj: dict[str, Any], audit_doc: dict[str, Any]
             for code, ruling in rulings.items():
                 out.check(isinstance(ruling, dict) and ruling.get("verdict") in BOTTOM_VERDICT_RANK,
                           f"裁定文件 {code}.verdict 无效")
+                if isinstance(ruling, dict):
+                    why = str(ruling.get("why", "")).strip()
+                    out.check(len(why) >= 120,
+                              f"裁定文件 {code}.why 过短；须展开关键业绩、六维核查、反方风险与结论")
+                    out.check(bool(re.search(r"\d", why)) and any(marker in why for marker in
+                              ("归母", "扣非", "现金流", "公告", "年报", "季报", "预告")),
+                              f"裁定文件 {code}.why 缺可核查日期/数字或财务证据")
+                    out.check(any(marker in why for marker in
+                                  ("但", "风险", "未见", "反方", "不确定", "否决", "约束")),
+                              f"裁定文件 {code}.why 缺反方风险或未命中边界")
     if candidates:
         out.check(set(verdicts) >= codes, "搜索审计缺候选裁定 verdict")
     else:
@@ -2299,7 +2323,7 @@ BOTTOM_ETF_VERSION = "bottom-etf-holdings/v1"
 BOTTOM_ETF_STATUSES = {"ok", "partial", "no_etf", "blocked"}
 
 
-def validate_bottom_etf(obj: dict[str, Any]) -> Result:
+def validate_bottom_etf(obj: dict[str, Any], require_complete: bool = False) -> Result:
     """校验只读 ETF 持仓/走势增强字段，不触碰推荐资格与分数。"""
     out = Result("bottom.etf-holdings")
     meta = obj.get("etf_holdings_meta") or {}
@@ -2307,6 +2331,9 @@ def validate_bottom_etf(obj: dict[str, Any]) -> Result:
         return out
     out.check(meta.get("used_in_recommendation") is False, "ETF 信息必须声明不参与推荐")
     out.check(meta.get("status") in {"ok", "blocked", "no_candidates"}, "顶层 ETF status 无效")
+    if require_complete and obj.get("adjudicated") and obj.get("candidates"):
+        out.check(meta.get("status") == "ok", "裁定版 ETF 顶层状态必须在线恢复为 ok")
+        out.check(meta.get("online_refresh") is True, "裁定版 ETF 必须声明本次在线刷新")
     cap = _num(meta.get("similarity_max_etfs_by_holding_weight"))
     out.check(cap is not None and 1 <= cap <= 300, "ETF 相似度计算上限无效")
     html_top = _num(meta.get("html_top"))
@@ -2323,7 +2350,11 @@ def validate_bottom_etf(obj: dict[str, Any]) -> Result:
         out.check(status in BOTTOM_ETF_STATUSES, f"{code} ETF status 无效: {status}")
         if status == "blocked":
             out.check(bool(str(payload.get("error") or "").strip()), f"{code} ETF blocked 缺错误说明")
+            if require_complete and obj.get("adjudicated"):
+                out.check(False, f"裁定版禁止发布 ETF blocked: {code}")
             continue
+        if require_complete and obj.get("adjudicated"):
+            out.check(status in {"ok", "no_etf"}, f"裁定版 ETF 未完全跑通: {code} status={status}")
 
         report_date = str(payload.get("report_date") or "")
         out.check(bool(DATE_RE.match(report_date)), f"{code} ETF 报告期格式错误")
@@ -2397,7 +2428,7 @@ def validate_bottom(obj: dict[str, Any], strict: bool = True, require_search: bo
         out.check(str(row.get("T", t)) == t, f"{code} 的 T 与顶层不一致")
     out.check(all(bool(x.get("qualified")) for x in candidates), "candidates 中出现未过线票")
     out.check(not any(bool(x.get("qualified")) for x in observe), "observe 中出现过线票")
-    out.merge(validate_bottom_etf(obj))
+    out.merge(validate_bottom_etf(obj, require_complete=strict))
 
     if obj.get("adjudicated"):
         allowed = {"✓", "?", "✗"}
@@ -3084,6 +3115,9 @@ def validate_html(skill: str, obj: dict[str, Any], html_path: pathlib.Path, stri
                 block_plain = _plain_html(block)
                 out.check("ETF持仓与走势相似度" in block_plain,
                           f"HTML ETF 区块缺标题: {code}")
+                if obj.get("adjudicated"):
+                    out.check("数据获取失败" not in block_plain,
+                              f"裁定版 HTML 禁止保留 ETF 获取失败文案: {code}")
                 payload = row.get("etf_holdings") or {}
                 if payload.get("source_url"):
                     out.check(str(payload.get("source_url")) in link_targets,
@@ -3182,6 +3216,23 @@ def validate_html(skill: str, obj: dict[str, Any], html_path: pathlib.Path, stri
                                 out.check(f"data-agent3-call-id='{call_id}'" in block and
                                           str(context.get("reason", "")) in _plain_html(block),
                                           f"HTML {code} 未完整下沉 {call_id} 的股票级信息")
+                    if isinstance(bottom_audit.get("bottom_search"), dict):
+                        for row in obj.get("candidates") or []:
+                            code = str(row.get("code") or "")
+                            start = f"<!-- codex-bottom-ruling-evidence:{code}:start -->"
+                            end = f"<!-- codex-bottom-ruling-evidence:{code}:end -->"
+                            block_start = raw.find(start)
+                            block_end = raw.find(end, block_start + len(start))
+                            out.check(raw.count(start) == 1 and raw.count(end) == 1 and
+                                      block_end > block_start,
+                                      f"HTML 候选卡片缺六维裁定底稿: {code}")
+                            block = raw[block_start:block_end] if block_end > block_start >= 0 else ""
+                            block_links = _html_link_targets(block)
+                            for fact in (bottom_audit.get("facts") or []):
+                                if str(fact.get("code", "")) == code:
+                                    out.check(str(fact.get("fact_id", "")) in block and
+                                              str(fact.get("source_url", "")) in block_links,
+                                              f"HTML {code} 六维底稿缺事实或来源: {fact.get('fact_id')}")
                 out.check("真实连续5个市场交易日" in plain and "57.2%" in plain and "55.3%" in plain,
                           "HTML 缺毒月集中窗新口径校正说明")
                 if require_bottom_search or toxic_version in TOXIC_WARNING_VERSIONS:
@@ -3274,10 +3325,15 @@ SECTOR_CONTEXT_BLOCK_RE = re.compile(
     r"<!-- codex-agent3-sector-context:[^:]+:end -->",
     re.S,
 )
+RULING_EVIDENCE_BLOCK_RE = re.compile(
+    r"<!-- codex-bottom-ruling-evidence:[^:]+:start -->.*?"
+    r"<!-- codex-bottom-ruling-evidence:[^:]+:end -->",
+    re.S,
+)
 
 
 def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Result:
-    """追加审计、顶部走势映射与候选板块 context；不改变排序或交易字段。"""
+    """追加审计、候选六维底稿、顶部走势映射与板块 context；不改变交易字段。"""
     out = Result("augment-report")
     out.check(path.is_file(), f"报告不存在: {path}")
     audit = obj.get("codex_audit")
@@ -3320,6 +3376,7 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
     raw = re.sub(re.escape(ASHARE_OUTLOOK_START) + r".*?" +
                  re.escape(ASHARE_OUTLOOK_END), "", raw, flags=re.S)
     raw = SECTOR_CONTEXT_BLOCK_RE.sub("", raw)
+    raw = RULING_EVIDENCE_BLOCK_RE.sub("", raw)
 
     def esc(value: Any) -> str:
         return html.escape(str(value if value is not None else ""), quote=True)
@@ -3790,6 +3847,78 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
             if insert_at >= 0:
                 insert_at += len("</div>")
                 raw = raw[:insert_at] + block + raw[insert_at:]
+    if skill == "bottom-fishing" and isinstance(search, dict):
+        category_labels = {
+            "performance_operations": "业绩经营",
+            "financial_credit": "财务信用",
+            "governance_regulatory": "治理监管",
+            "corporate_events": "资本事件",
+            "industry_policy_domestic": "国内行业",
+            "external_global_peer": "海外驱动",
+        }
+        facts_by_code: dict[str, list[dict[str, Any]]] = {}
+        for fact in audit.get("facts") or []:
+            if isinstance(fact, dict) and str(fact.get("code", "")):
+                facts_by_code.setdefault(str(fact.get("code")), []).append(fact)
+        ledger_by_code: dict[str, list[dict[str, Any]]] = {}
+        for entry in search.get("f10_seed_ledger") or []:
+            if isinstance(entry, dict):
+                ledger_by_code.setdefault(str(entry.get("code", "")), []).append(entry)
+        for candidate in obj.get("candidates") or []:
+            code = str(candidate.get("code") or "")
+            coverage = ((search.get("coverage_by_code") or {}).get(code) or {})
+            categories = coverage.get("categories") or {}
+            coverage_text = "　".join(
+                f"{label}:{esc((categories.get(key) or {}).get('status') or 'missing')}"
+                for key, label in category_labels.items()
+            )
+            fact_rows = []
+            for fact in facts_by_code.get(code, []):
+                category = category_labels.get(str(fact.get("category")), str(fact.get("category") or "事实"))
+                url = str(fact.get("source_url") or "")
+                source = (f"<a href='{esc(url)}'>{esc(fact.get('source_name') or '来源')}</a>"
+                          if url else esc(fact.get("source_name") or "来源缺失"))
+                fact_rows.append(
+                    f"<li data-bottom-fact-id='{esc(fact.get('fact_id'))}'><b>{esc(category)}</b>｜"
+                    f"{esc(fact.get('published_at'))}｜{esc(fact.get('fact'))} "
+                    f"<span style='font-size:11px'>[{source}]</span></li>"
+                )
+            latest = (coverage.get("official_latest_check") or {}).get("latest_pre_t") or "无"
+            post = ((search.get("post_t_safety_by_code") or {}).get(code) or {})
+            ledger = ledger_by_code.get(code, [])
+            block = (
+                f"<!-- codex-bottom-ruling-evidence:{esc(code)}:start -->"
+                f"<section class='bottom-ruling-evidence' data-bottom-ruling-code='{esc(code)}' "
+                "style='margin:7px 10px;padding:9px 11px;border:1px solid #a5b4fc;"
+                "border-radius:7px;background:#f8fafc;color:#27325a'>"
+                "<b>六维裁定底稿（卡片展开）</b>"
+                f"<div style='font-size:11px;margin:4px 0'>覆盖：{coverage_text}<br>"
+                f"最新T前官方公告：{esc(latest)}；F10逐条对账：{len(ledger)}条；"
+                f"T后检查至：{esc(post.get('checked_through_beijing') or '无')}；"
+                f"as-of-T/有效裁定：{esc(post.get('base_verdict_asof_t') or '—')}/"
+                f"{esc(post.get('effective_verdict') or '—')}</div>"
+                "<ul style='margin:5px 0 0 18px;padding:0'>"
+                + ("".join(fact_rows) or "<li>本票没有采用主事实；详见未决查询与裁定边界。</li>")
+                + "</ul></section>"
+                f"<!-- codex-bottom-ruling-evidence:{esc(code)}:end -->"
+            )
+            ticker_match = re.search(
+                rf"(?is)<span\s+class\s*=\s*['\"]?tk['\"]?[^>]*>\s*{re.escape(code)}"
+                rf"(?:·[^<]*)?</span>", raw,
+            )
+            out.check(ticker_match is not None, f"候选卡片未找到，无法展开六维裁定底稿: {code}")
+            if ticker_match is None:
+                continue
+            next_card = raw.find("<div class=card", ticker_match.end())
+            card_end = next_card if next_card >= 0 else len(raw)
+            ruling_pos = raw.find("<b>裁定", ticker_match.end(), card_end)
+            insert_at = raw.find("</div>", ruling_pos, card_end) if ruling_pos >= 0 else -1
+            if insert_at >= 0:
+                insert_at += len("</div>")
+            else:
+                insert_at = raw.find("</div>", ticker_match.end(), card_end)
+                insert_at = insert_at + len("</div>") if insert_at >= 0 else ticker_match.end()
+            raw = raw[:insert_at] + block + raw[insert_at:]
     if ashare_outlook_top_html:
         env_match = re.search(r"(?is)<div\s+class\s*=\s*['\"]?env\b.*?</div>", raw)
         heading_match = re.search(r"(?is)<h2\b[^>]*>.*?</h2>", raw)
@@ -4466,7 +4595,14 @@ def _test_bottom_search_case() -> tuple[dict[str, Any], dict[str, Any]]:
         }},
     }
     audit_doc = {"T": t, "alerts": global_alerts,
-                 "rulings": {code: {"verdict": "✓", "alerts": toxic_alerts_by_code[code]}},
+                 "rulings": {code: {
+                     "verdict": "✓",
+                     "why": ("截至2026-01-10，官方2025年年度报告与最新经营公告显示归母、扣非和经营现金流"
+                             "保持改善，业绩经营证据支持修复；财务信用、治理监管、资本事件、国内行业及海外驱动"
+                             "六维均已完成官方入口与分类查询。反方风险是外部冲击仍可能压制估值，但未见债务违约、"
+                             "非标审计或持续经营恶化，故维持✓并保留风险边界。"),
+                     "alerts": toxic_alerts_by_code[code],
+                 }},
                  "codex_audit": audit}
     return result_obj, audit_doc
 
@@ -4651,6 +4787,21 @@ def strict_self_test() -> Result:
     outlook["sector_beneficiaries"] = ["手写的非派生板块文字"]
     out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
               "严格负例失效: Agent③ legacy 板块数组与 sector_calls 不一致未被拦截")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    outlook = bad_search["codex_audit"]["toxic_risk_warning"]["ashare_runtime_outlook"]
+    outlook["index_style_implications"] = ["大盘质量相对更稳，小盘高估值成长受利率约束"]
+    outlook["sector_calls"] = []
+    outlook["sector_beneficiaries"] = ["未识别明确相对受益板块"]
+    outlook["sector_pressures"] = ["未识别明确相对承压板块"]
+    bad_search["codex_audit"]["toxic_risk_warning"]["by_code"]["600000"]["sector_context"] = []
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: 已有相对风格判断却输出空板块映射未被拦截")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    bad_search["rulings"]["600000"]["why"] = "已完成覆盖，未见风险，给✓。"
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: 候选裁定只写简略摘要未被拦截")
 
     bad_search = copy.deepcopy(search_audit_doc)
     bad_search["rulings"]["600000"]["alerts"] = []

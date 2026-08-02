@@ -10,7 +10,15 @@ from unittest import mock
 
 import run_engine
 from acceptance import validate_bottom_etf, validate_html
-from bottom_etf import VERSION, _is_etf_row, _similarity, inject_etf_sections
+from bottom_etf import (
+    VERSION,
+    REPORT_API,
+    REPORT_WEB_APIS,
+    _is_etf_row,
+    _report_request,
+    _similarity,
+    inject_etf_sections,
+)
 
 
 class BottomEtfTest(unittest.TestCase):
@@ -81,7 +89,7 @@ class BottomEtfTest(unittest.TestCase):
         result = self._result()
         self.assertTrue(validate_bottom_etf(result).passed)
         result["candidates"][0]["etf_holdings"]["ranked"][0]["window_end"] = "2026-08-03"
-        checked = validate_bottom_etf(result)
+        checked = validate_bottom_etf(result, require_complete=True)
         self.assertFalse(checked.passed)
         self.assertTrue(any("越过 T 日" in message for message in checked.errors))
 
@@ -93,6 +101,39 @@ class BottomEtfTest(unittest.TestCase):
             "all_etfs": [], "ranked": [],
         })
         self.assertTrue(validate_bottom_etf(result).passed)
+
+    def test_report_request_switches_to_backup_endpoint(self) -> None:
+        calls = []
+
+        def fake(url: str, params: dict) -> dict:
+            calls.append((url, params))
+            if url == REPORT_API:
+                raise OSError("primary unavailable")
+            return {"success": True, "result": {"data": [{"REPORT_DATE": "2026-03-31"}]}}
+
+        with mock.patch("bottom_etf.time.sleep"):
+            obj = _report_request(fake, {"type": "RPT_MAIN_REPORTDATE", "sty": "ALL", "p": 1, "ps": 100})
+        self.assertEqual(obj["result"]["data"][0]["REPORT_DATE"], "2026-03-31")
+        self.assertEqual(calls[0][0], REPORT_API)
+        self.assertEqual(calls[3][0], REPORT_WEB_APIS[0])
+        self.assertEqual(calls[3][1]["reportName"], "RPT_MAIN_REPORTDATE")
+
+    def test_adjudicated_report_rejects_blocked_etf(self) -> None:
+        result = self._result()
+        result["adjudicated"] = True
+        result["etf_holdings_meta"].update({"status": "blocked", "online_refresh": True})
+        result["candidates"][0]["etf_holdings"] = {
+            "version": VERSION,
+            "status": "blocked",
+            "used_in_recommendation": False,
+            "error": "all endpoints unavailable",
+            "all_etfs": [],
+            "ranked": [],
+        }
+        checked = validate_bottom_etf(result, require_complete=True)
+        self.assertFalse(checked.passed)
+        self.assertTrue(any("禁止发布" in message or "必须在线恢复" in message
+                            for message in checked.errors))
 
     def test_html_inserts_after_f10_and_is_idempotent(self) -> None:
         raw = (

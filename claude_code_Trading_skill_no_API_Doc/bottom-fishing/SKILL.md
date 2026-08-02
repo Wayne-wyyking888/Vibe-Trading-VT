@@ -27,7 +27,7 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
    **完整阅读** `references/WEB_EVIDENCE_PROTOCOL.md`；无论是否有过线票，都必须完整阅读
    `references/TOXIC_RISK_WARNING_PROTOCOL.md` 和 `references/AGENT3_SECTOR_MAPPING_PROTOCOL.md` 并运行 Agent③，
    不得凭摘要或单轮泛搜跳过覆盖、血缘、外盘会话新鲜度、板块调用、候选下沉与时点门禁。
-1. **跑引擎**（PowerShell；行情联网被沙箱阻断时按 Codex 权限流程申请一次网络执行；拉取约480只K线通常需要数分钟，网络慢时可能超过10分钟）：
+1. **跑引擎**（PowerShell；从第一次请求开始使用可访问公开行情的网络执行；拉取约480只K线通常需要数分钟，网络慢时可能超过10分钟）：
    ```powershell
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" bottom --
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" validate-bottom-engine --json "C:\Trading_analysis\data\bottom_latest.json" --html "<引擎stdout给出的原始HTML绝对路径>"
@@ -58,7 +58,9 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
    同分按归一化路径 RMSE 升序，HTML 只展示最相关前5只且不提供全部展开表。基金定期披露不等于实时仓位，
    一/三季报可能不是全部持仓；较新但尚未完整的
    报告期只提示、不混入名单。该区块固定 `used_in_recommendation=false`，在 Agent①/②/③及原 renderer 之后运行，
-   不改候选、分数、✓/?/✗、排序、价位、仓位、冷却或熔断；数据失败仅在区块内降级为不可用。
+    不改候选、分数、✓/?/✗、排序、价位、仓位、冷却或熔断。每次裁定必须在线确认最新完整披露期并在线刷新持仓；
+    主持仓端点失败时依次切换三个 DataCenter 备用端点，腾讯三行情端点失败时切换东方财富行情，不使用过期持仓缓存兜底。
+    裁定版出现 `blocked/partial/数据获取失败` 时禁止发布并由自动发布器重试。
 2. **Agent②「错杀裁定官」（我做，只对过线票，通常0-3只——个股消息面的人工增量位置；毒月研究证明
    输赢家量化特征完全相同，"为什么跌"只能靠消息面）**：按下面「红旗分型」判——核心不是"有没有F10红旗"，而是
    **"基本面是否在恶化"**（2026-07-16 毒月8v8消息面对照实证：⚠事件型红旗单独出现≈无区分力、恶化型才是毒月雷真
@@ -157,7 +159,7 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" validate-bottom-search --result "C:\Trading_analysis\data\bottom_latest.json" --audit "C:\Trading_analysis\data\bottom_adjudication.json"
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" bottom -- --adjudicate
    ```
-   `validate-bottom-search` 会同时验 Agent② 与 Agent③；非零退出时禁止 adjudicate：先补齐搜索、来源链、
+   `validate-bottom-search` 会同时验 Agent② 与 Agent③；非零退出时禁止 adjudicate：自动定位并补齐搜索、来源链、
    F10逐条对账、五域 coverage、alert 映射或T+隔离记录，不能删字段绕过。
    引擎自动：**分层重排**（✓>?>✗，层内仍按引擎总分——纪律：不造未经走样本校准的新数值权重）→
    ?/✗票撤除买入方案（P13-3：非买入票不给价，卡片保留供对照，✗票置灰）→ 重出裁定版HTML
@@ -169,7 +171,14 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
 5. **Agent④式复核并通过 Codex 硬门禁后才输出最终表**：引擎表 + 裁定列（✓错杀可入 / ✗恶化·否决 / ?存疑降级）+
    Agent③ shadow warning，检查
    价格新鲜度(引擎T=最近已收盘日)、数字来源可追溯；否决票在文字报告注明理由（HTML卡片保留供对照）。
-   `bottom_adjudication.json` 顶层除原字段外必须加入 `codex_audit`。先对每个 `✓` 票执行独立跨源验价，
+   每票 `rulings[code].why` 至少展开关键财务数字、六维核查、最强反方风险和结论，不得只写“已覆盖、未见风险”的摘要；
+   最终 HTML 还必须把六维采用事实、日期、来源、F10逐条数量及 T/T后裁定状态下沉到每张候选卡片。
+   `bottom_adjudication.json` 顶层除原字段外必须加入 `codex_audit`。完成审计后优先运行自动发布器；它会自动执行
+   基线、搜索审计、ETF多端点重试、跨源验价重试、attach、augment、brand、最终验收和HTML禁词/区块巡检：
+   ```powershell
+   python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\bottom-fishing\scripts\finalize_bottom.py"
+   ```
+   手工排障时才拆开运行以下等价步骤。先对每个 `✓` 票执行独立跨源验价，
    并把输出的 `price_verification_by_code` 并入 `codex_audit`；没有 `✓` 时输出为空对象即可：
    ```powershell
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\verify_prices.py" --skill bottom-fishing --result "C:\Trading_analysis\data\bottom_latest.json"
@@ -178,7 +187,9 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" brand-report --html "<裁定版HTML绝对路径>"
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" validate --skill bottom-fishing --json "C:\Trading_analysis\data\bottom_latest.json" --html "<裁定版HTML绝对路径>" --require-bottom-search
    ```
-   任一命令非零退出即标记“未通过”，不得把该 HTML 当最终报告；验收器不提供最终报告降级开关。
+   任一命令非零退出时由自动发布器对可恢复环节换源重试；重试完成前不得回复“获取失败”或发布半成品。
+   最终 HTML 仍含 `数据获取失败`、`未识别明确相对受益板块`、`未识别明确相对承压板块`、缺ETF区块、
+   缺六维裁定底稿或缺候选板块下沉时一律不发布；验收器不提供最终报告降级开关。
 6. **复盘对账**：用户说"抄底复盘/对账"时跑：
    ```powershell
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" bottom -- --review

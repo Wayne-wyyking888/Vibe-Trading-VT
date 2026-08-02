@@ -24,6 +24,7 @@ import pathlib
 import re
 import statistics
 import threading
+import time
 import urllib.parse
 import urllib.request
 from typing import Any, Callable
@@ -31,12 +32,18 @@ from typing import Any, Callable
 
 VERSION = "bottom-etf-holdings/v1"
 REPORT_API = "https://datacenter.eastmoney.com/securities/api/data/get"
+REPORT_WEB_APIS = (
+    "https://datacenter-web.eastmoney.com/api/data/v1/get",
+    "https://datacenter.eastmoney.com/api/data/v1/get",
+    "https://datacenter.eastmoney.com/securities/api/data/v1/get",
+)
 REPORT_PAGE = "https://data.eastmoney.com/zlsj/detail/{date}-0-{code}.html"
 KLINE_HOSTS = (
     "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get",
     "https://ifzq.gtimg.cn/appstock/app/fqkline/get",
     "https://proxy.finance.qq.com/ifzqgtimg/appstock/app/fqkline/get",
 )
+EASTMONEY_KLINE_API = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
 SIMILARITY_DAYS = 60
 MIN_RETURN_DAYS = 40
 DEFAULT_SIMILARITY_MAX = 80
@@ -64,6 +71,65 @@ def _json_request(url: str, params: dict[str, Any], timeout: float = 18.0) -> di
     )
     with urllib.request.urlopen(req, timeout=timeout) as response:
         return json.loads(response.read().decode("utf-8", "ignore"))
+
+
+def _request_with_retry(
+    request_json: Callable[..., dict[str, Any]],
+    url: str,
+    params: dict[str, Any],
+    *,
+    attempts: int = 3,
+) -> dict[str, Any]:
+    """短退避重试单个公开端点；最终异常交给上层切换端点/提供方。"""
+    last_error: Exception | None = None
+    for attempt in range(max(1, attempts)):
+        try:
+            return request_json(url, params)
+        except Exception as exc:  # noqa: BLE001
+            last_error = exc
+            if attempt + 1 < attempts:
+                time.sleep(0.4 * (2 ** attempt))
+    assert last_error is not None
+    raise last_error
+
+
+def _web_report_params(params: dict[str, Any]) -> dict[str, Any]:
+    """把 securities/WAP 参数翻译成 DataCenter v1 参数。"""
+    translated: dict[str, Any] = {
+        "reportName": params.get("type"),
+        "columns": params.get("sty") or "ALL",
+        "source": "WEB",
+        "client": "WEB",
+        "pageNumber": params.get("p") or 1,
+        "pageSize": params.get("ps") or 100,
+    }
+    if params.get("st"):
+        translated["sortColumns"] = params["st"]
+    if params.get("sr") not in (None, ""):
+        translated["sortTypes"] = params["sr"]
+    if params.get("filter"):
+        translated["filter"] = params["filter"]
+    return translated
+
+
+def _report_request(
+    request_json: Callable[..., dict[str, Any]],
+    params: dict[str, Any],
+) -> dict[str, Any]:
+    """在线读取最新披露，主端点失败时依次切换三个公开备用端点。"""
+    endpoints = [(REPORT_API, params)] + [
+        (url, _web_report_params(params)) for url in REPORT_WEB_APIS
+    ]
+    errors: list[str] = []
+    for url, endpoint_params in endpoints:
+        try:
+            obj = _request_with_retry(request_json, url, endpoint_params)
+            if obj.get("success") is False or not isinstance(obj.get("result"), dict):
+                raise RuntimeError(f"接口返回失败: code={obj.get('code')} message={obj.get('message')}")
+            return obj
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"{urllib.parse.urlparse(url).netloc}: {str(exc)[:120]}")
+    raise RuntimeError("ETF公开披露端点全部不可用: " + " | ".join(errors))
 
 
 def _read_cache(path: pathlib.Path, max_age_seconds: float | None = None) -> dict[str, Any] | None:
@@ -97,11 +163,9 @@ def _float(value: Any) -> float | None:
 
 def _report_periods(cache_root: pathlib.Path, request_json: Callable[..., dict[str, Any]]) -> list[dict[str, Any]]:
     cache = cache_root / "report_periods.json"
-    cached = _read_cache(cache, max_age_seconds=6 * 3600)
-    if cached and isinstance(cached.get("rows"), list):
-        return cached["rows"]
-    obj = request_json(
-        REPORT_API,
+    # 每次裁定在线确认最近完整报告期；缓存只留审计副本，不作为失败兜底。
+    obj = _report_request(
+        request_json,
         {
             "type": "RPT_MAIN_REPORTDATE",
             "sty": "ALL",
@@ -181,14 +245,12 @@ def _stock_etfs(
     request_json: Callable[..., dict[str, Any]],
 ) -> list[dict[str, Any]]:
     cache = cache_root / "holdings" / f"{code}_{report_date}.json"
-    cached = _read_cache(cache, max_age_seconds=7 * 24 * 3600)
-    if cached and isinstance(cached.get("rows"), list):
-        return cached["rows"]
+    # 完整报告期也可能补充/更正；每次裁定在线刷新，缓存只作审计副本。
     rows: list[dict[str, Any]] = []
     pages = 1
     for page in range(1, MAX_HOLDING_PAGES + 1):
-        obj = request_json(
-            REPORT_API,
+        obj = _report_request(
+            request_json,
             {
                 "type": "RPT_MAIN_ORGHOLDDETAIL",
                 "sty": "ALL",
@@ -249,17 +311,14 @@ def _symbol(code: str) -> str:
 def _fetch_kline(code: str, cache_root: pathlib.Path, target_t: str) -> list[list[Any]]:
     symbol = _symbol(code)
     cache = cache_root / "klines" / f"{symbol}.json"
-    cached = _read_cache(cache)
-    cached_rows = list((cached or {}).get("rows") or [])
-    if cached_rows and str(cached_rows[-1][0]) >= target_t:
-        return cached_rows
     last_error: Exception | None = None
     for host in KLINE_HOSTS:
         try:
-            obj = _json_request(
+            obj = _request_with_retry(
+                _json_request,
                 host,
                 {"param": f"{symbol},day,,,{KLINE_BARS},qfq"},
-                timeout=15,
+                attempts=2,
             )
             node = (obj.get("data") or {}).get(symbol) or {}
             raw = node.get("qfqday") or node.get("day") or []
@@ -276,9 +335,35 @@ def _fetch_kline(code: str, cache_root: pathlib.Path, target_t: str) -> list[lis
                 return rows
         except Exception as exc:  # noqa: BLE001
             last_error = exc
-    if cached_rows:
-        return cached_rows
-    raise RuntimeError(f"{symbol} K线不可用: {last_error}")
+    # 腾讯三端点不可用时切到东方财富，避免同提供方单点失败。
+    try:
+        secid = ("1." if str(code).startswith(("5", "6", "9")) else "0.") + str(code)
+        obj = _request_with_retry(
+            _json_request,
+            EASTMONEY_KLINE_API,
+            {
+                "secid": secid,
+                "klt": 101,
+                "fqt": 1,
+                "lmt": KLINE_BARS,
+                "fields1": "f1,f2,f3,f4,f5,f6",
+                "fields2": "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61",
+            },
+            attempts=3,
+        )
+        raw = ((obj.get("data") or {}).get("klines") or [])
+        rows = []
+        for item in raw:
+            parts = str(item).split(",")
+            close = _float(parts[2] if len(parts) >= 3 else None)
+            if close is not None:
+                rows.append([parts[0], close])
+        if len(rows) >= MIN_RETURN_DAYS + 1:
+            _write_cache(cache, {"fetched_at": _now().isoformat(timespec="seconds"), "rows": rows})
+            return rows
+        raise RuntimeError("东方财富K线共同日不足")
+    except Exception as exc:  # noqa: BLE001
+        raise RuntimeError(f"{symbol} 腾讯/东方财富K线均不可用: 腾讯={last_error}; 东财={exc}") from exc
 
 
 def _pearson(left: list[float], right: list[float]) -> float | None:
@@ -361,6 +446,8 @@ def enrich_bottom_result(
         "similarity_max_etfs_by_holding_weight": similarity_max,
         "html_top": html_top,
         "disclosure_note": "基金定期披露≠实时仓位；一/三季报通常非全部持仓，披露中报告可能不完整",
+        "online_refresh": True,
+        "recovery_policy": "每次裁定在线刷新；持仓四端点自动切换；行情腾讯三端点失败后切东方财富；不使用过期缓存兜底",
     }
     result["etf_holdings_meta"] = top_meta
     candidates = list(result.get("candidates") or [])
