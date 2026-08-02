@@ -11,6 +11,10 @@
   同一旧会话中属于 weekly P13/P14 的脚本已按规则归属移入 weekly skill，避免重复和误用。
 - `scripts/research/bottom_ml/`：7 个 CatBoost/purged-CV 与毒月样本选择源码；来源、源码 hash 及外部 parquet
   hash 见同目录 `SOURCE_MANIFEST.json`。
+- `scripts/research/precrash_kline_study/`：暴雷前 10/20/30/60/75/100/120/150 根 K 线轨迹、
+  stop/win 对照、N=5 冷却、成熟标签、同日对照、20日事件去重与季度前推 OOS；源码、外部 parquet
+  和生成结果 hash 见同目录 `SOURCE_MANIFEST.json`，大结果留在
+  `C:\Trading_analysis\research\bottom_precrash_kline_study\output\`。
 - `scripts/research/holiday_event_study/`：2024—2026 上交所官方休市日历与节前/节后事件研究；
   源码、日历、外部 parquet 和生成结果 hash 见同目录 `SOURCE_MANIFEST.json`，大结果留在
   `C:\Trading_analysis\research\bottom_holiday_event_study\output\`。
@@ -31,6 +35,7 @@
 | 崩盘快刀与尾部成簇 | `toxic_month.py`, `bottom_regime2.py` | 保留买入日崩盘快刀、低仓位和预算熔断；否决“拿久等回来” | 胜负必须使用先到目标/先触-8%的路径口径，不能只看期末收益 |
 | 毒月消息面红旗分型 | `bottom_ml/select_poison.py`, `bottom_ml/select_winners.py` + README 8v8人工证据 | 采纳“恶化型强否决、事件型单独不否”的定性 rubric；不加数值分 | 人工对照仅 n=16，进入数值 gate 前仍需面板验证 |
 | ML 选股与毒月对照 | `bottom_ml/fetch_klines.py` → `panel_build.py` → `align_check.py` → `model.py`; `select_poison.py`, `select_winners.py` | CatBoost/tree boosting 选股进入否决清单；只保留 regime 研究可能性 | purged前推与 holdout 仍受股票池、特征脆弱性和单窗口影响 |
+| 暴雷前多窗口 K 线轨迹 | `precrash_kline_study/precrash_kline_study.py` | 采纳“60日深跌、20—30日继续走弱、T附近微修复、成交量收缩”为全体过线票描述；未找到稳健区分 stop/win 的个股 K 线特征，不新增过滤器 | 成熟冷却样本1458笔；100—150日表面差异受年份/regime混杂；同日、分年、20日事件去重与季度前推均未支持稳定泛化；150日窗缺早期样本 |
 | 节假日前后暴雷相关性、毒月反向归因 | `holiday_event_study/holiday_event_study.py` + 上交所2024—2026休市日历 | 节前仅弱提示、节后不成立；毒月不是节日窗制造；不增加禁买窗口，不改生产workflow；只允许未来shadow累计 | 完整事件仅16个；节前5日冷却线+7.9pp但cluster CI跨0、随机化p=0.470、BH q=0.765；毒月内±5日窗占25.5%信号/26.1%雷，删除后真正因雷率跌破30%而消失的毒月=0 |
 | 毒月真实集中窗、网页事件归因与事前预警可得性 | `toxic_month_web_study/analyze_toxic_windows.py` + `web_event_ledger.csv` + `EARLY_WARNING_DESIGN.md` | 当前固定面板为10个严格毒月及2024-07边界月；11个月1057笔止损中584笔（55.3%）集中于各月真实连续5个市场交易日的兑现窗，严格10个月为506/884（57.2%）；旧约61%是“5个有信号日期”口径，不得混用。共同点更像跨行业regime切换，不是同一板块。2026-07-23采纳为 Agent③ 五域 Web nowcast 和 HTML shadow warning，契约见 `references/TOXIC_RISK_WARNING_PROTOCOL.md`；不改分数、裁定、仓位或推荐 | 网页归因有事后叙事偏差；仅11个月，且2026多个月份受小样本和重复信号放大；Agent③仍须累计逐笔T日证据、误报和机会成本，未升级为交易gate |
 

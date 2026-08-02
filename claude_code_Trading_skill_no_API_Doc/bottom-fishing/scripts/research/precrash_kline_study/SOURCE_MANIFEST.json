@@ -1,0 +1,79 @@
+{
+  "schema": "trading-research-source-manifest/v1",
+  "mode": "isolated-hypothesis-study",
+  "created_at": "2026-08-02",
+  "study": "bottom-fishing pre-stop K-line trajectory study 2024-2026",
+  "workflow_modified": false,
+  "source_files": {
+    "precrash_kline_study.py": {
+      "bytes": 42941,
+      "sha256": "6F131684BFC9541D756E6D498A8DCB403E5268774DA0D985694C668CF930D44C"
+    },
+    "README.md": {
+      "bytes": 3717,
+      "sha256": "969099B573306E8E7F0045B84BED12C822A0EFDF3D2BEB712B20AFDB81F692BC"
+    }
+  },
+  "external_datasets": {
+    "C:\\Trading_analysis\\research\\bottom_ml\\index_399006.parquet": {
+      "bytes": 53862,
+      "sha256": "7913D39E96205801709B085FBFFE39820B76788ACBA88F49F2BC957853ED4A19"
+    },
+    "C:\\Trading_analysis\\research\\bottom_ml\\index_panel.parquet": {
+      "bytes": 20329,
+      "sha256": "8AF94A4DD953864B063351453077E021CB88969A254E92EFE0C68919B35ACE3D"
+    },
+    "C:\\Trading_analysis\\research\\bottom_ml\\klines.parquet": {
+      "bytes": 5819671,
+      "sha256": "20073207B4378021ADFDC59F9E404582314C0A9F76708B7117E003EB35BACB6C"
+    },
+    "C:\\Trading_analysis\\research\\bottom_ml\\meta.parquet": {
+      "bytes": 12221,
+      "sha256": "E3C05B0B6FC7E6F356281348686CF24D56DE36354A6377C96563CC1CA97494DB"
+    },
+    "C:\\Trading_analysis\\research\\bottom_ml\\panel.parquet": {
+      "bytes": 838472,
+      "sha256": "6220C0C2215D023B870FE63F797720092F46772FFD4DB7A436377EFC8475D5C4"
+    }
+  },
+  "generated_outputs": {
+    "root": "C:\\Trading_analysis\\research\\bottom_precrash_kline_study\\output",
+    "common_shape.csv": {
+      "bytes": 7367,
+      "sha256": "277961768F0B219185840115C37CD2A214BA3C42770F319535FF0144D67A9EAA"
+    },
+    "feature_comparison.csv": {
+      "bytes": 99915,
+      "sha256": "F95FF439E388320C7BF235B2633BE1BA635264BE305523AD33FF9B3420E3C8F1"
+    },
+    "market_comparison.csv": {
+      "bytes": 4737,
+      "sha256": "9E923639ED63D7FD9CF8A091144EB37A3FC32960B9EF6E96DA15B86F03456960"
+    },
+    "oos_auc.csv": {
+      "bytes": 2104,
+      "sha256": "2D751EACCA97B060D9DB2223D324F61C822C46FB377F9937F053F6A401C37851"
+    },
+    "results.json": {
+      "bytes": 286238,
+      "sha256": "375C5A6910CFC8A80B1635481DDBB2499C5F15EE2019A213B65270D2B176BEEE"
+    },
+    "sample_audit.json": {
+      "bytes": 2842,
+      "sha256": "64C705855758CD11264EE5E89EEC43294D6C5BB894190F3B653B2CB3C86A5FA5"
+    },
+    "summary.md": {
+      "bytes": 9055,
+      "sha256": "DFDF6717270112B6CB06FABF0F00DCFAB9F035CE6D5F8876748A4D1F2E2EF0EA"
+    },
+    "trajectory.csv": {
+      "bytes": 9062,
+      "sha256": "9E03E22D41240A9B0A574C274E47F2949A6B01AED91706655D37CCB91DCF11AB"
+    },
+    "trajectory.png": {
+      "bytes": 148168,
+      "sha256": "99D08A555800B3D220A45E79FD226E6DA321E082AE9BD2E39C172279B4F449B1"
+    }
+  },
+  "verdict": "成熟N=5冷却样本1458笔。全体过线票共有60日深跌、20—30日继续走弱、T附近微修复和成交量收缩轨迹；10—60日个股K线不能稳定区分stop/win，100—150日表面分离受年份/regime混杂。严格稳健候选为0，不修改生产workflow。"
+}
