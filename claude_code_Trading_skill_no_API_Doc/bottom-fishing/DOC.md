@@ -21,8 +21,10 @@ bottom-fishing/
 ├─ scripts/research/
 │  ├─ legacy_cc/          # 从 Claude Code scratchpad 原样抢救的历史实验
 │  ├─ bottom_ml/          # CatBoost/purged-CV 源码；大 parquet 仍在外部数据目录
+│  ├─ precrash_kline_study/ # 暴雷前10—150日轨迹、同日对照与季度前推OOS
 │  ├─ holiday_event_study/ # 2024—2026节假日前后事件研究
-│  └─ toxic_month_web_study/ # 毒月真实集中窗、事件账本与预警设计
+│  ├─ toxic_month_web_study/ # 毒月真实集中窗、事件账本与预警设计
+│  └─ board30_split_study/ # 30* 20%板独立profile预注册/A-B/holdout（shadow-only）
 ├─ README.md             # 研究存档: 全部方法论数字/否决清单/毒月专项
 ├─ DOC.md                # 本文件(操作文档)
 └─ reports/              # HTML报告(gitignore, bottom_cn_完整北京时间戳[_裁定版].html)
@@ -120,5 +122,5 @@ python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" vali
 - 影子候选(强格子未进规则, 随影子日志复验): 防守持续≥9天、大盘RSV∈[15,40]。
 - 30笔了结后 --review 与回测口径(75.2%/13.9%)偏离>10pp → 回研究台重校准。
 - **研究结论摘要进 README，复现实验与 provenance 进 `references/RESEARCH_LEDGER.md`**；日常扫描不得执行
-  `scripts/research/`。最新：2026-07-23 毒月真实交易日集中窗和节假日归因已接入 Agent③ shadow warning，
-  但尚未升级为交易 gate。
+  `scripts/research/`。最新：2026-08-09 完成 `30*` 20%涨跌幅独立profile研究，点估计只达到未来shadow讨论门槛，
+  因holdout月簇CI跨0、月度反向和ATR上边界而**暂不进入生产**；现行全市场统一阈值、workflow和日志均不变。

@@ -21,8 +21,13 @@
 - `scripts/research/toxic_month_web_study/`：毒月真实 5 市场交易日集中窗、行业集中度、国内外网页事件归因
   及事前 warning 设计；源码、证据账本、外部 parquet 和生成结果 hash 见同目录
   `SOURCE_MANIFEST.json`，大结果留在 `C:\Trading_analysis\research\bottom_toxic_month_web_study\output\`。
+- `scripts/research/board30_split_study/`：`30*`（20%涨跌幅）与 `60*+00*`（10%涨跌幅）分组机制研究；
+  `PRE_REGISTRATION.md` 冻结候选族、时间隔离和 shadow 门槛，`research.py` 负责同源 qfq 分段补历史、
+  N=5 旋转门、1000候选搜索和2026 holdout，`verify.py` 独立复算五条 A/B 结果。大数据、报告、冻结文件、
+  验收结果和 hash manifest 留在 `C:\Trading_analysis\research\bottom_board30_split_study\`。
 - 大样本数据不随 skill 复制，保留在 `C:\Trading_analysis\research\bottom_ml\`。运行前必须先核对 manifest；
-  hash 不一致即视为不同实验，不得沿用旧结论。
+  `board30_split_study` 的大样本另保留在上述独立目录。运行前必须先核对对应 manifest；hash 不一致即视为
+  不同实验，不得沿用旧结论。
 
 ## 规则到实验的映射
 
@@ -38,6 +43,7 @@
 | 暴雷前多窗口 K 线轨迹 | `precrash_kline_study/precrash_kline_study.py` | 采纳“60日深跌、20—30日继续走弱、T附近微修复、成交量收缩”为全体过线票描述；未找到稳健区分 stop/win 的个股 K 线特征，不新增过滤器 | 成熟冷却样本1458笔；100—150日表面差异受年份/regime混杂；同日、分年、20日事件去重与季度前推均未支持稳定泛化；150日窗缺早期样本 |
 | 节假日前后暴雷相关性、毒月反向归因 | `holiday_event_study/holiday_event_study.py` + 上交所2024—2026休市日历 | 节前仅弱提示、节后不成立；毒月不是节日窗制造；不增加禁买窗口，不改生产workflow；只允许未来shadow累计 | 完整事件仅16个；节前5日冷却线+7.9pp但cluster CI跨0、随机化p=0.470、BH q=0.765；毒月内±5日窗占25.5%信号/26.1%雷，删除后真正因雷率跌破30%而消失的毒月=0 |
 | 毒月真实集中窗、网页事件归因与事前预警可得性 | `toxic_month_web_study/analyze_toxic_windows.py` + `web_event_ledger.csv` + `EARLY_WARNING_DESIGN.md` | 当前固定面板为10个严格毒月及2024-07边界月；11个月1057笔止损中584笔（55.3%）集中于各月真实连续5个市场交易日的兑现窗，严格10个月为506/884（57.2%）；旧约61%是“5个有信号日期”口径，不得混用。共同点更像跨行业regime切换，不是同一板块。2026-07-23采纳为 Agent③ 五域 Web nowcast 和 HTML shadow warning，契约见 `references/TOXIC_RISK_WARNING_PROTOCOL.md`；不改分数、裁定、仓位或推荐 | 网页归因有事后叙事偏差；仅11个月，且2026多个月份受小样本和重复信号放大；Agent③仍须累计逐笔T日证据、误报和机会成本，未升级为交易gate |
+| `30*` 20%涨跌幅独立打分/阈值 | `board30_split_study/research.py`, `verify.py`, `PRE_REGISTRATION.md` | **shadow-only，暂不采纳生产**。预注册网格冻结候选为 `limit20_atr10|atr8|def24|stock15`：仅对`30*`把涨停基因阈值9.3%→18.5%、ATR高波惩罚7→10、硬gate 4→8、防守总分18→24，非防守个股分仍15；`60*+00*`逐行不变。全扩窗`30*`旧/新=544笔61.6胜/32.4雷/EV+0.49 vs 632笔69.6/26.7/+1.34；全部旧/分组=1754笔61.1/31.9/+0.50 vs 1842笔63.8/30.0/+0.79。2026 holdout `30*`旧/新=49笔67.3/30.6/+0.92 vs 116笔71.6/27.6/+1.37。独立验收12/12、旧面板复现通过 | holdout仅7个月且月簇bootstrap胜率/雷率/EV差CI均跨0；29个双方有信号月仅15改善/3平/11变差，2025H2反向；ATR=8落在预注册网格上边界，post-hoc 到12/无硬gate才饱和，未识别全局最优；今日成交额前600有幸存者偏差、未模拟20%板跌停封单与滑点。只支持未来前瞻shadow，不支持现在改workflow |
 
 ## 重跑纪律
 
@@ -56,3 +62,6 @@
 - 市场级 Web risk warning 已以 Agent③ 接入日常流程并由独立验收器强制检查五域覆盖、T/T后隔离、
   来源 origin 和 HTML alert 联动；当前仍未完成 T-as-of 回放和 shadow 样本，只允许
   `mode=shadow` 的透明提示，不得自动降级、禁买、调仓位或改分。
+- `30*` 分组机制虽达到预注册“进入 shadow 讨论”点估计门槛，但未达到统计确认，也未解决 ATR 上边界。
+  若开启下一阶段，必须在**尚未出现的新交易日**预先冻结 ATR8/ATR9/无硬gate 三条影子线、最小样本与回滚条件；
+  在此前不得把 post-hoc ATR12/无gate 反过来写进生产，也不得把本次2026 holdout再次称为新样本外。
