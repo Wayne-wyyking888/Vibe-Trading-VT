@@ -13,7 +13,7 @@ warning；该文件负责外盘/宏观预测输入、分窗口A股板块调用�
 1. 角色边界
 2. 五个固定风险域
 3. T 日与 T 后隔离
-4. 完整检索与证据约束推断
+4. 完整检索、重大排期事件预期与证据约束推断
 5. 五域合并后的A股走势映射
 6. warning 等级和来源门槛
 7. 候选暴露映射与 HTML
@@ -91,6 +91,25 @@ Agent③不能用“方向不确定”“待观察”结束分析。每条 `warn
 `runtime_evaluation.source_refs` 引用，并出现在本域同阶段查询的 `reviewed_urls` 中。
 `no_relevant_hit` 也必须写运行时点基准判断，例如“截至检索时点未发现重大新增压力，但不等于风险不存在”，
 并列出观察变量和失效条件。
+
+### 4.1 重大排期事件预期台账
+
+Agent③必须主动检索 T+1 起未来10个自然日的重大统计、央行、政策和长假排期。`warnings[]` 中每一条
+`status=scheduled` 事件都必须一对一进入 `scheduled_event_expectations[]`；不得有漏项或孤儿记录。
+
+- `official_source_refs` 只证明事件名称和排期，必须至少有一个官方直达或经核官方镜像；
+- `consensus_source_refs` 证明一致预期，只能使用调查、市场定价或可靠机构/媒体预览，并与对应
+  `warning.evaluation.consensus_source_refs` 精确一致；
+- `consensus_query_ids` 必须回指该 warning 的实际 as-of-T 查询；有共识时采用来源 URL 必须出现在这些
+  查询的 `reviewed_urls`，声称无可靠共识时必须至少有两条不同查询文本；
+- `scheduled_for` 优先写完整 `+08:00` 北京时间；官方只给日期或窗口时必须分别标
+  `time_precision=date|window`，不能伪造分钟；
+- `consensus_status=available` 时，每个指标必须同时写 `consensus`、`previous`、`unit` 和指标级来源；
+- CPI/PPI 固定四项：`headline_mom/headline_yoy/core_mom/core_yoy`；就业报告固定
+  `payroll_change/unemployment_rate/wage_growth_mom`；LPR 固定 `lpr_1y/lpr_5y`；
+- 完成至少两种独立共识查询仍无结果时，写 `no_reliable_consensus`、空指标和明确原因；不得让用户提醒、
+  补数或把“待补”带入报告；
+- 每条记录还必须有可读摘要与 `watch_after_release`，并在 HTML 顶部展示排期、预期/前值、基准/上下行情景和来源。
 
 ## 5. 五域合并后的A股走势映射
 
@@ -307,6 +326,34 @@ HTML 顶部“市况”正下方必须先显示“Agent③ A股走势映射（�
         "shadow": true
       }
     ],
+    "scheduled_event_expectations": [
+      {
+        "event_id": "event-us-cpi-YYYY-MM",
+        "warning_id": "toxic-warning-001",
+        "event_name": "美国某月CPI",
+        "event_class": "inflation_cpi|inflation_ppi|labor_report|central_bank_decision|central_bank_communication|pmi|gdp|retail_sales|lpr|policy_calendar|holiday|other",
+        "scheduled_for": "YYYY-MM-DD HH:MM:SS+08:00",
+        "time_precision": "datetime|date|window",
+        "official_source_refs": ["official-source-ref"],
+        "consensus_status": "available|no_reliable_consensus|not_applicable",
+        "consensus_source_refs": ["consensus-source-ref"],
+        "consensus_query_ids": ["toxic-query-consensus-001"],
+        "required_metric_ids": ["headline_mom", "headline_yoy", "core_mom", "core_yoy"],
+        "metrics": [
+          {
+            "metric_id": "headline_mom",
+            "label": "总CPI环比",
+            "consensus": "+0.1%",
+            "previous": "+0.2%",
+            "unit": "%",
+            "source_refs": ["consensus-source-ref"]
+          }
+        ],
+        "consensus_note": "官方排期与一致预期的证据边界",
+        "display_summary": "事件名：可直接展示的预期摘要",
+        "watch_after_release": ["实际值相对预期差", "利率/汇率/风格反应"]
+      }
+    ],
     "by_code": {
       "600000": {
         "exposure": "none|watch|high",
@@ -444,11 +491,13 @@ python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" vali
 ```
 
 该命令同时验证 Agent② `bottom_search` 和 Agent③ `toxic_risk_warning`。Agent③缺五域运行时点评估、
-缺八类预测输入覆盖、缺事件推断、只写“方向不确定”、末端扫描未覆盖至实际运行日、无来源精确概率、
+缺八类预测输入覆盖、重大排期事件漏一对一预期台账、CPI/PPI漏四指标、指标缺前值/来源、缺事件推断、
+只写“方向不确定”、末端扫描未覆盖至实际运行日、无来源精确概率、
 缺分窗口A股走势综合、板块 bullet 无括号原因、板块与候选股票未双向下沉、没有逐域说明如何反映到A股、
 编造A股精确涨跌概率/幅度/点位或发生 T 后倒灌时均失败。最终发布只接受 v3；历史 v2 仅保留非严格读取兼容。
 任一失败都不得运行 `--adjudicate`。最终 `augment-report` 会生成 Agent③ 独立审计表，
-`validate --require-bottom-search` 还会检查A股白话综合确实位于顶部市况下、运行时点共识/基准情景、
+`validate --require-bottom-search` 还会检查A股白话综合确实位于顶部市况下、重大排期事件的北京时间、
+全部指标预期/前值/情景/来源、运行时点共识/基准情景、
 warning 来源链接和报告/个股 alert 文本确实出现在 HTML。不可变核心 HTML 中遗留的旧“61%”
 集中窗口径由该附录强制校正为真实连续5个市场交易日的57.2%（严格10月）/55.3%（含边界月），
 最终报告不得再引用旧数值。

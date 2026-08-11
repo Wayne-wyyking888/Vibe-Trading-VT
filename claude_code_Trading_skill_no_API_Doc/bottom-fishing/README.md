@@ -93,11 +93,12 @@ python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" bott
   但后续战争不能倒灌成节前已知风险。
 
 因此新增 Agent③：每次扫描固定覆盖五个市场风险域，将 T 日 warning 写入报告级 alert，并只对有明确行业/
-产品/成本/海外收入暴露的候选下沉个股 alert。v2 要求每次把五域检索到实际完成时点，并对每条事件及五域综合
+产品/成本/海外收入暴露的候选下沉个股 alert。v3 要求每次把五域检索到实际完成时点，并对每条事件及五域综合
 写事实、当前共识、基准/上下行情景、置信度、传导链、观察变量和失效条件；FOMC、PMI 只是事件例子，
-不能只写“方向不确定”。五域之后还必须合并输出这些信息反映到A股下一交易日和未来1—5个交易日的大概
+不能只写“方向不确定”。每条重大排期 warning 还要一对一登记官方排期、北京时间、一致预期、前值和公布后观察项；
+CPI/PPI 必须补齐总项与核心的环比/同比四项。五域之后还必须合并输出这些信息反映到A股下一交易日和未来1—5个交易日的大概
 方向、风格与板块结构，并把白话结论放在最终HTML顶部“市况”正下方；不允许编造未经校准的涨跌概率或点位。数据契约为
-`codex_audit.toxic_risk_warning`/`bottom-toxic-risk-warning/v2`；验收器强制检查T日截止、来源 origin、
+`codex_audit.toxic_risk_warning`/`bottom-toxic-risk-warning/v3`；验收器强制检查T日截止、来源 origin、
 五域 coverage、T后隔离、最新运行时点评估、A股走势映射和 HTML 可见性。当前固定 `mode=shadow`，
 不改分数、✓/?/✗、仓位或熔断；
 完成无前视样本、误报率和机会成本评估前不得升级为交易 gate。完整协议见

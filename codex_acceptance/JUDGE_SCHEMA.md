@@ -129,12 +129,15 @@ bottom-fishing 启用 `bottom_search` 后按其 F10 ledger 执行：T 前实质�
 `no_relevant_hit/blocked`，允许该票没有 fact，严禁为满足旧的 facts 覆盖规则虚构“无证据事实”。
 
 同时必须写入 Agent③ 的
-`codex_audit.toxic_risk_warning`，版本固定为 `bottom-toxic-risk-warning/v2`。完整五域覆盖、
+`codex_audit.toxic_risk_warning`，版本固定为 `bottom-toxic-risk-warning/v3`。完整五域覆盖、
 截至实际运行时点的最新搜索、T/T后隔离、逐项证据约束推断、来源门槛、候选暴露和 HTML alert 联动见
 `claude_code_Trading_skill_no_API_Doc/bottom-fishing/references/TOXIC_RISK_WARNING_PROTOCOL.md`。
 该对象固定 `mode=shadow`，只增加风险提示，不改变分数、推荐线、✓/?/✗、仓位或预算熔断。
 每条 warning/delta 和 `runtime_evaluation` 的五个域都必须写事实、共识、基准情景与置信度、
  上下行情景、传导链、观察变量、失效条件和推断边界；不能只写“方向不确定”。
+每条 `status=scheduled` warning 还必须一对一写入 `scheduled_event_expectations`：官方排期、北京时间/精度、
+一致预期来源、指标预期与前值、公布后观察项完整可审计；CPI/PPI 必须包含总项环比/同比、核心环比/同比四项。
+没有可靠共识时明确记账，禁止编数或把补齐责任转给用户。
 五域完成后还必须写 `ashare_runtime_outlook`：逐域解释如何反映到A股，并明确下一交易日、未来1—5日、
 指数/风格、相对受益与承压板块、开盘触发和一句白话走势结论。该综合只允许定性置信度，禁止未经校准的
 涨跌概率、涨跌幅或指数目标点位；HTML白话卡片必须位于顶部“市况”正下方。

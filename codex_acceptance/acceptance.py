@@ -490,6 +490,21 @@ ASHARE_UNCALIBRATED_PRECISION_RE = re.compile(
 TOXIC_WARNING_V2 = "bottom-toxic-risk-warning/v2"
 TOXIC_WARNING_V3 = "bottom-toxic-risk-warning/v3"
 TOXIC_WARNING_VERSIONS = {TOXIC_WARNING_V2, TOXIC_WARNING_V3}
+SCHEDULED_EVENT_CLASSES = {
+    "inflation_cpi", "inflation_ppi", "labor_report", "central_bank_decision",
+    "central_bank_communication", "pmi", "gdp", "retail_sales", "lpr",
+    "policy_calendar", "holiday", "other",
+}
+SCHEDULED_EVENT_CONSENSUS_STATUSES = {
+    "available", "no_reliable_consensus", "not_applicable",
+}
+SCHEDULED_EVENT_TIME_PRECISIONS = {"datetime", "date", "window"}
+SCHEDULED_EVENT_REQUIRED_METRICS = {
+    "inflation_cpi": {"headline_mom", "headline_yoy", "core_mom", "core_yoy"},
+    "inflation_ppi": {"headline_mom", "headline_yoy", "core_mom", "core_yoy"},
+    "labor_report": {"payroll_change", "unemployment_rate", "wage_growth_mom"},
+    "lpr": {"lpr_1y", "lpr_5y"},
+}
 PREDICTIVE_INPUT_CATEGORIES = (
     "us_equity_sectors",
     "global_peer_events",
@@ -590,6 +605,158 @@ def _validate_toxic_evaluation(out: Result, value: Any, tag: str,
         out.check("T" in boundary and any(marker in boundary for marker in
                                           ("不倒灌", "不用于T", "不进入T", "与T日裁定隔离")),
                   f"{tag}.inference_boundary 必须明确运行时点信息不倒灌 T 日裁定")
+
+
+def _validate_scheduled_event_expectations(
+        out: Result, warning: dict[str, Any], warning_by_id: dict[str, dict[str, Any]],
+        source_by_ref: dict[str, dict[str, Any]],
+        query_by_id: dict[str, dict[str, Any]]) -> None:
+    """Require a complete, source-linked expectation ledger for every scheduled warning."""
+    entries = warning.get("scheduled_event_expectations")
+    out.check(isinstance(entries, list),
+              "toxic_risk_warning.scheduled_event_expectations 必须是数组")
+    if not isinstance(entries, list):
+        return
+    scheduled_ids = {
+        warning_id for warning_id, item in warning_by_id.items()
+        if item.get("status") == "scheduled"
+    }
+    entry_by_warning: dict[str, dict[str, Any]] = {}
+    seen_event_ids: set[str] = set()
+    required_fields = {
+        "event_id", "warning_id", "event_name", "event_class", "scheduled_for",
+        "time_precision", "official_source_refs", "consensus_status",
+        "consensus_source_refs", "consensus_query_ids", "required_metric_ids", "metrics",
+        "consensus_note", "display_summary", "watch_after_release",
+    }
+    metric_fields = {"metric_id", "label", "consensus", "previous", "unit", "source_refs"}
+    for idx, item in enumerate(entries):
+        tag = f"toxic_risk_warning.scheduled_event_expectations[{idx}]"
+        out.check(isinstance(item, dict), f"{tag} 必须是对象")
+        if not isinstance(item, dict):
+            continue
+        out.check(required_fields <= set(item), f"{tag} 缺必需字段")
+        event_id = str(item.get("event_id", "")).strip()
+        warning_id = str(item.get("warning_id", "")).strip()
+        out.check(bool(event_id) and event_id not in seen_event_ids,
+                  f"{tag}.event_id 为空或重复")
+        if event_id:
+            seen_event_ids.add(event_id)
+        out.check(warning_id in scheduled_ids and warning_id not in entry_by_warning,
+                  f"{tag}.warning_id 未一对一对应 scheduled warning")
+        if warning_id and warning_id not in entry_by_warning:
+            entry_by_warning[warning_id] = item
+        warning_item = warning_by_id.get(warning_id) or {}
+        event_name = str(item.get("event_name", "")).strip()
+        event_class = str(item.get("event_class", "")).strip()
+        scheduled_for = str(item.get("scheduled_for", "")).strip()
+        precision = str(item.get("time_precision", "")).strip()
+        out.check(bool(event_name), f"{tag}.event_name 为空")
+        out.check(event_class in SCHEDULED_EVENT_CLASSES, f"{tag}.event_class 无效")
+        out.check(precision in SCHEDULED_EVENT_TIME_PRECISIONS, f"{tag}.time_precision 无效")
+        if precision == "datetime":
+            out.check(_beijing_datetime(scheduled_for) is not None,
+                      f"{tag}.scheduled_for 必须是 +08:00 的完整北京时间")
+        elif precision == "date":
+            out.check(re.fullmatch(r"\d{4}-\d{2}-\d{2}", scheduled_for) is not None and
+                      _date(scheduled_for) is not None,
+                      f"{tag}.scheduled_for 必须是 YYYY-MM-DD")
+        else:
+            out.check(bool(scheduled_for), f"{tag}.scheduled_for 窗口描述为空")
+        if precision in {"datetime", "date"}:
+            out.check(_date(scheduled_for) == _date(warning_item.get("event_start")),
+                      f"{tag}.scheduled_for 日期与 warning.event_start 不一致")
+
+        warning_refs = set(_string_list(warning_item.get("source_refs")))
+        official_refs = _string_list(item.get("official_source_refs"))
+        out.check(bool(official_refs) and set(official_refs) <= warning_refs,
+                  f"{tag}.official_source_refs 必须非空且来自对应 warning")
+        out.check(all((source_by_ref.get(ref) or {}).get("source_kind") in
+                      {"official_direct", "verified_official_mirror"} for ref in official_refs),
+                  f"{tag}.official_source_refs 必须是官方来源")
+        consensus_status = str(item.get("consensus_status", ""))
+        consensus_refs = _string_list(item.get("consensus_source_refs"))
+        out.check(consensus_status in SCHEDULED_EVENT_CONSENSUS_STATUSES,
+                  f"{tag}.consensus_status 无效")
+        out.check(set(consensus_refs) <= warning_refs,
+                  f"{tag}.consensus_source_refs 必须来自对应 warning")
+        evaluation_refs = set(_string_list((warning_item.get("evaluation") or {}).get(
+            "consensus_source_refs")))
+        out.check(set(consensus_refs) == evaluation_refs,
+                  f"{tag}.consensus_source_refs 必须与 warning.evaluation 一致")
+        consensus_query_ids = _string_list(item.get("consensus_query_ids"))
+        out.check(bool(consensus_query_ids) and
+                  len(consensus_query_ids) == len(set(consensus_query_ids)) and
+                  set(consensus_query_ids) <= set(_string_list(warning_item.get("query_ids"))),
+                  f"{tag}.consensus_query_ids 必须非空、去重且来自对应 warning")
+        consensus_queries = [query_by_id.get(query_id) for query_id in consensus_query_ids]
+        out.check(all(query is not None and query.get("phase") == "as_of_t"
+                      for query in consensus_queries),
+                  f"{tag}.consensus_query_ids 必须回指 as_of_t 查询")
+        query_variants = {
+            str(query.get("query_text", "")).strip()
+            for query in consensus_queries if isinstance(query, dict)
+        }
+
+        required_metric_ids = _string_list(item.get("required_metric_ids"))
+        metrics = item.get("metrics") or []
+        out.check(isinstance(item.get("required_metric_ids"), list) and
+                  len(required_metric_ids) == len(set(required_metric_ids)),
+                  f"{tag}.required_metric_ids 必须是去重数组")
+        out.check(isinstance(item.get("metrics"), list), f"{tag}.metrics 必须是数组")
+        metric_ids: set[str] = set()
+        for metric_idx, metric in enumerate(metrics if isinstance(metrics, list) else []):
+            metric_tag = f"{tag}.metrics[{metric_idx}]"
+            out.check(isinstance(metric, dict), f"{metric_tag} 必须是对象")
+            if not isinstance(metric, dict):
+                continue
+            out.check(metric_fields <= set(metric), f"{metric_tag} 缺必需字段")
+            metric_id = str(metric.get("metric_id", "")).strip()
+            out.check(bool(metric_id) and metric_id not in metric_ids,
+                      f"{metric_tag}.metric_id 为空或重复")
+            metric_ids.add(metric_id)
+            for field in ("label", "consensus", "previous", "unit"):
+                out.check(bool(str(metric.get(field, "")).strip()), f"{metric_tag}.{field} 为空")
+            refs = _string_list(metric.get("source_refs"))
+            out.check(bool(refs) and set(refs) <= set(consensus_refs),
+                      f"{metric_tag}.source_refs 必须非空且来自共识来源")
+        profiled_ids = SCHEDULED_EVENT_REQUIRED_METRICS.get(event_class)
+        if profiled_ids is not None and consensus_status == "available":
+            out.check(set(required_metric_ids) == profiled_ids,
+                      f"{tag}.required_metric_ids 未覆盖 {event_class} 固定指标")
+        out.check(set(required_metric_ids) <= metric_ids,
+                  f"{tag}.metrics 缺 required_metric_ids 指标")
+
+        note = str(item.get("consensus_note", "")).strip()
+        summary = str(item.get("display_summary", "")).strip()
+        watch_items = _string_list(item.get("watch_after_release"))
+        out.check(bool(note) and bool(summary), f"{tag} 共识说明或展示摘要为空")
+        out.check(event_name in summary, f"{tag}.display_summary 必须点名事件")
+        out.check(bool(watch_items) and all(value.strip() for value in watch_items),
+                  f"{tag}.watch_after_release 必须是非空字符串数组")
+        if consensus_status == "available":
+            out.check(bool(consensus_refs) and bool(metrics) and
+                      set(required_metric_ids) == metric_ids,
+                      f"{tag} available 必须有来源且 metrics 与 required_metric_ids 精确一致")
+            reviewed_urls = {
+                url for query in consensus_queries if isinstance(query, dict)
+                for url in _string_list(query.get("reviewed_urls"))
+            }
+            out.check(all(str((source_by_ref.get(ref) or {}).get("access_url", "")) in reviewed_urls
+                          for ref in consensus_refs),
+                      f"{tag} 共识来源未进入 consensus_query_ids.reviewed_urls")
+        elif consensus_status == "no_reliable_consensus":
+            out.check(not consensus_refs and not metrics and not required_metric_ids and
+                      any(marker in note for marker in ("无可靠共识", "未找到可靠共识")),
+                      f"{tag} no_reliable_consensus 必须明确无可靠共识且不得伪造指标")
+            out.check(len(consensus_query_ids) >= 2 and len(query_variants) >= 2,
+                      f"{tag} 声称无可靠共识前必须完成至少两种独立查询")
+        else:
+            out.check(event_class in {"holiday", "policy_calendar", "other"} and
+                      not consensus_refs and not metrics and not required_metric_ids,
+                      f"{tag} not_applicable 仅限无调查型事件且不得夹带指标")
+    out.check(set(entry_by_warning) == scheduled_ids,
+              "每条 scheduled warning 必须且只能有一条重大排期事件预期记录")
 
 
 def _validate_market_signal_layer(out: Result, warning: dict[str, Any],
@@ -984,7 +1151,9 @@ def validate_toxic_risk_warning(result_obj: dict[str, Any], document: dict[str, 
     }
     version = str(warning.get("version", ""))
     if version == TOXIC_WARNING_V3:
-        required_fields |= {"market_signals", "predictive_input_coverage"}
+        required_fields |= {
+            "market_signals", "predictive_input_coverage", "scheduled_event_expectations",
+        }
     out.check(required_fields <= set(warning), "toxic_risk_warning 缺必需字段")
     out.check(version in TOXIC_WARNING_VERSIONS, "toxic_risk_warning.version 错误")
     if required:
@@ -1284,6 +1453,11 @@ def validate_toxic_risk_warning(result_obj: dict[str, Any], document: dict[str, 
                           _string_list((query_by_id.get(query_id) or {}).get("reviewed_urls"))
                           for query_id in _string_list(item.get("query_ids"))),
                       f"{delta_id} 来源未出现在关联查询 reviewed_urls: {source_ref}")
+
+    if version == TOXIC_WARNING_V3:
+        _validate_scheduled_event_expectations(
+            out, warning, warning_by_id, source_by_ref, query_by_id
+        )
 
     coverage = warning.get("coverage") or {}
     out.check(isinstance(coverage, dict) and set(coverage) == set(TOXIC_WARNING_DOMAINS),
@@ -3184,6 +3358,53 @@ def validate_html(skill: str, obj: dict[str, Any], html_path: pathlib.Path, stri
                         out.check("data-agent3-sector-direction='beneficiary'" in raw and
                                   "data-agent3-sector-direction='pressure'" in raw,
                                   "HTML 顶部相对受益/承压必须渲染为独立 bullet 列表")
+                        event_entries = toxic_warning.get("scheduled_event_expectations") or []
+                        outlook_end = raw.find(ASHARE_OUTLOOK_END, outlook_pos)
+                        outlook_block = (raw[outlook_pos:outlook_end]
+                                         if outlook_pos >= 0 and outlook_end > outlook_pos else "")
+                        outlook_links = _html_link_targets(outlook_block)
+                        if event_entries:
+                            out.check("重大排期事件预期（北京时间）" in _plain_html(outlook_block) and
+                                      "重大排期事件预期（官方排期 + 一致预期 + 前值）" in plain,
+                                      "HTML 顶部或审计附录缺重大排期事件预期")
+                        warning_lookup = {
+                            str(item.get("warning_id", "")): item
+                            for item in toxic_warning.get("warnings") or []
+                            if isinstance(item, dict)
+                        }
+                        source_lookup = {
+                            str(item.get("source_ref", "")): item
+                            for item in toxic_warning.get("sources") or []
+                            if isinstance(item, dict)
+                        }
+                        for event in event_entries:
+                            if not isinstance(event, dict):
+                                continue
+                            event_id = str(event.get("event_id", ""))
+                            out.check(f"data-agent3-event-id='{event_id}'" in outlook_block,
+                                      f"HTML 顶部缺重大排期事件 {event_id}")
+                            evaluation = (warning_lookup.get(str(event.get("warning_id", ""))) or {}).get(
+                                "evaluation") or {}
+                            for value in (
+                                event.get("event_name"), event.get("scheduled_for"),
+                                event.get("consensus_note"), event.get("display_summary"),
+                                evaluation.get("base_case"), evaluation.get("upside_scenario"),
+                                evaluation.get("downside_scenario"),
+                            ):
+                                out.check(bool(str(value or "")) and str(value) in _plain_html(outlook_block),
+                                          f"HTML 顶部 {event_id} 缺事件时间、共识或情景字段")
+                            for metric in event.get("metrics") or []:
+                                if not isinstance(metric, dict):
+                                    continue
+                                for field in ("label", "consensus", "previous", "unit"):
+                                    out.check(str(metric.get(field, "")) in _plain_html(outlook_block),
+                                              f"HTML 顶部 {event_id} 缺指标 {metric.get('metric_id')}.{field}")
+                            for ref in list(dict.fromkeys(
+                                    _string_list(event.get("official_source_refs")) +
+                                    _string_list(event.get("consensus_source_refs")))):
+                                url = str((source_lookup.get(ref) or {}).get("access_url", ""))
+                                out.check(bool(url) and url in outlook_links,
+                                          f"HTML 顶部 {event_id} 缺排期/共识来源 {ref}")
                         out.check("八类预测输入覆盖" in plain and "市场与外盘信号（已观察事实）" in plain,
                                   "HTML 审计附录缺八类预测输入与市场信号")
                         for category in PREDICTIVE_INPUT_CATEGORIES:
@@ -3416,7 +3637,77 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
 
     ashare_outlook_top_html = ""
     ashare_outlook_audit_html = ""
+    scheduled_events_top_html = ""
+    scheduled_events_audit_html = ""
     if skill == "bottom-fishing" and isinstance(toxic_warning, dict):
+        warning_lookup = {
+            str(item.get("warning_id", "")): item
+            for item in toxic_warning.get("warnings") or []
+            if isinstance(item, dict)
+        }
+        scheduled_event_cards = []
+        scheduled_event_rows = []
+        for event in toxic_warning.get("scheduled_event_expectations") or []:
+            if not isinstance(event, dict):
+                continue
+            warning_item = warning_lookup.get(str(event.get("warning_id", ""))) or {}
+            evaluation = warning_item.get("evaluation") or {}
+            metrics = event.get("metrics") or []
+            metric_rows = "".join(
+                f"<tr><td style='border:1px solid #ddd6fe;padding:5px'>{esc(metric.get('label'))}</td>"
+                f"<td style='border:1px solid #ddd6fe;padding:5px'>{esc(metric.get('consensus'))}</td>"
+                f"<td style='border:1px solid #ddd6fe;padding:5px'>{esc(metric.get('previous'))}</td>"
+                f"<td style='border:1px solid #ddd6fe;padding:5px'>{esc(metric.get('unit'))}</td></tr>"
+                for metric in metrics if isinstance(metric, dict)
+            )
+            metric_table = (
+                "<table style='width:100%;border-collapse:collapse;font-size:11.5px;background:#fff;margin-top:5px'>"
+                "<tr><th style='border:1px solid #c4b5fd;padding:5px'>指标</th>"
+                "<th style='border:1px solid #c4b5fd;padding:5px'>一致预期</th>"
+                "<th style='border:1px solid #c4b5fd;padding:5px'>前值</th>"
+                "<th style='border:1px solid #c4b5fd;padding:5px'>单位</th></tr>"
+                + metric_rows + "</table>" if metric_rows else
+                f"<p style='margin:5px 0'><b>共识状态：</b>{esc(event.get('consensus_status'))}；"
+                f"{esc(event.get('consensus_note'))}</p>"
+            )
+            watches = "；".join(str(value) for value in event.get("watch_after_release") or [])
+            event_id = esc(event.get("event_id"))
+            scheduled_event_cards.append(
+                f"<div data-agent3-event-id='{event_id}' style='border:1px solid #c4b5fd;"
+                "border-radius:7px;background:#ede9fe;padding:8px;margin:7px 0'>"
+                f"<div><b>{esc(event.get('event_name'))}</b>　北京时间："
+                f"{esc(event.get('scheduled_for'))}　[{esc(event.get('time_precision'))}]</div>"
+                f"<div style='font-size:12px;margin-top:3px'>{esc(event.get('display_summary'))}</div>"
+                + metric_table
+                + f"<div style='font-size:11.5px;margin-top:5px'><b>共识说明：</b>"
+                  f"{esc(event.get('consensus_note'))}<br><b>基准：</b>{esc(evaluation.get('base_case'))}"
+                  f"<br><b>上行：</b>{esc(evaluation.get('upside_scenario'))}"
+                  f"<br><b>下行：</b>{esc(evaluation.get('downside_scenario'))}"
+                  f"<br><b>公布后核对：</b>{esc(watches)}<br><b>来源：</b>"
+                  f"{toxic_source_links(list(dict.fromkeys(_string_list(event.get('official_source_refs')) + _string_list(event.get('consensus_source_refs')))))}</div></div>"
+            )
+            metric_text = "；".join(
+                f"{metric.get('label')}：预期{metric.get('consensus')} / 前值{metric.get('previous')} {metric.get('unit')}"
+                for metric in metrics if isinstance(metric, dict)
+            ) or str(event.get("consensus_note") or "")
+            scheduled_event_rows.append(
+                f"<tr data-agent3-audit-event-id='{event_id}'><td>{esc(event.get('event_name'))}<br>"
+                f"{esc(event.get('event_class'))}</td><td>{esc(event.get('scheduled_for'))}<br>"
+                f"{esc(event.get('time_precision'))}</td><td>{esc(metric_text)}</td>"
+                f"<td>{toxic_evaluation_html(evaluation)}</td><td>"
+                f"{toxic_source_links(list(dict.fromkeys(_string_list(event.get('official_source_refs')) + _string_list(event.get('consensus_source_refs')))))}</td></tr>"
+            )
+        if scheduled_event_cards:
+            scheduled_events_top_html = (
+                "<div style='margin:8px 0'><b>重大排期事件预期（北京时间）</b>"
+                + "".join(scheduled_event_cards) + "</div>"
+            )
+            scheduled_events_audit_html = (
+                "<h4>重大排期事件预期（官方排期 + 一致预期 + 前值）</h4>"
+                "<table><tr><th>事件</th><th>北京时间</th><th>指标预期/前值</th>"
+                "<th>条件式情景</th><th>来源</th></tr>"
+                + "".join(scheduled_event_rows) + "</table>"
+            )
         outlook = toxic_warning.get("ashare_runtime_outlook")
         if isinstance(outlook, dict):
             next_session = outlook.get("next_session") or {}
@@ -3492,7 +3783,8 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
                   "Agent③ A股走势映射（运行时点 shadow）</div>"
                 + f"<div style='font-size:14px;margin-bottom:7px'><b>一句话：</b>"
                   f"{esc(outlook.get('plain_language_verdict'))}</div>"
-                  "<table style='width:100%;border-collapse:collapse;font-size:12.5px;background:#fff'>"
+                + scheduled_events_top_html
+                + "<table style='width:100%;border-collapse:collapse;font-size:12.5px;background:#fff'>"
                   "<tr><th style='border:1px solid #c4b5fd;padding:6px'>窗口</th>"
                   "<th style='border:1px solid #c4b5fd;padding:6px'>倾向/置信度</th>"
                   "<th style='border:1px solid #c4b5fd;padding:6px'>大概路径</th></tr>"
@@ -3743,6 +4035,7 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
             "不得继续引用；按真实连续5个市场交易日，严格10个毒月为57.2%，"
             "含2024-07边界月为55.3%。</p>"
             f"<p><b>clear边界：</b>{esc(toxic_warning.get('clear_reason') or '不适用')}</p>"
+            + scheduled_events_audit_html
             + ashare_outlook_audit_html
             + "<table><tr><th>风险域</th><th>状态</th><th>查询</th><th>覆盖结论</th></tr>"
             + "".join(coverage_rows) + "</table>"
@@ -4061,6 +4354,7 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
         }
 
     warning_id = "toxic-warning-001"
+    scheduled_warning_id = "toxic-warning-scheduled"
     delta_id = "toxic-delta-001"
     signal_is_post = bool(_date(retrieved) and _date(t) and _date(retrieved) > _date(t))
     signal_phase = "post_t_safety" if signal_is_post else "as_of_t"
@@ -4086,6 +4380,17 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
         "published_at_beijing": f"{t} 08:00:00+08:00",
         "phase": "as_of_t",
     })
+    if active:
+        sources.append({
+            "source_ref": "toxic-source-scheduled-consensus",
+            "access_url": "https://example.com/independent-consensus",
+            "publisher": "独立调查机构",
+            "source_kind": "independent_media",
+            "origin_id": "toxic-origin-scheduled-consensus",
+            "published_at": t,
+            "published_at_beijing": f"{t} 09:00:00+08:00",
+            "phase": "as_of_t",
+        })
     signal_source_url = "https://example.com/us-sector-close"
     sources.append({
         "source_ref": "toxic-source-market-signal",
@@ -4113,6 +4418,25 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
         "source_refs": ["toxic-source-001"],
         "query_ids": ["toxic-q-external-1"],
         "evaluation": test_evaluation("截至T的外部冲击", ["toxic-source-001"]),
+        "shadow": True,
+    }, {
+        "warning_id": scheduled_warning_id,
+        "level": "med",
+        "risk_family": "macro_calendar",
+        "status": "scheduled",
+        "scope": "market",
+        "first_public_at": t,
+        "event_start": str(_date(t) + dt.timedelta(days=1)),
+        "event_end": str(_date(t) + dt.timedelta(days=1)),
+        "direction_certainty": "uncertain",
+        "why": "测试用次日CPI排期与完整四指标一致预期",
+        "affected_industries": [],
+        "codes": [],
+        "source_refs": ["toxic-source-scheduled", "toxic-source-scheduled-consensus"],
+        "query_ids": ["toxic-q-scheduled-macro-policy-1"],
+        "evaluation": test_evaluation(
+            "次日CPI排期", ["toxic-source-scheduled-consensus"]
+        ),
         "shadow": True,
     }] if active else [])
     has_post_delta = bool(active and _date(retrieved) and _date(t) and _date(retrieved) > _date(t))
@@ -4157,6 +4481,22 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
             })
             coverage[domain] = {"status": "hit", "query_ids": [qid],
                                 "warning_ids": [warning_id], "reason": "T日仍活跃"}
+        elif active and domain == "scheduled_macro_policy":
+            qid = "toxic-q-scheduled-macro-policy-1"
+            queries.append({
+                "query_id": qid, "domain": domain, "phase": "as_of_t",
+                "query_text": "官方 CPI 排期与四指标一致预期",
+                "date_from": "2025-01-01", "date_to": t,
+                "executed_at_beijing": executed, "outcome": "selected",
+                "reviewed_urls": ["https://example.com/official-calendar",
+                                  "https://example.com/independent-consensus"],
+                "selected_warning_ids": [scheduled_warning_id],
+                "selected_delta_ids": [], "selected_signal_ids": [],
+                "notes": "采用官方排期和独立调查的一致预期",
+            })
+            coverage[domain] = {"status": "hit", "query_ids": [qid],
+                                "warning_ids": [scheduled_warning_id],
+                                "reason": "次日重大排期与一致预期已结构化"}
         else:
             query_ids = []
             for variant in (1, 2):
@@ -4235,7 +4575,7 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
                 "source_refs", []) if item_id != "market-signal-001" else
                 ["toxic-source-market-signal"])
         ))
-        if domain == "scheduled_macro_policy":
+        if domain == "scheduled_macro_policy" and "toxic-source-scheduled" not in refs:
             refs.append("toxic-source-scheduled")
         published = [_date(source_lookup[ref]["published_at"]) for ref in refs if ref in source_lookup]
         published = [date for date in published if date is not None]
@@ -4406,6 +4746,38 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
         "queries": queries,
         "coverage": coverage,
         "warnings": warnings,
+        "scheduled_event_expectations": ([{
+            "event_id": "scheduled-event-cpi-001",
+            "warning_id": scheduled_warning_id,
+            "event_name": "测试次日CPI",
+            "event_class": "inflation_cpi",
+            "scheduled_for": f"{str(_date(t) + dt.timedelta(days=1))} 20:30:00+08:00",
+            "time_precision": "datetime",
+            "official_source_refs": ["toxic-source-scheduled"],
+            "consensus_status": "available",
+            "consensus_source_refs": ["toxic-source-scheduled-consensus"],
+            "consensus_query_ids": ["toxic-q-scheduled-macro-policy-1"],
+            "required_metric_ids": [
+                "headline_mom", "headline_yoy", "core_mom", "core_yoy",
+            ],
+            "metrics": [
+                {"metric_id": "headline_mom", "label": "总CPI环比",
+                 "consensus": "+0.1%", "previous": "+0.2%", "unit": "%",
+                 "source_refs": ["toxic-source-scheduled-consensus"]},
+                {"metric_id": "headline_yoy", "label": "总CPI同比",
+                 "consensus": "+2.6%", "previous": "+2.7%", "unit": "%",
+                 "source_refs": ["toxic-source-scheduled-consensus"]},
+                {"metric_id": "core_mom", "label": "核心CPI环比",
+                 "consensus": "+0.2%", "previous": "+0.2%", "unit": "%",
+                 "source_refs": ["toxic-source-scheduled-consensus"]},
+                {"metric_id": "core_yoy", "label": "核心CPI同比",
+                 "consensus": "+2.8%", "previous": "+2.9%", "unit": "%",
+                 "source_refs": ["toxic-source-scheduled-consensus"]},
+            ],
+            "consensus_note": "独立调查提供四项一致预期，官方来源只确认发布时间。",
+            "display_summary": "测试次日CPI：四项一致预期与前值已完整登记。",
+            "watch_after_release": ["逐项比较实际值与一致预期", "观察利率、美元与成长风格反应"],
+        }] if active else []),
         "market_signals": market_signals,
         "predictive_input_coverage": predictive_input_coverage,
         "by_code": {
@@ -4431,6 +4803,9 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
     }
     global_alerts = ([{"warning_id": warning_id, "level": "med",
                        "text": "Agent③影子预警：T日已公开的外部冲击仍在演化；shadow，不改分数。",
+                       "shadow": True, "post_t": False},
+                      {"warning_id": scheduled_warning_id, "level": "med",
+                       "text": "Agent③影子预警：次日CPI排期与四项一致预期已登记；shadow，不改分数。",
                        "shadow": True, "post_t": False}] if active else [])
     if has_post_delta:
         global_alerts.append({"warning_id": delta_id, "level": "med",
@@ -4721,6 +5096,45 @@ def strict_self_test() -> Result:
     runtime_item["evaluation"]["consensus_source_refs"] = []
     out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
               "严格负例失效: Agent③ 无来源精确概率推断未被拦截")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    del bad_search["codex_audit"]["toxic_risk_warning"]["scheduled_event_expectations"]
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: Agent③ 重大排期事件预期台账缺失未被拦截")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    event = bad_search["codex_audit"]["toxic_risk_warning"][
+        "scheduled_event_expectations"
+    ][0]
+    event["metrics"] = [
+        metric for metric in event["metrics"] if metric["metric_id"] != "core_yoy"
+    ]
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: CPI 四项预期漏核心同比仍被放行")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    event = bad_search["codex_audit"]["toxic_risk_warning"][
+        "scheduled_event_expectations"
+    ][0]
+    event["metrics"][0]["previous"] = ""
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: 重大排期事件指标缺前值仍被放行")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    toxic = bad_search["codex_audit"]["toxic_risk_warning"]
+    event = toxic["scheduled_event_expectations"][0]
+    event["consensus_status"] = "no_reliable_consensus"
+    event["consensus_source_refs"] = []
+    event["required_metric_ids"] = []
+    event["metrics"] = []
+    event["consensus_note"] = "未找到可靠共识。"
+    warning_item = next(
+        item for item in toxic["warnings"] if item["warning_id"] == event["warning_id"]
+    )
+    warning_item["evaluation"]["consensus"] = "未找到可靠共识。"
+    warning_item["evaluation"]["consensus_source_refs"] = []
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: 只做一次查询就声称无可靠共识仍被放行")
 
     bad_search = copy.deepcopy(search_audit_doc)
     del bad_search["codex_audit"]["toxic_risk_warning"]["ashare_runtime_outlook"]

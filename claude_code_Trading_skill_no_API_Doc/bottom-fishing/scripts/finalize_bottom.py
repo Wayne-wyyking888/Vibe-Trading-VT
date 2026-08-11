@@ -3,7 +3,7 @@
 """自动恢复并发布 bottom-fishing 裁定版。
 
 前置条件：Codex 已完成 bottom_adjudication.json 的 Agent②/③审计。
-本脚本固定执行：基线→搜索审计→裁定/ETF自动重试→跨源验价→附审计→
+本脚本固定执行：基线→派生字段归一→搜索审计→裁定/ETF自动重试→跨源验价→附审计→
 报告增强→品牌清理→最终硬验收→HTML内容巡检。任何中间失败均不得发布。
 """
 from __future__ import annotations
@@ -23,6 +23,7 @@ REPO = pathlib.Path(__file__).resolve().parents[3]
 ACCEPTANCE = REPO / "codex_acceptance" / "acceptance.py"
 RUN_ENGINE = REPO / "codex_acceptance" / "run_engine.py"
 VERIFY_PRICES = REPO / "codex_acceptance" / "verify_prices.py"
+NORMALIZE_AUDIT = SKILL / "scripts" / "normalize_bottom_audit.py"
 DATA = pathlib.Path(r"C:\Trading_analysis\data")
 RESULT = DATA / "bottom_latest.json"
 AUDIT = DATA / "bottom_adjudication.json"
@@ -106,6 +107,7 @@ def main() -> int:
     py = sys.executable
 
     _run([py, str(ACCEPTANCE), "baseline"])
+    _run([py, str(NORMALIZE_AUDIT), "--audit", str(AUDIT)])
     _run([py, str(ACCEPTANCE), "validate-bottom-search",
           "--result", str(RESULT), "--audit", str(AUDIT)])
 

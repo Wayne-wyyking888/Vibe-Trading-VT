@@ -1,4 +1,4 @@
 interface:
   display_name: "A股抄底与毒月预警"
-  short_description: "A股底部扫描、错杀裁定、外盘信号与板块映射"
-  default_prompt: "使用 $bottom-fishing 扫描最新已收盘A股底部机会，自动换源重试并完成详细错杀裁定、五域风险、分窗口板块映射、候选下沉和通过HTML硬验收的最终报告。"
+  short_description: "A股底部扫描、错杀裁定、重大事件预期与板块映射"
+  default_prompt: "使用 $bottom-fishing 扫描最新已收盘A股底部机会，一次性完成自动换源重试、详细错杀裁定、五域风险、未来重大排期事件完整预期与前值、分窗口板块映射、候选下沉和通过HTML硬验收的最终报告；不要要求用户补齐研究内容。"

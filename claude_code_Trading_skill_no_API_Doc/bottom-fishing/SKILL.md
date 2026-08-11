@@ -1,6 +1,6 @@
 ---
 name: bottom-fishing
-description: A股底部区与超跌修复扫描（0 API、Codex 原生）。用于抄底、超跌、底部扫描、低吸扫描、bottom-fishing、毒月风险预警、错杀裁定、抄底复盘等请求；运行不可变 Python 引擎，执行双路径推荐线、ATR gate、5交易日冷却、官方源优先的多轮网页检索、F10逐条对账、Agent③五域最新风险检索、外盘/宏观预测输入与分窗口A股板块映射、候选股票信息下沉、T日证据与运行时点增量隔离、结构化搜索覆盖审计、✓/?/✗分层、shadow warning、影子日志、adjudicate/review，并在独立验收通过后输出原生 HTML。
+description: A股底部区与超跌修复扫描（0 API、Codex 原生）。用于抄底、超跌、底部扫描、低吸扫描、bottom-fishing、毒月风险预警、错杀裁定、抄底复盘等请求；运行不可变 Python 引擎，执行双路径推荐线、ATR gate、5交易日冷却、官方源优先的多轮网页检索、F10逐条对账、Agent③五域最新风险检索、重大排期事件完整预期、外盘/宏观预测输入与分窗口A股板块映射、候选股票信息下沉、T日证据与运行时点增量隔离、结构化搜索覆盖审计、✓/?/✗分层、shadow warning、影子日志、adjudicate/review，并在一次性自修复与独立验收通过后输出原生 HTML。
 ---
 
 # A股抄底扫描（0 API · Codex 原生 · 影子复验期）
@@ -121,15 +121,22 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
    - **八类预测输入**：逐类覆盖美股行业、全球同业事件、亚洲早盘同业、中国相关离岸资产、利率汇率波动、
      商品运价、宏观预期差、国内政策产业信息；记录原市场交易日、北京时间可得时点、相对基准、冲击类型、
      新鲜度和来源。市场未开写 `not_open`，来源受阻写 `blocked`，两者都不得伪造方向。
-   - **逐项证据约束推断**：每条 warning、每条 T 后 delta、每个五域运行时点综合都必须分开写
-     `事实/当前共识/基准情景+置信度/上下行情景/传导链/观察变量/失效条件/推断边界`。
-     有市场定价、调查或可靠机构来源才可写精确概率/基点；否则只给定性置信度。推断不是交易指令。
+    - **逐项证据约束推断**：每条 warning、每条 T 后 delta、每个五域运行时点综合都必须分开写
+      `事实/当前共识/基准情景+置信度/上下行情景/传导链/观察变量/失效条件/推断边界`。
+      有市场定价、调查或可靠机构来源才可写精确概率/基点；否则只给定性置信度。推断不是交易指令。
+    - **重大排期事件完整预期台账**：主动扫描 T+1 起未来10个自然日的重大统计、央行、政策与长假排期；
+      每条 `status=scheduled` warning 必须一对一写入 `scheduled_event_expectations`，包含事件名、北京时间/精度、
+      官方排期来源、一致预期来源、前值、公布后观察项和条件式情景。CPI/PPI 固定补齐总项环比/同比、核心环比/同比
+      四项；就业报告固定补齐新增就业、失业率、薪资环比；LPR 固定补齐1年期/5年期。官方源只证明排期，调查或可靠
+      机构来源才证明预期。确无可靠共识时必须在完成至少两种独立共识查询后写
+      `consensus_status=no_reliable_consensus`，不得编数，也不得只漏字段。用户不负责提醒或补齐宏观预期。
    - **五域+预测输入合并映射到A股**：完成五域与八类输入后输出 `ashare_runtime_outlook`，分别直说竞价/开盘、
      开盘后延续或回吐、下一交易日综合及未来1—5个交易日的偏强、偏弱、震荡或分化路径。相对受益/承压板块
      必须来自结构化 `sector_calls`，在HTML逐条 bullet 为 `板块（原因）`，并显示窗口、置信度、来源与失效条件；
      不得用“风险资产或有波动”代替A股结论，不得编造未经校准的A股涨跌概率、幅度或指数点位。
-   - **排期风险**：统计数据、LPR、FOMC、政策生效日、长假闭市等只给 med 黄色提示，
-     `direction_certainty=uncertain`；但仍须评估当前最普遍预期和条件式市场传导，不能只写“方向不确定”。
+    - **排期风险**：统计数据、LPR、FOMC、政策生效日、长假闭市等只给 med 黄色提示，
+      `direction_certainty=uncertain`；但仍须评估当前最普遍预期和条件式市场传导，不能只写“方向不确定”。结构化预期
+      必须在报告顶部 A股走势映射中可见，不能只埋在审计附录。
    - **活跃风险**：战争—航运—油价、关税/出口管制、融资收缩、退市/ST恐慌、跨资产强平等，只有
      `first_public_at≤T` 且截至T仍未结束才可 warning；high 必须有官方源和至少两个独立 `origin_id`。
    - **候选暴露与板块下沉**：warning 只有行业、产品、成本或海外收入能明确映射时才下沉；泛化市场恐慌不得
@@ -140,8 +147,8 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
      `post_t_safety_items`，`used_in_asof_t_warning=false`，但必须进入 `runtime_evaluation` 被综合评价；
      HTML 明示“T后”和运行时点评估，不得倒灌成事前命中。
    - **结构化落盘**：写入 `codex_audit.toxic_risk_warning`，固定
-     `version=bottom-toxic-risk-warning/v3`、`mode=shadow`、五域 coverage、sources、queries、warnings、
-     `market_signals`、八类 `predictive_input_coverage`、含 `sector_context` 的 by_code、post-T 增量、五域
+      `version=bottom-toxic-risk-warning/v3`、`mode=shadow`、五域 coverage、sources、queries、warnings、
+      `scheduled_event_expectations`、`market_signals`、八类 `predictive_input_coverage`、含 `sector_context` 的 by_code、post-T 增量、五域
      `runtime_evaluation`、含分窗口 `sector_calls` 的 `ashare_runtime_outlook` 和 clear_reason。
      每条 warning/delta 同步到顶层 `alerts`；
      映射候选的再同步到 `rulings[code].alerts`，都带 `warning_id/level/text/shadow/post_t`。
@@ -159,8 +166,9 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" validate-bottom-search --result "C:\Trading_analysis\data\bottom_latest.json" --audit "C:\Trading_analysis\data\bottom_adjudication.json"
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" bottom -- --adjudicate
    ```
-   `validate-bottom-search` 会同时验 Agent② 与 Agent③；非零退出时禁止 adjudicate：自动定位并补齐搜索、来源链、
-   F10逐条对账、五域 coverage、alert 映射或T+隔离记录，不能删字段绕过。
+    `validate-bottom-search` 会同时验 Agent② 与 Agent③；非零退出时禁止 adjudicate：自动定位并补齐搜索、来源链、
+    F10逐条对账、重大排期事件完整预期、五域 coverage、alert 映射或T+隔离记录，不能删字段绕过，也不能停下来让用户
+    提醒缺哪项或代填预期。
    引擎自动：**分层重排**（✓>?>✗，层内仍按引擎总分——纪律：不造未经走样本校准的新数值权重）→
    ?/✗票撤除买入方案（P13-3：非买入票不给价，卡片保留供对照，✗票置灰）→ 重出裁定版HTML
    （严格命名为 `bottom_cn_YYYY-MM-DD_HH-MM-SS_裁定版.html`，时间取带 `+08:00` 的
@@ -174,7 +182,7 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
    每票 `rulings[code].why` 至少展开关键财务数字、六维核查、最强反方风险和结论，不得只写“已覆盖、未见风险”的摘要；
    最终 HTML 还必须把六维采用事实、日期、来源、F10逐条数量及 T/T后裁定状态下沉到每张候选卡片。
    `bottom_adjudication.json` 顶层除原字段外必须加入 `codex_audit`。完成审计后优先运行自动发布器；它会自动执行
-   基线、搜索审计、ETF多端点重试、跨源验价重试、attach、augment、brand、最终验收和HTML禁词/区块巡检：
+    基线、可机械派生字段归一、搜索审计、ETF多端点重试、跨源验价重试、attach、augment、brand、最终验收和HTML禁词/区块巡检：
    ```powershell
    python "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\bottom-fishing\scripts\finalize_bottom.py"
    ```
@@ -187,7 +195,11 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" brand-report --html "<裁定版HTML绝对路径>"
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" validate --skill bottom-fishing --json "C:\Trading_analysis\data\bottom_latest.json" --html "<裁定版HTML绝对路径>" --require-bottom-search
    ```
-   任一命令非零退出时由自动发布器对可恢复环节换源重试；重试完成前不得回复“获取失败”或发布半成品。
+    任一命令非零退出时由自动发布器对可恢复环节换源重试；重试完成前不得回复“获取失败”或发布半成品。
+    **一次出结果闭环（强制）**：首次校验失败后读取全部错误，能由已有证据机械同步的交给 normalizer；缺来源、缺查询、
+    缺重大事件指标、缺情景或时间冲突的，由 Codex 继续网页检索并更新同一份审计，再从 `validate-bottom-search` 重跑。
+    最多保留一个最终裁定版并在所有硬门禁通过后才回复用户。除非遭遇需要用户新授权的权限阻断，整个补齐—重验过程不得
+    要求用户干预，也不得把“下次再加”当成本次完成。
    最终 HTML 仍含 `数据获取失败`、`未识别明确相对受益板块`、`未识别明确相对承压板块`、缺ETF区块、
    缺六维裁定底稿或缺候选板块下沉时一律不发布；验收器不提供最终报告降级开关。
 6. **复盘对账**：用户说"抄底复盘/对账"时跑：
