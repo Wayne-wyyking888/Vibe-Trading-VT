@@ -461,6 +461,9 @@ ASHARE_OUTLOOK_V3_FIELDS = {
     "opening_auction",
     "intraday_followthrough",
     "sector_calls",
+    "signal_disposition_ledger",
+    "unmapped_signal_ids",
+    "unmapped_domain_ids",
 }
 ASHARE_OUTLOOK_BIASES = {
     "positive",
@@ -471,6 +474,7 @@ ASHARE_OUTLOOK_BIASES = {
     "mixed",
 }
 ASHARE_DOMAIN_DIRECTIONS = {"positive", "neutral", "negative", "mixed"}
+ASHARE_DOMAIN_SECTOR_DISPOSITIONS = {"linked", "neutral", "not_applicable"}
 ASHARE_DIRECTION_WORDS = (
     "偏强",
     "偏弱",
@@ -496,12 +500,25 @@ SCHEDULED_EVENT_CLASSES = {
     "policy_calendar", "holiday", "other",
 }
 SCHEDULED_EVENT_CONSENSUS_STATUSES = {
-    "available", "no_reliable_consensus", "not_applicable",
+    "available", "forecast_available", "mixed_available", "partial_available", "qualitative_only",
+    "no_reliable_consensus", "not_applicable",
+}
+EXPECTATION_SEARCH_CHANNELS = (
+    "survey_consensus",
+    "economic_calendar",
+    "institution_preview",
+)
+EXPECTATION_SEARCH_STATUSES = {"hit", "no_relevant_hit", "blocked", "not_applicable"}
+SCHEDULED_METRIC_SEARCH_STATUSES = {"available", "no_reliable_estimate"}
+SCHEDULED_METRIC_ESTIMATE_KINDS = {
+    "survey_consensus", "market_pricing", "institution_forecast",
 }
 SCHEDULED_EVENT_TIME_PRECISIONS = {"datetime", "date", "window"}
 SCHEDULED_EVENT_REQUIRED_METRICS = {
-    "inflation_cpi": {"headline_mom", "headline_yoy", "core_mom", "core_yoy"},
-    "inflation_ppi": {"headline_mom", "headline_yoy", "core_mom", "core_yoy"},
+    "inflation_cpi": {"cpi_headline_mom", "cpi_headline_yoy", "cpi_core_mom", "cpi_core_yoy"},
+    "inflation_ppi": {
+        "ppi_final_demand_mom", "ppi_final_demand_yoy", "ppi_core_mom", "ppi_core_yoy",
+    },
     "labor_report": {"payroll_change", "unemployment_rate", "wage_growth_mom"},
     "lpr": {"lpr_1y", "lpr_5y"},
 }
@@ -533,6 +550,10 @@ MARKET_SIGNAL_SHOCK_TYPES = {
     "not_applicable", "unknown",
 }
 SECTOR_CALL_DIRECTIONS = {"beneficiary", "pressure"}
+SIGNAL_DISPOSITIONS = {
+    "direct_driver", "direct_opposing", "direct_mixed", "mediated", "neutral",
+    "not_applicable", "stale_excluded",
+}
 SECTOR_CONTEXT_RELATIONS = {
     "direct_sector", "customer", "supplier", "competitor", "input_cost",
     "overseas_revenue", "sector_only",
@@ -543,6 +564,34 @@ SECTOR_CONTEXT_RELEVANCE = {"direct", "indirect", "sector_only"}
 def _sector_call_display(call: dict[str, Any]) -> str:
     reasons = "；".join(str(item).strip() for item in call.get("reasons") or [] if str(item).strip())
     return f"{str(call.get('sector_name', '')).strip()}（{reasons}）"
+
+
+def _sector_signal_verdict(call: dict[str, Any], outlook: dict[str, Any]) -> str:
+    """Return the compact, mechanically derived signal-completeness verdict for a top card."""
+    call_id = str(call.get("call_id", "")).strip()
+    considered = set(_string_list(call.get("considered_signal_ids")))
+    drivers = set(_string_list(call.get("driver_signal_ids")))
+    opposing = set(_string_list(call.get("opposing_signal_ids")))
+    mediated = {
+        str(item.get("signal_id", "")).strip()
+        for item in outlook.get("signal_disposition_ledger") or []
+        if isinstance(item, dict) and item.get("disposition") == "mediated" and
+        call_id in _string_list(item.get("sector_call_ids"))
+    }
+    total = len([
+        item for item in outlook.get("signal_disposition_ledger") or []
+        if isinstance(item, dict) and str(item.get("signal_id", "")).strip()
+    ])
+    unmapped = len(set(_string_list(outlook.get("unmapped_signal_ids"))))
+    considered_domains = len(set(_string_list(call.get("considered_domain_ids"))))
+    total_domains = len(outlook.get("domain_impacts") or {})
+    unmapped_domains = len(set(_string_list(outlook.get("unmapped_domain_ids"))))
+    return (
+        f"处置结论：本板块已考虑信号{len(considered)}条"
+        f"（驱动{len(drivers)}/反向{len(opposing)}/中介{len(mediated)}）；"
+        f"关联五域{considered_domains}域；全局信号{total}条/五域{total_domains}域均已处置，"
+        f"未解释{unmapped + unmapped_domains}项。"
+    )
 
 
 def _string_list(value: Any) -> list[str]:
@@ -627,9 +676,14 @@ def _validate_scheduled_event_expectations(
         "event_id", "warning_id", "event_name", "event_class", "scheduled_for",
         "time_precision", "official_source_refs", "consensus_status",
         "consensus_source_refs", "consensus_query_ids", "required_metric_ids", "metrics",
+        "expectation_search_coverage", "metric_search_ledger", "qualitative_expectation",
         "consensus_note", "display_summary", "watch_after_release",
     }
-    metric_fields = {"metric_id", "label", "consensus", "previous", "unit", "source_refs"}
+    metric_fields = {
+        "metric_id", "label", "consensus", "previous", "unit", "estimate_kind",
+        "metric_definition", "source_refs",
+    }
+    metric_ledger_fields = {"metric_id", "status", "query_ids", "source_refs", "reason"}
     for idx, item in enumerate(entries):
         tag = f"toxic_risk_warning.scheduled_event_expectations[{idx}]"
         out.check(isinstance(item, dict), f"{tag} 必须是对象")
@@ -680,15 +734,21 @@ def _validate_scheduled_event_expectations(
                   f"{tag}.consensus_status 无效")
         out.check(set(consensus_refs) <= warning_refs,
                   f"{tag}.consensus_source_refs 必须来自对应 warning")
+        out.check(set(consensus_refs).isdisjoint(official_refs),
+                  f"{tag}.consensus_source_refs 不得复用只证明排期的 official_source_refs")
+        out.check(all((source_by_ref.get(ref) or {}).get("source_kind") in {
+            "official_direct", "verified_official_mirror", "independent_media",
+            "independent_research",
+        } for ref in consensus_refs),
+                  f"{tag}.consensus_source_refs 不得采用未核二手来源")
         evaluation_refs = set(_string_list((warning_item.get("evaluation") or {}).get(
             "consensus_source_refs")))
         out.check(set(consensus_refs) == evaluation_refs,
                   f"{tag}.consensus_source_refs 必须与 warning.evaluation 一致")
         consensus_query_ids = _string_list(item.get("consensus_query_ids"))
-        out.check(bool(consensus_query_ids) and
-                  len(consensus_query_ids) == len(set(consensus_query_ids)) and
+        out.check(len(consensus_query_ids) == len(set(consensus_query_ids)) and
                   set(consensus_query_ids) <= set(_string_list(warning_item.get("query_ids"))),
-                  f"{tag}.consensus_query_ids 必须非空、去重且来自对应 warning")
+                  f"{tag}.consensus_query_ids 必须去重且来自对应 warning")
         consensus_queries = [query_by_id.get(query_id) for query_id in consensus_query_ids]
         out.check(all(query is not None and query.get("phase") == "as_of_t"
                       for query in consensus_queries),
@@ -697,6 +757,67 @@ def _validate_scheduled_event_expectations(
             str(query.get("query_text", "")).strip()
             for query in consensus_queries if isinstance(query, dict)
         }
+
+        search_coverage = item.get("expectation_search_coverage") or {}
+        out.check(isinstance(search_coverage, dict) and
+                  set(search_coverage) == set(EXPECTATION_SEARCH_CHANNELS),
+                  f"{tag}.expectation_search_coverage 必须精确覆盖三路预期检索")
+        channel_query_ids: list[str] = []
+        channel_statuses: dict[str, str] = {}
+        channel_source_refs: dict[str, set[str]] = {}
+        for channel in EXPECTATION_SEARCH_CHANNELS:
+            channel_item = search_coverage.get(channel) or {}
+            channel_tag = f"{tag}.expectation_search_coverage.{channel}"
+            out.check(isinstance(channel_item, dict) and
+                      {"status", "query_ids", "source_refs", "reason"} <= set(channel_item),
+                      f"{channel_tag} 缺必需字段")
+            if not isinstance(channel_item, dict):
+                continue
+            channel_status = str(channel_item.get("status", ""))
+            channel_ids = _string_list(channel_item.get("query_ids"))
+            channel_refs = _string_list(channel_item.get("source_refs"))
+            channel_statuses[channel] = channel_status
+            channel_source_refs[channel] = set(channel_refs)
+            out.check(channel_status in EXPECTATION_SEARCH_STATUSES,
+                      f"{channel_tag}.status 无效")
+            out.check(len(channel_ids) == len(set(channel_ids)) and
+                      set(channel_ids) <= set(consensus_query_ids),
+                      f"{channel_tag}.query_ids 必须去重且来自 consensus_query_ids")
+            out.check(bool(str(channel_item.get("reason", "")).strip()),
+                      f"{channel_tag}.reason 为空")
+            out.check(len(channel_refs) == len(set(channel_refs)) and
+                      set(channel_refs) <= set(consensus_refs),
+                      f"{channel_tag}.source_refs 必须去重且来自事件预期来源")
+            if consensus_status == "not_applicable":
+                out.check(channel_status == "not_applicable" and not channel_ids and not channel_refs,
+                          f"{channel_tag} not_applicable 事件不得伪造检索")
+            else:
+                out.check(channel_status != "not_applicable" and bool(channel_ids),
+                          f"{channel_tag} 必须实际执行且不得写 not_applicable")
+                channel_queries = [query_by_id.get(query_id) or {} for query_id in channel_ids]
+                out.check(all(query.get("phase") == "as_of_t" and
+                              warning_id in _string_list(query.get("selected_warning_ids"))
+                              for query in channel_queries),
+                          f"{channel_tag} 查询必须在 as_of_t 阶段双向选择对应 warning")
+                if channel_status == "hit":
+                    channel_urls = {
+                        url for query in channel_queries
+                        for url in _string_list(query.get("reviewed_urls"))
+                    }
+                    out.check(bool(channel_refs) and all(
+                        str((source_by_ref.get(ref) or {}).get("access_url", "")) in channel_urls
+                        for ref in channel_refs
+                    ), f"{channel_tag} hit 必须采用来源且其 URL 进入本路 reviewed_urls")
+                else:
+                    out.check(not channel_refs,
+                              f"{channel_tag} 非 hit 不得夹带采用来源")
+            channel_query_ids.extend(channel_ids)
+        out.check(len(channel_query_ids) == len(set(channel_query_ids)),
+                  f"{tag}.expectation_search_coverage 三路不得复用同一 query_id")
+        out.check(set(channel_query_ids) == set(consensus_query_ids),
+                  f"{tag}.consensus_query_ids 必须等于三路预期检索 query_ids 并集")
+        out.check(set().union(*channel_source_refs.values()) == set(consensus_refs),
+                  f"{tag}.consensus_source_refs 必须等于三路检索采用来源并集")
 
         required_metric_ids = _string_list(item.get("required_metric_ids"))
         metrics = item.get("metrics") or []
@@ -715,45 +836,155 @@ def _validate_scheduled_event_expectations(
             out.check(bool(metric_id) and metric_id not in metric_ids,
                       f"{metric_tag}.metric_id 为空或重复")
             metric_ids.add(metric_id)
-            for field in ("label", "consensus", "previous", "unit"):
+            for field in ("label", "consensus", "previous", "unit", "metric_definition"):
                 out.check(bool(str(metric.get(field, "")).strip()), f"{metric_tag}.{field} 为空")
+            metric_semantics = (
+                f"{metric.get('label', '')} {metric.get('metric_definition', '')}"
+            ).lower()
+            if event_class == "inflation_cpi":
+                out.check(metric_id.startswith("cpi_") and "cpi" in metric_semantics,
+                          f"{metric_tag} 必须使用 CPI 专属 metric_id 并明确 CPI 口径")
+            elif event_class == "inflation_ppi":
+                out.check(metric_id.startswith("ppi_") and "ppi" in metric_semantics and
+                          ("最终需求" in metric_semantics or "final demand" in metric_semantics),
+                          f"{metric_tag} 必须使用 PPI 专属 metric_id 并明确最终需求口径")
+                if "core" in metric_id:
+                    out.check(any(marker in metric_semantics for marker in
+                                  ("剔除", "不含", "excluding", "less")),
+                              f"{metric_tag} 核心PPI必须写明剔除项，禁止与核心CPI混用")
+            out.check(str(metric.get("estimate_kind", "")) in SCHEDULED_METRIC_ESTIMATE_KINDS,
+                      f"{metric_tag}.estimate_kind 无效")
             refs = _string_list(metric.get("source_refs"))
             out.check(bool(refs) and set(refs) <= set(consensus_refs),
                       f"{metric_tag}.source_refs 必须非空且来自共识来源")
+            estimate_kind = str(metric.get("estimate_kind", ""))
+            allowed_lane_refs = (
+                channel_source_refs.get("institution_preview", set())
+                if estimate_kind == "institution_forecast" else
+                channel_source_refs.get("survey_consensus", set()) |
+                channel_source_refs.get("economic_calendar", set())
+            )
+            out.check(set(refs) <= allowed_lane_refs,
+                      f"{metric_tag}.source_refs 与 estimate_kind 对应检索路径不一致")
         profiled_ids = SCHEDULED_EVENT_REQUIRED_METRICS.get(event_class)
-        if profiled_ids is not None and consensus_status == "available":
+        if profiled_ids is not None:
             out.check(set(required_metric_ids) == profiled_ids,
                       f"{tag}.required_metric_ids 未覆盖 {event_class} 固定指标")
-        out.check(set(required_metric_ids) <= metric_ids,
-                  f"{tag}.metrics 缺 required_metric_ids 指标")
+        out.check(metric_ids <= set(required_metric_ids),
+                  f"{tag}.metrics 含 required_metric_ids 之外的指标")
+
+        metric_search_ledger = item.get("metric_search_ledger") or []
+        out.check(isinstance(metric_search_ledger, list),
+                  f"{tag}.metric_search_ledger 必须是数组")
+        metric_ledger_by_id: dict[str, dict[str, Any]] = {}
+        for ledger_idx, ledger in enumerate(
+                metric_search_ledger if isinstance(metric_search_ledger, list) else []):
+            ledger_tag = f"{tag}.metric_search_ledger[{ledger_idx}]"
+            out.check(isinstance(ledger, dict) and metric_ledger_fields <= set(ledger),
+                      f"{ledger_tag} 缺必需字段")
+            if not isinstance(ledger, dict):
+                continue
+            metric_id = str(ledger.get("metric_id", "")).strip()
+            out.check(bool(metric_id) and metric_id not in metric_ledger_by_id,
+                      f"{ledger_tag}.metric_id 为空或重复")
+            if metric_id and metric_id not in metric_ledger_by_id:
+                metric_ledger_by_id[metric_id] = ledger
+            status = str(ledger.get("status", ""))
+            ledger_query_ids = _string_list(ledger.get("query_ids"))
+            ledger_refs = _string_list(ledger.get("source_refs"))
+            out.check(status in SCHEDULED_METRIC_SEARCH_STATUSES,
+                      f"{ledger_tag}.status 无效")
+            out.check(bool(ledger_query_ids) and
+                      set(ledger_query_ids) <= set(consensus_query_ids),
+                      f"{ledger_tag}.query_ids 必须非空且来自三路预期查询")
+            out.check(bool(str(ledger.get("reason", "")).strip()),
+                      f"{ledger_tag}.reason 为空")
+            if status == "available":
+                metric = next((entry for entry in metrics if isinstance(entry, dict) and
+                               entry.get("metric_id") == metric_id), None)
+                out.check(metric is not None and bool(ledger_refs) and
+                          set(ledger_refs) == set(_string_list((metric or {}).get("source_refs"))),
+                          f"{ledger_tag} available 必须与 metrics/source_refs 精确对应")
+            else:
+                out.check(metric_id not in metric_ids and not ledger_refs,
+                          f"{ledger_tag} no_reliable_estimate 不得夹带数值或来源")
+        out.check(set(metric_ledger_by_id) == set(required_metric_ids),
+                  f"{tag}.metric_search_ledger 必须逐项覆盖 required_metric_ids")
+        out.check(metric_ids == {
+            metric_id for metric_id, ledger in metric_ledger_by_id.items()
+            if ledger.get("status") == "available"
+        }, f"{tag}.metrics 必须与 metric_search_ledger.available 精确一致")
 
         note = str(item.get("consensus_note", "")).strip()
         summary = str(item.get("display_summary", "")).strip()
+        qualitative = str(item.get("qualitative_expectation", "")).strip()
         watch_items = _string_list(item.get("watch_after_release"))
-        out.check(bool(note) and bool(summary), f"{tag} 共识说明或展示摘要为空")
+        out.check(bool(note) and bool(summary) and bool(qualitative),
+                  f"{tag} 共识说明、定性预期或展示摘要为空")
         out.check(event_name in summary, f"{tag}.display_summary 必须点名事件")
         out.check(bool(watch_items) and all(value.strip() for value in watch_items),
                   f"{tag}.watch_after_release 必须是非空字符串数组")
+        reviewed_urls = {
+            url for query in consensus_queries if isinstance(query, dict)
+            for url in _string_list(query.get("reviewed_urls"))
+        }
+        out.check(all(str((source_by_ref.get(ref) or {}).get("access_url", "")) in reviewed_urls
+                      for ref in consensus_refs),
+                  f"{tag} 共识/预测来源未进入 consensus_query_ids.reviewed_urls")
         if consensus_status == "available":
             out.check(bool(consensus_refs) and bool(metrics) and
-                      set(required_metric_ids) == metric_ids,
+                      set(required_metric_ids) == metric_ids and
+                      all(metric.get("estimate_kind") in {"survey_consensus", "market_pricing"}
+                          for metric in metrics if isinstance(metric, dict)),
                       f"{tag} available 必须有来源且 metrics 与 required_metric_ids 精确一致")
+        elif consensus_status == "forecast_available":
+            out.check(bool(consensus_refs) and bool(metrics) and
+                      set(required_metric_ids) == metric_ids and
+                      channel_statuses.get("institution_preview") == "hit" and
+                      all(metric.get("estimate_kind") == "institution_forecast"
+                          for metric in metrics if isinstance(metric, dict)),
+                      f"{tag} forecast_available 必须完整登记机构预测且不得冒充调查共识")
+        elif consensus_status == "mixed_available":
+            estimate_kinds = {
+                str(metric.get("estimate_kind", ""))
+                for metric in metrics if isinstance(metric, dict)
+            }
+            out.check(bool(consensus_refs) and bool(metrics) and
+                      set(required_metric_ids) == metric_ids and
+                      "institution_forecast" in estimate_kinds and
+                      bool(estimate_kinds & {"survey_consensus", "market_pricing"}),
+                      f"{tag} mixed_available 必须完整登记且同时包含机构预测与调查/市场定价")
+        elif consensus_status == "partial_available":
+            out.check(bool(consensus_refs) and bool(metrics) and bool(required_metric_ids) and
+                      metric_ids < set(required_metric_ids),
+                      f"{tag} partial_available 必须保留部分数值并逐项解释缺口")
+        elif consensus_status == "qualitative_only":
+            out.check(bool(consensus_refs) and not metrics and
+                      channel_statuses.get("institution_preview") == "hit" and
+                      set(consensus_refs) == channel_source_refs.get("institution_preview", set()),
+                      f"{tag} qualitative_only 必须有可靠预览来源且不得夹带数值")
+        elif consensus_status == "no_reliable_consensus":
+            out.check(not consensus_refs and not metrics and
+                      any(marker in note for marker in ("无可靠共识", "未找到可靠共识")),
+                      f"{tag} no_reliable_consensus 必须明确无可靠共识且不得伪造指标")
             reviewed_urls = {
                 url for query in consensus_queries if isinstance(query, dict)
                 for url in _string_list(query.get("reviewed_urls"))
             }
-            out.check(all(str((source_by_ref.get(ref) or {}).get("access_url", "")) in reviewed_urls
-                          for ref in consensus_refs),
-                      f"{tag} 共识来源未进入 consensus_query_ids.reviewed_urls")
-        elif consensus_status == "no_reliable_consensus":
-            out.check(not consensus_refs and not metrics and not required_metric_ids and
-                      any(marker in note for marker in ("无可靠共识", "未找到可靠共识")),
-                      f"{tag} no_reliable_consensus 必须明确无可靠共识且不得伪造指标")
-            out.check(len(consensus_query_ids) >= 2 and len(query_variants) >= 2,
-                      f"{tag} 声称无可靠共识前必须完成至少两种独立查询")
+            reviewed_hosts = {urlsplit(url).netloc.lower() for url in reviewed_urls
+                              if _valid_http_url(url)}
+            out.check(len(consensus_query_ids) >= 3 and len(query_variants) >= 3 and
+                      all(channel_statuses.get(channel) == "no_relevant_hit"
+                          for channel in EXPECTATION_SEARCH_CHANNELS) and
+                      all(any(_string_list((query_by_id.get(query_id) or {}).get("reviewed_urls"))
+                              for query_id in _string_list((search_coverage.get(channel) or {}).get(
+                                  "query_ids"))) for channel in EXPECTATION_SEARCH_CHANNELS) and
+                      len(reviewed_hosts) >= 2,
+                      f"{tag} 声称无可靠共识前必须完成三路检索、逐路审阅URL且覆盖至少两个来源域名")
         else:
             out.check(event_class in {"holiday", "policy_calendar", "other"} and
-                      not consensus_refs and not metrics and not required_metric_ids,
+                      not consensus_refs and not metrics and not required_metric_ids and
+                      not metric_search_ledger and not consensus_query_ids,
                       f"{tag} not_applicable 仅限无调查型事件且不得夹带指标")
     out.check(set(entry_by_warning) == scheduled_ids,
               "每条 scheduled warning 必须且只能有一条重大排期事件预期记录")
@@ -917,11 +1148,13 @@ def _validate_ashare_runtime_outlook(out: Result, value: Any, retrieved_dt: dt.d
     out.check(isinstance(domain_impacts, dict) and
               set(domain_impacts) == set(TOXIC_WARNING_DOMAINS),
               f"{tag}.domain_impacts 必须逐域说明如何反映到A股")
+    domain_call_ids_by_domain: dict[str, set[str]] = {}
     for domain in TOXIC_WARNING_DOMAINS:
         impact = domain_impacts.get(domain) or {}
         impact_tag = f"{tag}.domain_impacts.{domain}"
-        out.check(isinstance(impact, dict) and {"direction", "mechanism"} <= set(impact),
-                  f"{impact_tag} 缺 direction/mechanism")
+        out.check(isinstance(impact, dict) and {
+            "direction", "mechanism", "sector_disposition", "sector_call_ids", "sector_reason",
+        } <= set(impact), f"{impact_tag} 缺走势或板块处置字段")
         if not isinstance(impact, dict):
             continue
         out.check(str(impact.get("direction", "")) in ASHARE_DOMAIN_DIRECTIONS,
@@ -929,6 +1162,20 @@ def _validate_ashare_runtime_outlook(out: Result, value: Any, retrieved_dt: dt.d
         mechanism = str(impact.get("mechanism", "")).strip()
         out.check("A股" in mechanism and len(mechanism) >= 10,
                   f"{impact_tag}.mechanism 必须直说本域如何反映到A股")
+        sector_disposition = str(impact.get("sector_disposition", ""))
+        domain_call_ids = _string_list(impact.get("sector_call_ids"))
+        out.check(sector_disposition in ASHARE_DOMAIN_SECTOR_DISPOSITIONS,
+                  f"{impact_tag}.sector_disposition 无效")
+        out.check(len(domain_call_ids) == len(set(domain_call_ids)),
+                  f"{impact_tag}.sector_call_ids 不得重复")
+        out.check(bool(str(impact.get("sector_reason", "")).strip()),
+                  f"{impact_tag}.sector_reason 为空")
+        if sector_disposition == "linked":
+            out.check(bool(domain_call_ids), f"{impact_tag} linked 必须承接至少一个 sector_call")
+        else:
+            out.check(not domain_call_ids,
+                      f"{impact_tag} {sector_disposition} 不得夹带 sector_call_ids")
+        domain_call_ids_by_domain[domain] = set(domain_call_ids)
 
     outlook_texts: list[str] = []
     horizons = (["opening_auction", "intraday_followthrough"] if is_v3 else []) + [
@@ -966,11 +1213,14 @@ def _validate_ashare_runtime_outlook(out: Result, value: Any, retrieved_dt: dt.d
         candidate_industries = candidate_industries or {}
         calls = value.get("sector_calls") or []
         out.check(isinstance(calls, list), f"{tag}.sector_calls 必须是数组")
+        driver_calls_by_signal: dict[str, set[str]] = {}
+        opposing_calls_by_signal: dict[str, set[str]] = {}
+        considered_by_call: dict[str, set[str]] = {}
         required_call_fields = {
             "call_id", "direction", "sector_name", "sector_keys", "industry_matches",
             "horizon", "reasons", "driver_signal_ids", "opposing_signal_ids",
-            "dominant_driver", "confidence", "invalidators", "source_refs",
-            "candidate_codes", "shadow",
+            "considered_signal_ids", "considered_domain_ids", "dominant_driver", "confidence", "invalidators",
+            "source_refs", "candidate_codes", "shadow",
         }
         for idx, call in enumerate(calls if isinstance(calls, list) else []):
             call_tag = f"{tag}.sector_calls[{idx}]"
@@ -1012,8 +1262,23 @@ def _validate_ashare_runtime_outlook(out: Result, value: Any, retrieved_dt: dt.d
                       set(linked_signals) <= set(signal_by_id),
                       f"{call_tag} driver/opposing signal 引用无效或重复")
             out.check(all((signal_by_id.get(signal_id) or {}).get("freshness") == "fresh"
-                          for signal_id in drivers),
-                      f"{call_tag} 主驱动只能引用 fresh 信号")
+                          for signal_id in linked_signals),
+                      f"{call_tag} driver/opposing 只能引用 fresh 信号")
+            considered = _string_list(call.get("considered_signal_ids"))
+            out.check(len(considered) == len(set(considered)) and
+                      set(linked_signals) <= set(considered) <= set(signal_by_id),
+                      f"{call_tag}.considered_signal_ids 必须去重、包含全部直接信号且只引用已登记信号")
+            considered_domains = _string_list(call.get("considered_domain_ids"))
+            out.check(bool(considered_domains) and
+                      len(considered_domains) == len(set(considered_domains)) and
+                      set(considered_domains) <= set(TOXIC_WARNING_DOMAINS),
+                      f"{call_tag}.considered_domain_ids 必须非空、去重且只引用五域")
+            if call_id:
+                considered_by_call[call_id] = set(considered)
+                for signal_id in drivers:
+                    driver_calls_by_signal.setdefault(signal_id, set()).add(call_id)
+                for signal_id in opposing:
+                    opposing_calls_by_signal.setdefault(signal_id, set()).add(call_id)
             out.check(bool(str(call.get("dominant_driver", "")).strip()),
                       f"{call_tag}.dominant_driver 为空")
             out.check(str(call.get("confidence", "")) in {"low", "medium", "high"},
@@ -1039,6 +1304,118 @@ def _validate_ashare_runtime_outlook(out: Result, value: Any, retrieved_dt: dt.d
             out.check(direct_codes <= set(candidate_codes),
                       f"{call_tag} 提及候选所属行业却未把全部候选下沉")
             out.check(call.get("shadow") is True, f"{call_tag}.shadow 必须为 true")
+
+        ledger = value.get("signal_disposition_ledger") or []
+        out.check(isinstance(ledger, list), f"{tag}.signal_disposition_ledger 必须是数组")
+        ledger_by_signal: dict[str, dict[str, Any]] = {}
+        ledger_fields = {
+            "signal_id", "disposition", "sector_call_ids", "mediated_by_signal_ids", "reason",
+        }
+        for idx, item in enumerate(ledger if isinstance(ledger, list) else []):
+            ledger_tag = f"{tag}.signal_disposition_ledger[{idx}]"
+            out.check(isinstance(item, dict) and ledger_fields <= set(item),
+                      f"{ledger_tag} 缺必需字段")
+            if not isinstance(item, dict):
+                continue
+            signal_id = str(item.get("signal_id", "")).strip()
+            disposition = str(item.get("disposition", "")).strip()
+            call_ids = _string_list(item.get("sector_call_ids"))
+            mediator_ids = _string_list(item.get("mediated_by_signal_ids"))
+            out.check(bool(signal_id) and signal_id in signal_by_id and
+                      signal_id not in ledger_by_signal,
+                      f"{ledger_tag}.signal_id 为空、未知或重复")
+            if signal_id and signal_id not in ledger_by_signal:
+                ledger_by_signal[signal_id] = item
+            out.check(disposition in SIGNAL_DISPOSITIONS,
+                      f"{ledger_tag}.disposition 无效")
+            out.check(len(call_ids) == len(set(call_ids)) and set(call_ids) <= set(call_by_id),
+                      f"{ledger_tag}.sector_call_ids 重复或引用未知 call")
+            out.check(len(mediator_ids) == len(set(mediator_ids)) and
+                      set(mediator_ids) <= set(signal_by_id) and signal_id not in mediator_ids,
+                      f"{ledger_tag}.mediated_by_signal_ids 重复、未知或自引用")
+            out.check(bool(str(item.get("reason", "")).strip()), f"{ledger_tag}.reason 为空")
+
+            driver_calls = driver_calls_by_signal.get(signal_id, set())
+            opposing_calls = opposing_calls_by_signal.get(signal_id, set())
+            direct_calls = driver_calls | opposing_calls
+            freshness = str((signal_by_id.get(signal_id) or {}).get("freshness", ""))
+            if disposition == "direct_driver":
+                out.check(bool(driver_calls) and not opposing_calls and
+                          set(call_ids) == driver_calls and not mediator_ids,
+                          f"{ledger_tag} direct_driver 必须精确对应 driver_signal_ids")
+            elif disposition == "direct_opposing":
+                out.check(bool(opposing_calls) and not driver_calls and
+                          set(call_ids) == opposing_calls and not mediator_ids,
+                          f"{ledger_tag} direct_opposing 必须精确对应 opposing_signal_ids")
+            elif disposition == "direct_mixed":
+                out.check(bool(driver_calls) and bool(opposing_calls) and
+                          set(call_ids) == direct_calls and not mediator_ids,
+                          f"{ledger_tag} direct_mixed 必须同时精确对应 driver/opposing")
+            elif disposition == "mediated":
+                out.check(freshness == "fresh" and not direct_calls and bool(call_ids) and
+                          bool(mediator_ids),
+                          f"{ledger_tag} mediated 必须是 fresh、不得直接参战且需写中介与承接 call")
+            elif disposition in {"neutral", "not_applicable"}:
+                out.check(freshness == "fresh" and not direct_calls and not call_ids and
+                          not mediator_ids,
+                          f"{ledger_tag} {disposition} 不得参战或伪造中介")
+            else:
+                out.check(freshness == "stale" and not direct_calls and not call_ids and
+                          not mediator_ids,
+                          f"{ledger_tag} stale_excluded 仅限 stale 且不得参战")
+
+        out.check(set(ledger_by_signal) == set(signal_by_id),
+                  f"{tag}.signal_disposition_ledger 必须与 market_signals 一对一完整覆盖")
+        for signal_id, item in ledger_by_signal.items():
+            if item.get("disposition") != "mediated":
+                continue
+            call_ids = set(_string_list(item.get("sector_call_ids")))
+            mediator_ids = _string_list(item.get("mediated_by_signal_ids"))
+            mediator_calls: set[str] = set()
+            mediator_valid = True
+            for mediator_id in mediator_ids:
+                mediator_item = ledger_by_signal.get(mediator_id) or {}
+                if mediator_item.get("disposition") not in {
+                        "direct_driver", "direct_opposing", "direct_mixed"}:
+                    mediator_valid = False
+                mediator_calls.update(driver_calls_by_signal.get(mediator_id, set()))
+                mediator_calls.update(opposing_calls_by_signal.get(mediator_id, set()))
+            out.check(mediator_valid and bool(call_ids) and call_ids <= mediator_calls,
+                      f"{tag}.signal_disposition_ledger[{signal_id}] 中介信号未真实承接对应 call")
+
+        for call_id, call in call_by_id.items():
+            direct_ids = set(_string_list(call.get("driver_signal_ids"))) | set(
+                _string_list(call.get("opposing_signal_ids")))
+            mediated_ids = {
+                signal_id for signal_id, item in ledger_by_signal.items()
+                if item.get("disposition") == "mediated" and
+                call_id in _string_list(item.get("sector_call_ids"))
+            }
+            out.check(considered_by_call.get(call_id, set()) == direct_ids | mediated_ids,
+                      f"{tag}.sector_calls[{call_id}].considered_signal_ids 未精确覆盖直接及中介信号")
+            expected_domains = {
+                domain for domain, call_ids in domain_call_ids_by_domain.items()
+                if call_id in call_ids
+            }
+            out.check(set(_string_list(call.get("considered_domain_ids"))) == expected_domains,
+                      f"{tag}.sector_calls[{call_id}].considered_domain_ids 未与五域处置双向闭合")
+
+        out.check(all(call_ids <= set(call_by_id) for call_ids in domain_call_ids_by_domain.values()),
+                  f"{tag}.domain_impacts.sector_call_ids 引用未知 call")
+
+        unmapped = _string_list(value.get("unmapped_signal_ids"))
+        expected_unmapped = set(signal_by_id) - set(ledger_by_signal)
+        out.check(isinstance(value.get("unmapped_signal_ids"), list) and
+                  len(unmapped) == len(set(unmapped)) and set(unmapped) == expected_unmapped,
+                  f"{tag}.unmapped_signal_ids 必须机械等于未处置信号")
+        out.check(not unmapped, f"{tag}.unmapped_signal_ids 非空，禁止发布")
+        unmapped_domains = _string_list(value.get("unmapped_domain_ids"))
+        expected_unmapped_domains = set(TOXIC_WARNING_DOMAINS) - set(domain_impacts)
+        out.check(isinstance(value.get("unmapped_domain_ids"), list) and
+                  len(unmapped_domains) == len(set(unmapped_domains)) and
+                  set(unmapped_domains) == expected_unmapped_domains,
+                  f"{tag}.unmapped_domain_ids 必须机械等于未处置五域")
+        out.check(not unmapped_domains, f"{tag}.unmapped_domain_ids 非空，禁止发布")
 
         style_text = "；".join(_string_list(value.get("index_style_implications")))
         beneficiary_claim = any(marker in style_text for marker in
@@ -3365,7 +3742,7 @@ def validate_html(skill: str, obj: dict[str, Any], html_path: pathlib.Path, stri
                         outlook_links = _html_link_targets(outlook_block)
                         if event_entries:
                             out.check("重大排期事件预期（北京时间）" in _plain_html(outlook_block) and
-                                      "重大排期事件预期（官方排期 + 一致预期 + 前值）" in plain,
+                                      "重大排期事件预期（官方排期 + 调查共识/机构预测 + 前值）" in plain,
                                       "HTML 顶部或审计附录缺重大排期事件预期")
                         warning_lookup = {
                             str(item.get("warning_id", "")): item
@@ -3385,18 +3762,27 @@ def validate_html(skill: str, obj: dict[str, Any], html_path: pathlib.Path, stri
                                       f"HTML 顶部缺重大排期事件 {event_id}")
                             evaluation = (warning_lookup.get(str(event.get("warning_id", ""))) or {}).get(
                                 "evaluation") or {}
-                            for value in (
+                            visible_event_values = [
                                 event.get("event_name"), event.get("scheduled_for"),
                                 event.get("consensus_note"), event.get("display_summary"),
                                 evaluation.get("base_case"), evaluation.get("upside_scenario"),
                                 evaluation.get("downside_scenario"),
-                            ):
+                            ]
+                            if require_bottom_search or "qualitative_expectation" in event:
+                                visible_event_values.extend([
+                                    event.get("consensus_status"),
+                                    event.get("qualitative_expectation"),
+                                ])
+                            for value in visible_event_values:
                                 out.check(bool(str(value or "")) and str(value) in _plain_html(outlook_block),
                                           f"HTML 顶部 {event_id} 缺事件时间、共识或情景字段")
                             for metric in event.get("metrics") or []:
                                 if not isinstance(metric, dict):
                                     continue
-                                for field in ("label", "consensus", "previous", "unit"):
+                                metric_display_fields = ["label", "consensus", "previous", "unit"]
+                                if require_bottom_search or "metric_definition" in metric:
+                                    metric_display_fields.extend(["estimate_kind", "metric_definition"])
+                                for field in metric_display_fields:
                                     out.check(str(metric.get(field, "")) in _plain_html(outlook_block),
                                               f"HTML 顶部 {event_id} 缺指标 {metric.get('metric_id')}.{field}")
                             for ref in list(dict.fromkeys(
@@ -3405,19 +3791,38 @@ def validate_html(skill: str, obj: dict[str, Any], html_path: pathlib.Path, stri
                                 url = str((source_lookup.get(ref) or {}).get("access_url", ""))
                                 out.check(bool(url) and url in outlook_links,
                                           f"HTML 顶部 {event_id} 缺排期/共识来源 {ref}")
-                        out.check("八类预测输入覆盖" in plain and "市场与外盘信号（已观察事实）" in plain,
-                                  "HTML 审计附录缺八类预测输入与市场信号")
+                        out.check("八类预测输入覆盖" in plain and
+                                  "市场与外盘信号（已观察事实）" in plain and
+                                  "全信号处置台账（未解释必须为0）" in plain and
+                                  "未解释信号：0" in plain,
+                                  "HTML 审计附录缺八类预测输入、市场信号或零遗漏处置台账")
                         for category in PREDICTIVE_INPUT_CATEGORIES:
                             out.check(category in plain, f"HTML 缺预测输入覆盖类 {category}")
+                        for domain, impact in (outlook.get("domain_impacts") or {}).items():
+                            out.check(str(domain) in plain and
+                                      str((impact or {}).get("sector_disposition", "")) in plain and
+                                      str((impact or {}).get("sector_reason", "")) in plain,
+                                      f"HTML 缺五域板块处置 {domain} 的状态或理由")
                         for signal in toxic_warning.get("market_signals") or []:
                             out.check(str(signal.get("signal_id", "")) in plain and
                                       str(signal.get("value_text", "")) in plain and
                                       str(signal.get("observed_at_beijing", "")) in plain,
                                       f"HTML 缺市场信号 {signal.get('signal_id')} 的事实或可得时点")
+                        for disposition in outlook.get("signal_disposition_ledger") or []:
+                            if not isinstance(disposition, dict):
+                                continue
+                            signal_id = str(disposition.get("signal_id", ""))
+                            out.check(f"data-agent3-signal-disposition='{signal_id}'" in raw and
+                                      str(disposition.get("disposition", "")) in plain and
+                                      str(disposition.get("reason", "")) in plain,
+                                      f"HTML 全信号处置台账缺 {signal_id} 的处置或理由")
                         for call in outlook.get("sector_calls") or []:
                             call_id = str(call.get("call_id", ""))
                             out.check(f"data-agent3-call-id='{call_id}'" in raw,
                                       f"HTML 缺板块调用 {call_id}")
+                            out.check(f"data-agent3-call-verdict='{call_id}'" in outlook_block and
+                                      _sector_signal_verdict(call, outlook) in _plain_html(outlook_block),
+                                      f"HTML 顶部板块卡缺 {call_id} 的简短信号处置结论")
                             for reason in call.get("reasons") or []:
                                 out.check(str(reason) in plain,
                                           f"HTML 缺 {call_id} 的可见原因")
@@ -3657,15 +4062,19 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
                 f"<tr><td style='border:1px solid #ddd6fe;padding:5px'>{esc(metric.get('label'))}</td>"
                 f"<td style='border:1px solid #ddd6fe;padding:5px'>{esc(metric.get('consensus'))}</td>"
                 f"<td style='border:1px solid #ddd6fe;padding:5px'>{esc(metric.get('previous'))}</td>"
-                f"<td style='border:1px solid #ddd6fe;padding:5px'>{esc(metric.get('unit'))}</td></tr>"
+                f"<td style='border:1px solid #ddd6fe;padding:5px'>{esc(metric.get('unit'))}</td>"
+                f"<td style='border:1px solid #ddd6fe;padding:5px'>{esc(metric.get('estimate_kind'))}</td>"
+                f"<td style='border:1px solid #ddd6fe;padding:5px'>{esc(metric.get('metric_definition'))}</td></tr>"
                 for metric in metrics if isinstance(metric, dict)
             )
             metric_table = (
                 "<table style='width:100%;border-collapse:collapse;font-size:11.5px;background:#fff;margin-top:5px'>"
                 "<tr><th style='border:1px solid #c4b5fd;padding:5px'>指标</th>"
-                "<th style='border:1px solid #c4b5fd;padding:5px'>一致预期</th>"
+                "<th style='border:1px solid #c4b5fd;padding:5px'>预期值</th>"
                 "<th style='border:1px solid #c4b5fd;padding:5px'>前值</th>"
-                "<th style='border:1px solid #c4b5fd;padding:5px'>单位</th></tr>"
+                "<th style='border:1px solid #c4b5fd;padding:5px'>单位</th>"
+                "<th style='border:1px solid #c4b5fd;padding:5px'>预期类型</th>"
+                "<th style='border:1px solid #c4b5fd;padding:5px'>指标口径</th></tr>"
                 + metric_rows + "</table>" if metric_rows else
                 f"<p style='margin:5px 0'><b>共识状态：</b>{esc(event.get('consensus_status'))}；"
                 f"{esc(event.get('consensus_note'))}</p>"
@@ -3678,8 +4087,10 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
                 f"<div><b>{esc(event.get('event_name'))}</b>　北京时间："
                 f"{esc(event.get('scheduled_for'))}　[{esc(event.get('time_precision'))}]</div>"
                 f"<div style='font-size:12px;margin-top:3px'>{esc(event.get('display_summary'))}</div>"
+                f"<div style='font-size:11.5px;margin-top:3px'><b>预期口径：</b>"
+                f"{esc(event.get('consensus_status'))}；{esc(event.get('qualitative_expectation'))}</div>"
                 + metric_table
-                + f"<div style='font-size:11.5px;margin-top:5px'><b>共识说明：</b>"
+                + f"<div style='font-size:11.5px;margin-top:5px'><b>预期口径说明：</b>"
                   f"{esc(event.get('consensus_note'))}<br><b>基准：</b>{esc(evaluation.get('base_case'))}"
                   f"<br><b>上行：</b>{esc(evaluation.get('upside_scenario'))}"
                   f"<br><b>下行：</b>{esc(evaluation.get('downside_scenario'))}"
@@ -3687,7 +4098,8 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
                   f"{toxic_source_links(list(dict.fromkeys(_string_list(event.get('official_source_refs')) + _string_list(event.get('consensus_source_refs')))))}</div></div>"
             )
             metric_text = "；".join(
-                f"{metric.get('label')}：预期{metric.get('consensus')} / 前值{metric.get('previous')} {metric.get('unit')}"
+                f"{metric.get('label')}：预期{metric.get('consensus')} / 前值{metric.get('previous')} "
+                f"{metric.get('unit')} [{metric.get('estimate_kind')}]"
                 for metric in metrics if isinstance(metric, dict)
             ) or str(event.get("consensus_note") or "")
             scheduled_event_rows.append(
@@ -3703,7 +4115,7 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
                 + "".join(scheduled_event_cards) + "</div>"
             )
             scheduled_events_audit_html = (
-                "<h4>重大排期事件预期（官方排期 + 一致预期 + 前值）</h4>"
+                "<h4>重大排期事件预期（官方排期 + 调查共识/机构预测 + 前值）</h4>"
                 "<table><tr><th>事件</th><th>北京时间</th><th>指标预期/前值</th>"
                 "<th>条件式情景</th><th>来源</th></tr>"
                 + "".join(scheduled_event_rows) + "</table>"
@@ -3746,13 +4158,16 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
                 for call in calls:
                     reasons = "；".join(str(item) for item in call.get("reasons") or [])
                     invalidators = "；".join(str(item) for item in call.get("invalidators") or [])
+                    signal_verdict = _sector_signal_verdict(call, outlook)
                     rows.append(
                         f"<li data-agent3-call-id='{esc(call.get('call_id'))}'>"
                         f"<b>{esc(call.get('sector_name'))}</b>（{esc(reasons)}）"
                         f"<span style='color:#6d28d9'> [{esc(call.get('horizon'))}/"
                         f"{esc(call.get('confidence'))}]</span> "
                         f"<span style='font-size:11px'>来源：{toxic_source_links(call.get('source_refs'))}；"
-                        f"失效：{esc(invalidators)}</span></li>"
+                        f"失效：{esc(invalidators)}</span><br>"
+                        f"<span data-agent3-call-verdict='{esc(call.get('call_id'))}' "
+                        f"style='font-size:11px;font-weight:700'>{esc(signal_verdict)}</span></li>"
                     )
                 return "".join(rows)
 
@@ -3802,7 +4217,10 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
                 impact = (outlook.get("domain_impacts") or {}).get(domain) or {}
                 impact_rows.append(
                     f"<tr><td>{esc(domain)}</td><td>{esc(impact.get('direction'))}</td>"
-                    f"<td>{esc(impact.get('mechanism'))}</td></tr>"
+                    f"<td>{esc(impact.get('mechanism'))}</td>"
+                    f"<td>{esc(impact.get('sector_disposition'))}<br>"
+                    f"{esc('；'.join(str(x) for x in impact.get('sector_call_ids') or []) or '无')}<br>"
+                    f"{esc(impact.get('sector_reason'))}</td></tr>"
                 )
             ashare_outlook_audit_html = (
                 "<h4>A股走势综合审计（五域合并）</h4>"
@@ -3811,7 +4229,7 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
                 f"<b>未来1—5日：</b>{esc(next_days.get('bias'))}/"
                 f"{esc(next_days.get('confidence'))} — {esc(next_days.get('path'))}<br>"
                 f"<b>白话结论：</b>{esc(outlook.get('plain_language_verdict'))}</p>"
-                "<table><tr><th>风险域</th><th>对A股方向</th><th>反映机制</th></tr>"
+                "<table><tr><th>风险域</th><th>对A股方向</th><th>反映机制</th><th>板块处置</th></tr>"
                 + "".join(impact_rows) + "</table>"
                 f"<p><b>指数/风格：</b>{esc(joined('index_style_implications'))}<br>"
                 f"<b>相对受益：</b>{esc(joined('sector_beneficiaries'))}<br>"
@@ -3963,6 +4381,19 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
                 f"<td>{esc('；'.join(str(x) for x in item.get('horizons') or []))}<br>"
                 f"{esc(item.get('summary'))}</td><td>{toxic_source_links(item.get('source_refs'))}</td></tr>"
             )
+        signal_disposition_rows = []
+        outlook_for_ledger = toxic_warning.get("ashare_runtime_outlook") or {}
+        for item in outlook_for_ledger.get("signal_disposition_ledger") or []:
+            if not isinstance(item, dict):
+                continue
+            signal_disposition_rows.append(
+                f"<tr data-agent3-signal-disposition='{esc(item.get('signal_id'))}'>"
+                f"<td>{esc(item.get('signal_id'))}</td><td>{esc(item.get('disposition'))}</td>"
+                f"<td>{esc('；'.join(str(x) for x in item.get('sector_call_ids') or []) or '无')}</td>"
+                f"<td>{esc('；'.join(str(x) for x in item.get('mediated_by_signal_ids') or []) or '无')}</td>"
+                f"<td>{esc(item.get('reason'))}</td></tr>"
+            )
+        unmapped_signal_count = len(set(_string_list(outlook_for_ledger.get("unmapped_signal_ids"))))
         warning_rows = []
         for item in toxic_warning.get("warnings") or []:
             source_links = " ".join(
@@ -4046,6 +4477,10 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
                "<table><tr><th>ID</th><th>覆盖/族</th><th>会话/可得时点</th><th>标的/方向</th>"
                "<th>事实/基准/预期差</th><th>窗口/摘要</th><th>来源</th></tr>"
                + "".join(market_signal_rows) + "</table>"
+               "<h4>全信号处置台账（未解释必须为0）</h4>"
+               f"<p><b>未解释信号：{unmapped_signal_count}</b></p>"
+               "<table><tr><th>信号</th><th>处置</th><th>承接板块调用</th><th>中介信号</th><th>理由</th></tr>"
+               + "".join(signal_disposition_rows) + "</table>"
                if toxic_warning.get("version") == TOXIC_WARNING_V3 else "")
             + "<h4>运行时点五域综合评估（最新公开信息；不倒灌 T 日裁定）</h4>"
             "<table><tr><th>风险域</th><th>状态</th><th>评估时点/最新来源</th><th>证据约束推断</th></tr>"
@@ -4433,7 +4868,11 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
         "affected_industries": [],
         "codes": [],
         "source_refs": ["toxic-source-scheduled", "toxic-source-scheduled-consensus"],
-        "query_ids": ["toxic-q-scheduled-macro-policy-1"],
+        "query_ids": [
+            "toxic-q-scheduled-macro-policy-survey",
+            "toxic-q-scheduled-macro-policy-calendar",
+            "toxic-q-scheduled-macro-policy-preview",
+        ],
         "evaluation": test_evaluation(
             "次日CPI排期", ["toxic-source-scheduled-consensus"]
         ),
@@ -4482,21 +4921,30 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
             coverage[domain] = {"status": "hit", "query_ids": [qid],
                                 "warning_ids": [warning_id], "reason": "T日仍活跃"}
         elif active and domain == "scheduled_macro_policy":
-            qid = "toxic-q-scheduled-macro-policy-1"
-            queries.append({
-                "query_id": qid, "domain": domain, "phase": "as_of_t",
-                "query_text": "官方 CPI 排期与四指标一致预期",
-                "date_from": "2025-01-01", "date_to": t,
-                "executed_at_beijing": executed, "outcome": "selected",
-                "reviewed_urls": ["https://example.com/official-calendar",
-                                  "https://example.com/independent-consensus"],
-                "selected_warning_ids": [scheduled_warning_id],
-                "selected_delta_ids": [], "selected_signal_ids": [],
-                "notes": "采用官方排期和独立调查的一致预期",
-            })
-            coverage[domain] = {"status": "hit", "query_ids": [qid],
+            query_specs = (
+                ("toxic-q-scheduled-macro-policy-survey",
+                 "CPI 四指标 调查一致预期", "https://example.com/independent-consensus"),
+                ("toxic-q-scheduled-macro-policy-calendar",
+                 "CPI economic calendar forecast previous", "https://example.com/official-calendar"),
+                ("toxic-q-scheduled-macro-policy-preview",
+                 "CPI institution preview forecast", "https://preview.example.org/cpi"),
+            )
+            query_ids = []
+            for qid, query_text, reviewed_url in query_specs:
+                query_ids.append(qid)
+                queries.append({
+                    "query_id": qid, "domain": domain, "phase": "as_of_t",
+                    "query_text": query_text,
+                    "date_from": "2025-01-01", "date_to": t,
+                    "executed_at_beijing": executed, "outcome": "selected",
+                    "reviewed_urls": [reviewed_url],
+                    "selected_warning_ids": [scheduled_warning_id],
+                    "selected_delta_ids": [], "selected_signal_ids": [],
+                    "notes": "三路独立核查重大排期的调查共识、日历预期与机构预测",
+                })
+            coverage[domain] = {"status": "hit", "query_ids": query_ids,
                                 "warning_ids": [scheduled_warning_id],
-                                "reason": "次日重大排期与一致预期已结构化"}
+                                "reason": "次日重大排期与三路预期检索已结构化"}
         else:
             query_ids = []
             for variant in (1, 2):
@@ -4663,6 +5111,8 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
         "reasons": [sector_reason],
         "driver_signal_ids": ["market-signal-001"],
         "opposing_signal_ids": [],
+        "considered_signal_ids": ["market-signal-001"],
+        "considered_domain_ids": ["cross_asset_stress"],
         "dominant_driver": "最新完成海外交易时段的同行业相对强势",
         "confidence": "medium",
         "invalidators": ["A股竞价未跟随且开盘后行业相对收益迅速转负"],
@@ -4674,24 +5124,38 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
         "scheduled_macro_policy": {
             "direction": "mixed",
             "mechanism": "A股在排期事件落地前更可能观望，落地后再按利率和增长预期选择方向。",
+            "sector_disposition": "neutral",
+            "sector_call_ids": [],
+            "sector_reason": "排期本身尚无实际值或预期差，不单独生成相对板块方向。",
         },
         "domestic_regulatory_liquidity": {
             "direction": "neutral",
             "mechanism": "A股暂未出现国内监管或流动性失序信号，系统性下跌缺少本域催化。",
+            "sector_disposition": "neutral",
+            "sector_call_ids": [],
+            "sector_reason": "本域没有新鲜方向信号，不生成板块调用。",
         },
         "external_geopolitics_trade": {
             "direction": "negative" if active else "neutral",
-            "mechanism": ("A股风险偏好可能受外部冲击压制，能源与防御板块相对占优。" if active else
-                          "A股暂未发现新的外部冲击，海外因素不构成当前单边驱动。"),
+            "mechanism": ("A股风险偏好可能受外部冲击压制，但测试证据不足以形成独立板块调用。" if active else
+                           "A股暂未发现新的外部冲击，海外因素不构成当前单边驱动。"),
+            "sector_disposition": "neutral",
+            "sector_call_ids": [],
+            "sector_reason": "本域只形成市场级风险偏好判断，缺少可审计的相对行业信号。",
         },
         "cross_asset_stress": {
-            "direction": "negative" if active else "neutral",
-            "mechanism": ("A股可能通过商品价格和全球风险偏好承压，成长风格波动更大。" if active else
-                          "A股暂未受到跨资产强平信号推动，维持中性映射。"),
+            "direction": "mixed",
+            "mechanism": "A股市场级压力与海外同行业相对强势并存，测试行业先作结构性开盘映射。",
+            "sector_disposition": "linked",
+            "sector_call_ids": ["sector-call-001"],
+            "sector_reason": "本域的最新海外行业信号直接承接测试行业开盘调用。",
         },
         "holiday_information_gap": {
             "direction": "neutral",
             "mechanism": "A股不存在长假闭市累积信息冲击，普通周末不额外改变基准路径。",
+            "sector_disposition": "not_applicable",
+            "sector_call_ids": [],
+            "sector_reason": "普通周末不存在长假信息累积，对当前板块映射不适用。",
         },
     }
     ashare_outlook = {
@@ -4724,6 +5188,15 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
         "index_style_implications": ["大盘防御风格相对成长风格更稳" if active else
                                      "指数和风格暂缺五域层面的明确单边映射"],
         "sector_calls": sector_calls,
+        "signal_disposition_ledger": [{
+            "signal_id": "market-signal-001",
+            "disposition": "direct_driver",
+            "sector_call_ids": ["sector-call-001"],
+            "mediated_by_signal_ids": [],
+            "reason": "最新海外同行业相对强势直接进入测试行业开盘受益调用。",
+        }],
+        "unmapped_signal_ids": [],
+        "unmapped_domain_ids": [],
         "sector_beneficiaries": [f"测试行业（{sector_reason}）"],
         "sector_pressures": ["未识别明确相对承压板块"],
         "opening_triggers": ["核对海外风险消息、商品价格、人民币和主要海外股指"],
@@ -4756,24 +5229,66 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
             "official_source_refs": ["toxic-source-scheduled"],
             "consensus_status": "available",
             "consensus_source_refs": ["toxic-source-scheduled-consensus"],
-            "consensus_query_ids": ["toxic-q-scheduled-macro-policy-1"],
+            "consensus_query_ids": [
+                "toxic-q-scheduled-macro-policy-survey",
+                "toxic-q-scheduled-macro-policy-calendar",
+                "toxic-q-scheduled-macro-policy-preview",
+            ],
+            "expectation_search_coverage": {
+                "survey_consensus": {
+                    "status": "hit",
+                    "query_ids": ["toxic-q-scheduled-macro-policy-survey"],
+                    "source_refs": ["toxic-source-scheduled-consensus"],
+                    "reason": "已核对独立调查的一致预期。",
+                },
+                "economic_calendar": {
+                    "status": "no_relevant_hit",
+                    "query_ids": ["toxic-q-scheduled-macro-policy-calendar"],
+                    "source_refs": [],
+                    "reason": "已核对经济日历，未采用独立数值来源。",
+                },
+                "institution_preview": {
+                    "status": "no_relevant_hit",
+                    "query_ids": ["toxic-q-scheduled-macro-policy-preview"],
+                    "source_refs": [],
+                    "reason": "已核对机构预览，未采用独立数值来源。",
+                },
+            },
             "required_metric_ids": [
-                "headline_mom", "headline_yoy", "core_mom", "core_yoy",
+                "cpi_headline_mom", "cpi_headline_yoy", "cpi_core_mom", "cpi_core_yoy",
             ],
             "metrics": [
-                {"metric_id": "headline_mom", "label": "总CPI环比",
-                 "consensus": "+0.1%", "previous": "+0.2%", "unit": "%",
-                 "source_refs": ["toxic-source-scheduled-consensus"]},
-                {"metric_id": "headline_yoy", "label": "总CPI同比",
-                 "consensus": "+2.6%", "previous": "+2.7%", "unit": "%",
-                 "source_refs": ["toxic-source-scheduled-consensus"]},
-                {"metric_id": "core_mom", "label": "核心CPI环比",
-                 "consensus": "+0.2%", "previous": "+0.2%", "unit": "%",
-                 "source_refs": ["toxic-source-scheduled-consensus"]},
-                {"metric_id": "core_yoy", "label": "核心CPI同比",
-                 "consensus": "+2.8%", "previous": "+2.9%", "unit": "%",
-                 "source_refs": ["toxic-source-scheduled-consensus"]},
+                {"metric_id": "cpi_headline_mom", "label": "总CPI环比",
+                  "consensus": "+0.1%", "previous": "+0.2%", "unit": "%",
+                  "estimate_kind": "survey_consensus",
+                  "metric_definition": "居民消费价格指数（CPI）总项月度环比。",
+                  "source_refs": ["toxic-source-scheduled-consensus"]},
+                {"metric_id": "cpi_headline_yoy", "label": "总CPI同比",
+                  "consensus": "+2.6%", "previous": "+2.7%", "unit": "%",
+                  "estimate_kind": "survey_consensus",
+                  "metric_definition": "居民消费价格指数（CPI）总项年度同比。",
+                  "source_refs": ["toxic-source-scheduled-consensus"]},
+                {"metric_id": "cpi_core_mom", "label": "核心CPI环比",
+                  "consensus": "+0.2%", "previous": "+0.2%", "unit": "%",
+                  "estimate_kind": "survey_consensus",
+                  "metric_definition": "剔除食品与能源的居民消费价格指数（核心CPI）月度环比。",
+                  "source_refs": ["toxic-source-scheduled-consensus"]},
+                {"metric_id": "cpi_core_yoy", "label": "核心CPI同比",
+                  "consensus": "+2.8%", "previous": "+2.9%", "unit": "%",
+                  "estimate_kind": "survey_consensus",
+                  "metric_definition": "剔除食品与能源的居民消费价格指数（核心CPI）年度同比。",
+                  "source_refs": ["toxic-source-scheduled-consensus"]},
             ],
+            "metric_search_ledger": [
+                {"metric_id": metric_id, "status": "available",
+                 "query_ids": ["toxic-q-scheduled-macro-policy-survey"],
+                 "source_refs": ["toxic-source-scheduled-consensus"],
+                 "reason": "调查来源逐项提供该指标的一致预期与前值。"}
+                for metric_id in (
+                    "cpi_headline_mom", "cpi_headline_yoy", "cpi_core_mom", "cpi_core_yoy",
+                )
+            ],
+            "qualitative_expectation": "通胀同比温和回落，核心环比持平于前值；仅作为发布前基准。",
             "consensus_note": "独立调查提供四项一致预期，官方来源只确认发布时间。",
             "display_summary": "测试次日CPI：四项一致预期与前值已完整登记。",
             "watch_after_release": ["逐项比较实际值与一致预期", "观察利率、美元与成长风格反应"],
@@ -5018,6 +5533,43 @@ def strict_self_test() -> Result:
 
     search_result, search_audit_doc = _test_bottom_search_case()
     out.merge(validate_bottom_search(search_result, search_audit_doc, required=True))
+    ppi_search = copy.deepcopy(search_audit_doc)
+    ppi_event = ppi_search["codex_audit"]["toxic_risk_warning"][
+        "scheduled_event_expectations"
+    ][0]
+    ppi_event["event_name"] = "测试次日PPI"
+    ppi_event["event_class"] = "inflation_ppi"
+    ppi_event["required_metric_ids"] = [
+        "ppi_final_demand_mom", "ppi_final_demand_yoy", "ppi_core_mom", "ppi_core_yoy",
+    ]
+    ppi_metric_specs = (
+        ("ppi_final_demand_mom", "总PPI最终需求环比", "+0.2%", "+0.1%",
+         "生产者价格指数（PPI）最终需求总项月度环比。"),
+        ("ppi_final_demand_yoy", "总PPI最终需求同比", "+2.4%", "+2.3%",
+         "生产者价格指数（PPI）最终需求总项年度同比。"),
+        ("ppi_core_mom", "核心PPI最终需求环比", "+0.2%", "+0.2%",
+         "剔除食品、能源与贸易服务的生产者价格指数（PPI）最终需求月度环比。"),
+        ("ppi_core_yoy", "核心PPI最终需求同比", "+2.8%", "+2.9%",
+         "剔除食品、能源与贸易服务的生产者价格指数（PPI）最终需求年度同比。"),
+    )
+    ppi_event["metrics"] = [
+        {"metric_id": metric_id, "label": label, "consensus": consensus,
+         "previous": previous, "unit": "%", "estimate_kind": "survey_consensus",
+         "metric_definition": definition,
+         "source_refs": ["toxic-source-scheduled-consensus"]}
+        for metric_id, label, consensus, previous, definition in ppi_metric_specs
+    ]
+    ppi_event["metric_search_ledger"] = [
+        {"metric_id": metric_id, "status": "available",
+         "query_ids": ["toxic-q-scheduled-macro-policy-survey"],
+         "source_refs": ["toxic-source-scheduled-consensus"],
+         "reason": "调查来源逐项提供PPI该指标的一致预期与前值。"}
+        for metric_id, *_ in ppi_metric_specs
+    ]
+    ppi_event["qualitative_expectation"] = "PPI最终需求及核心项温和变化；仅作为发布前基准。"
+    ppi_event["consensus_note"] = "独立调查提供PPI四项一致预期，官方来源只确认发布时间。"
+    ppi_event["display_summary"] = "测试次日PPI：四项一致预期、前值及口径定义已完整登记。"
+    out.merge(validate_bottom_search(search_result, ppi_search, required=True))
     combined_search = copy.deepcopy(search_result)
     combined_search["alerts"] = copy.deepcopy(search_audit_doc.get("alerts") or [])
     for row in combined_search.get("candidates") or []:
@@ -5107,10 +5659,18 @@ def strict_self_test() -> Result:
         "scheduled_event_expectations"
     ][0]
     event["metrics"] = [
-        metric for metric in event["metrics"] if metric["metric_id"] != "core_yoy"
+        metric for metric in event["metrics"] if metric["metric_id"] != "cpi_core_yoy"
     ]
     out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
               "严格负例失效: CPI 四项预期漏核心同比仍被放行")
+
+    bad_ppi_search = copy.deepcopy(ppi_search)
+    bad_ppi_event = bad_ppi_search["codex_audit"]["toxic_risk_warning"][
+        "scheduled_event_expectations"
+    ][0]
+    bad_ppi_event["metrics"][0]["metric_id"] = "cpi_headline_mom"
+    out.check(not validate_bottom_search(search_result, bad_ppi_search, required=True).passed,
+              "严格负例失效: PPI 事件混入 CPI 指标ID仍被放行")
 
     bad_search = copy.deepcopy(search_audit_doc)
     event = bad_search["codex_audit"]["toxic_risk_warning"][
@@ -5121,12 +5681,38 @@ def strict_self_test() -> Result:
               "严格负例失效: 重大排期事件指标缺前值仍被放行")
 
     bad_search = copy.deepcopy(search_audit_doc)
+    event = bad_search["codex_audit"]["toxic_risk_warning"][
+        "scheduled_event_expectations"
+    ][0]
+    event["metrics"][0]["estimate_kind"] = "institution_forecast"
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: 调查来源被标成机构预测仍被放行")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    event = bad_search["codex_audit"]["toxic_risk_warning"][
+        "scheduled_event_expectations"
+    ][0]
+    event["expectation_search_coverage"]["survey_consensus"]["source_refs"] = []
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: 三路检索命中但缺本路采用来源仍被放行")
+
+    bad_search = copy.deepcopy(search_audit_doc)
     toxic = bad_search["codex_audit"]["toxic_risk_warning"]
     event = toxic["scheduled_event_expectations"][0]
     event["consensus_status"] = "no_reliable_consensus"
     event["consensus_source_refs"] = []
-    event["required_metric_ids"] = []
     event["metrics"] = []
+    event["consensus_query_ids"] = ["toxic-q-scheduled-macro-policy-survey"]
+    for channel_item in event["expectation_search_coverage"].values():
+        channel_item["status"] = "no_relevant_hit"
+        channel_item["query_ids"] = ["toxic-q-scheduled-macro-policy-survey"]
+        channel_item["source_refs"] = []
+        channel_item["reason"] = "仅复用一次查询，故该负例必须被拒绝。"
+    for metric_item in event["metric_search_ledger"]:
+        metric_item["status"] = "no_reliable_estimate"
+        metric_item["query_ids"] = ["toxic-q-scheduled-macro-policy-survey"]
+        metric_item["source_refs"] = []
+        metric_item["reason"] = "该指标未找到可靠预期。"
     event["consensus_note"] = "未找到可靠共识。"
     warning_item = next(
         item for item in toxic["warnings"] if item["warning_id"] == event["warning_id"]
@@ -5146,6 +5732,12 @@ def strict_self_test() -> Result:
     del outlook["domain_impacts"]["cross_asset_stress"]
     out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
               "严格负例失效: Agent③ A股走势综合漏一个风险域未被拦截")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    outlook = bad_search["codex_audit"]["toxic_risk_warning"]["ashare_runtime_outlook"]
+    outlook["domain_impacts"]["scheduled_macro_policy"].pop("sector_reason")
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: Agent③ 排期宏观域未说明板块处置仍被放行")
 
     bad_search = copy.deepcopy(search_audit_doc)
     outlook = bad_search["codex_audit"]["toxic_risk_warning"]["ashare_runtime_outlook"]
@@ -5180,6 +5772,34 @@ def strict_self_test() -> Result:
     call["reasons"] = []
     out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
               "严格负例失效: Agent③ 板块 bullet 缺原因未被拦截")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    outlook = bad_search["codex_audit"]["toxic_risk_warning"]["ashare_runtime_outlook"]
+    outlook["signal_disposition_ledger"] = []
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: Agent③ 市场信号漏出全信号处置台账仍被放行")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    outlook = bad_search["codex_audit"]["toxic_risk_warning"]["ashare_runtime_outlook"]
+    outlook["unmapped_signal_ids"] = ["market-signal-001"]
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: Agent③ 未解释信号非零仍被放行")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    call = bad_search["codex_audit"]["toxic_risk_warning"]["ashare_runtime_outlook"][
+        "sector_calls"
+    ][0]
+    call["considered_signal_ids"] = []
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: Agent③ 板块卡未承接直接/中介信号仍被放行")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    call = bad_search["codex_audit"]["toxic_risk_warning"]["ashare_runtime_outlook"][
+        "sector_calls"
+    ][0]
+    call["considered_domain_ids"] = []
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: Agent③ 板块卡未承接五域处置仍被放行")
 
     bad_search = copy.deepcopy(search_audit_doc)
     call = bad_search["codex_audit"]["toxic_risk_warning"]["ashare_runtime_outlook"][

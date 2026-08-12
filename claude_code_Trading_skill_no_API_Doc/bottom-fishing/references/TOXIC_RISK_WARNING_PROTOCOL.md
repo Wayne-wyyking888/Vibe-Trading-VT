@@ -100,15 +100,35 @@ Agent③必须主动检索 T+1 起未来10个自然日的重大统计、央行�
 - `official_source_refs` 只证明事件名称和排期，必须至少有一个官方直达或经核官方镜像；
 - `consensus_source_refs` 证明一致预期，只能使用调查、市场定价或可靠机构/媒体预览，并与对应
   `warning.evaluation.consensus_source_refs` 精确一致；
-- `consensus_query_ids` 必须回指该 warning 的实际 as-of-T 查询；有共识时采用来源 URL 必须出现在这些
-  查询的 `reviewed_urls`，声称无可靠共识时必须至少有两条不同查询文本；
+- 每个非 `not_applicable` 事件必须以 `expectation_search_coverage` 精确覆盖三条互补检索路径：
+  `survey_consensus`（调查/市场定价）、`economic_calendar`（经济日历）和
+  `institution_preview`（可靠机构或媒体预览）。每路都记录 `hit|no_relevant_hit|blocked`、非空且互不挪用的
+  `query_ids`、本路实际采用的 `source_refs` 与理由；查询必须回指该 warning 的实际 as-of-T 查询。`hit` 的来源 URL
+  必须进入本路 reviewed URL，非 `hit` 不得夹带来源；三路来源并集必须等于事件预期来源。`blocked` 必须换源重试，
+  不能据此声称无共识；
+- `consensus_query_ids` 必须等于三路检索 `query_ids` 的去重并集；采用来源 URL 必须出现在这些查询的
+  `reviewed_urls`。写 `no_reliable_consensus` 时三路均须完成、均不得 blocked，每路至少审阅一个 URL，且总计至少
+  三种不同查询文本、两个不同来源域名；仅做泛搜两次不再合格；
 - `scheduled_for` 优先写完整 `+08:00` 北京时间；官方只给日期或窗口时必须分别标
   `time_precision=date|window`，不能伪造分钟；
-- `consensus_status=available` 时，每个指标必须同时写 `consensus`、`previous`、`unit` 和指标级来源；
-- CPI/PPI 固定四项：`headline_mom/headline_yoy/core_mom/core_yoy`；就业报告固定
+- `consensus_status` 分为：`available`（完整调查/市场一致预期）、`forecast_available`（无调查共识但有完整可靠
+  机构预测）、`mixed_available`（四项完整但调查/市场定价与机构预测混合）、`partial_available`（只找到部分可靠数值）、
+  `qualitative_only`（仅有可靠定性预览）、
+  `no_reliable_consensus` 和 `not_applicable`。不得把机构预测冒充调查共识，也不得因没有完整调查共识而丢弃
+  已找到的数值或定性预览；
+- 每个数值指标必须同时写 `consensus`、`previous`、`unit`、`metric_definition`、
+  `estimate_kind=survey_consensus|market_pricing|institution_forecast` 和指标级来源；`consensus` 字段保留为兼容字段，
+  展示时必须按 `estimate_kind` 标成“一致预期”或“机构预测”；指标来源还必须落在对应检索路径：机构预测只能来自
+  `institution_preview`，调查/市场定价来自 `survey_consensus` 或有实际采用来源的 `economic_calendar`；
+- CPI 固定四项：`cpi_headline_mom/cpi_headline_yoy/cpi_core_mom/cpi_core_yoy`；PPI 固定四项：
+  `ppi_final_demand_mom/ppi_final_demand_yoy/ppi_core_mom/ppi_core_yoy`。PPI 的 `metric_definition` 必须明确最终需求及
+  核心项实际剔除范围，禁止复制核心 CPI 口径；就业报告固定
   `payroll_change/unemployment_rate/wage_growth_mom`；LPR 固定 `lpr_1y/lpr_5y`；
-- 完成至少两种独立共识查询仍无结果时，写 `no_reliable_consensus`、空指标和明确原因；不得让用户提醒、
-  补数或把“待补”带入报告；
+- 固定指标事件无论是否找到数值，都必须让 `required_metric_ids` 保留完整固定集合，并以
+  `metric_search_ledger` 一对一记录每项 `available|no_reliable_estimate`、查询、来源和理由；可用指标必须与
+  `metrics[]` 精确对应，缺失指标必须明确记录完成过的搜索，不得用空数组抹掉检查责任；
+- 三路检索和指标逐项搜索仍无结果时，才写 `no_reliable_consensus`；`qualitative_only` 必须填写
+  `qualitative_expectation` 和来源。不得让用户提醒、补数或把“待补”带入报告；
 - 每条记录还必须有可读摘要与 `watch_after_release`，并在 HTML 顶部展示排期、预期/前值、基准/上下行情景和来源。
 
 ## 5. 五域合并后的A股走势映射
@@ -117,15 +137,19 @@ Agent③必须主动检索 T+1 起未来10个自然日的重大统计、央行�
 `ashare_runtime_outlook`。它不是重复宏观事件预测，
 而是回答：“这些已知信息综合反映到A股，大概是什么走势和结构？”
 
-- `domain_impacts` 必须精确覆盖五域；每域写 `positive|neutral|negative|mixed`，并用
-  `mechanism` 直说如何传到A股，不能停在“全球风险资产可能波动”。
+- `domain_impacts` 必须精确覆盖五域；每域写 `positive|neutral|negative|mixed`，并用 `mechanism` 直说如何传到A股；
+  同时写 `sector_disposition=linked|neutral|not_applicable`、`sector_call_ids` 与 `sector_reason`，把本域全部 warning、
+  delta、排期预期和运行时信息的综合结果明确承接到板块 call，或说明为何不形成相对板块方向。不能停在
+  “全球风险资产可能波动”。
 - `opening_auction` 明确竞价/开盘缺口的 `bias`、路径和定性置信度。
 - `intraday_followthrough` 明确开盘后延续或回吐的 `bias`、路径和定性置信度。
 - `next_session` 保留下一交易日综合 `bias`、路径和定性置信度，不得替代两个日内窗口。
 - `next_1_5_sessions` 明确未来1—5个交易日的 `bias`、路径和定性置信度。
 - `index_style_implications` 写指数与风格相对强弱，例如大盘/小盘、价值/成长、防御/进攻。
 - `sector_calls` 作为板块结论唯一事实源，每条都写方向、行业键、预测窗口、括号原因、驱动/反向信号、
-  主导驱动、置信度、来源、失效条件和关联候选。
+  `considered_signal_ids`、`considered_domain_ids`、主导驱动、置信度、来源、失效条件和关联候选；二者分别与全信号
+  台账和五域板块处置双向闭合。
+- `unmapped_signal_ids` 与 `unmapped_domain_ids` 必须机械重算为空；非空拒绝发布。
 - `sector_beneficiaries` / `sector_pressures` 只能由 `sector_calls` 机械派生为
   `板块名（原因1；原因2）`；没有明确映射时写协议规定的未识别占位，不得手写第二套结论。
 - `opening_triggers` 写开盘前和开盘后优先核对的海外股指、商品、汇率、利率、官方消息等。
@@ -335,20 +359,52 @@ HTML 顶部“市况”正下方必须先显示“Agent③ A股走势映射（�
         "scheduled_for": "YYYY-MM-DD HH:MM:SS+08:00",
         "time_precision": "datetime|date|window",
         "official_source_refs": ["official-source-ref"],
-        "consensus_status": "available|no_reliable_consensus|not_applicable",
+        "consensus_status": "available|forecast_available|mixed_available|partial_available|qualitative_only|no_reliable_consensus|not_applicable",
         "consensus_source_refs": ["consensus-source-ref"],
         "consensus_query_ids": ["toxic-query-consensus-001"],
-        "required_metric_ids": ["headline_mom", "headline_yoy", "core_mom", "core_yoy"],
+        "expectation_search_coverage": {
+          "survey_consensus": {
+            "status": "hit|no_relevant_hit|blocked|not_applicable",
+            "query_ids": ["toxic-query-consensus-001"],
+            "source_refs": ["consensus-source-ref"],
+            "reason": "调查或市场定价检索结论"
+          },
+          "economic_calendar": {
+            "status": "hit|no_relevant_hit|blocked|not_applicable",
+            "query_ids": ["toxic-query-calendar-001"],
+            "source_refs": [],
+            "reason": "经济日历检索结论"
+          },
+          "institution_preview": {
+            "status": "hit|no_relevant_hit|blocked|not_applicable",
+            "query_ids": ["toxic-query-preview-001"],
+            "source_refs": [],
+            "reason": "机构/媒体预览检索结论"
+          }
+        },
+        "required_metric_ids": ["cpi_headline_mom", "cpi_headline_yoy", "cpi_core_mom", "cpi_core_yoy"],
         "metrics": [
           {
-            "metric_id": "headline_mom",
+            "metric_id": "cpi_headline_mom",
             "label": "总CPI环比",
             "consensus": "+0.1%",
             "previous": "+0.2%",
             "unit": "%",
+            "estimate_kind": "survey_consensus",
+            "metric_definition": "居民消费价格指数（CPI）总项月度环比",
             "source_refs": ["consensus-source-ref"]
           }
         ],
+        "metric_search_ledger": [
+          {
+            "metric_id": "cpi_headline_mom",
+            "status": "available|no_reliable_estimate",
+            "query_ids": ["toxic-query-consensus-001"],
+            "source_refs": ["consensus-source-ref"],
+            "reason": "该指标的采用或未采用理由"
+          }
+        ],
+        "qualitative_expectation": "可靠预览支持的定性预期；没有时说明三路检索边界",
         "consensus_note": "官方排期与一致预期的证据边界",
         "display_summary": "事件名：可直接展示的预期摘要",
         "watch_after_release": ["实际值相对预期差", "利率/汇率/风格反应"]
@@ -438,7 +494,10 @@ HTML 顶部“市况”正下方必须先显示“Agent③ A股走势映射（�
       "domain_impacts": {
         "scheduled_macro_policy": {
           "direction": "positive|neutral|negative|mixed",
-          "mechanism": "本域如何反映到A股"
+          "mechanism": "本域如何反映到A股",
+          "sector_disposition": "linked|neutral|not_applicable",
+          "sector_call_ids": ["sector-call-001"],
+          "sector_reason": "为何承接或为何不形成相对板块方向"
         }
       },
       "next_session": {
@@ -463,6 +522,9 @@ HTML 顶部“市况”正下方必须先显示“Agent③ A股走势映射（�
       },
       "index_style_implications": ["指数与风格映射"],
       "sector_calls": ["完整对象见 AGENT3_SECTOR_MAPPING_PROTOCOL.md"],
+      "signal_disposition_ledger": ["全部 market_signals 的唯一处置，完整对象见 AGENT3_SECTOR_MAPPING_PROTOCOL.md"],
+      "unmapped_signal_ids": [],
+      "unmapped_domain_ids": [],
       "sector_beneficiaries": ["由sector_calls派生的板块名（原因）"],
       "sector_pressures": ["由sector_calls派生的板块名（原因）"],
       "opening_triggers": ["开盘优先核对变量"],
@@ -491,9 +553,10 @@ python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" vali
 ```
 
 该命令同时验证 Agent② `bottom_search` 和 Agent③ `toxic_risk_warning`。Agent③缺五域运行时点评估、
-缺八类预测输入覆盖、重大排期事件漏一对一预期台账、CPI/PPI漏四指标、指标缺前值/来源、缺事件推断、
+缺八类预测输入覆盖、重大排期事件漏一对一预期台账、三路预期检索未闭合、把机构预测冒充一致预期、
+CPI/PPI 漏事件专属四指标的逐项搜索台账、混用指标口径、指标缺前值/来源/口径定义、缺事件推断、
 只写“方向不确定”、末端扫描未覆盖至实际运行日、无来源精确概率、
-缺分窗口A股走势综合、板块 bullet 无括号原因、板块与候选股票未双向下沉、没有逐域说明如何反映到A股、
+缺分窗口A股走势综合、存在未处置信号、板块 bullet 无括号原因、板块与候选股票未双向下沉、没有逐域说明如何反映到A股、
 编造A股精确涨跌概率/幅度/点位或发生 T 后倒灌时均失败。最终发布只接受 v3；历史 v2 仅保留非严格读取兼容。
 任一失败都不得运行 `--adjudicate`。最终 `augment-report` 会生成 Agent③ 独立审计表，
 `validate --require-bottom-search` 还会检查A股白话综合确实位于顶部市况下、重大排期事件的北京时间、

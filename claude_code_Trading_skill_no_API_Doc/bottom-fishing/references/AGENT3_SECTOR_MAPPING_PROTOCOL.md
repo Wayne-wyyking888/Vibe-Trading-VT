@@ -107,6 +107,31 @@ Agent③必须把运行时点信息分成三个不同目标，禁止用“下一
 查询必须以 `selected_signal_ids` 双向引用信号；信号来源必须出现在关联查询的 `reviewed_urls`，并进入
 所属五域 `runtime_evaluation.signal_ids/source_refs`。精确数字只可描述已观测事实；A股方向继续使用定性置信度。
 
+### 5.1 全信号处置台账
+
+八类覆盖只证明“信号被登记”，不证明“板块结论考虑过信号”。因此
+`ashare_runtime_outlook.signal_disposition_ledger` 必须与 `market_signals[]` 一对一：每个 signal 恰有一条处置，
+不得只挑支持既有结论的信号。
+
+- `direct_driver`：直接进入一个或多个 `sector_call.driver_signal_ids`；
+- `direct_opposing`：直接进入一个或多个 `sector_call.opposing_signal_ids`；
+- `direct_mixed`：在不同 call 中同时承担 driver 与 opposing；
+- `mediated`：不重复进入 call，通过另一条已直接使用的信号传导，例如 CPI→美债利率→成长估值；必须写
+  `mediated_by_signal_ids` 和实际承接的 `sector_call_ids`；
+- `neutral`：已核验但没有足以形成相对板块方向的预期差；
+- `not_applicable`：对当前A股板块窗口不适用，并说明边界；
+- `stale_excluded`：陈旧信号仅留审计，不得进 call。
+
+每条处置都写 `signal_id/disposition/sector_call_ids/mediated_by_signal_ids/reason`。直接处置的 call 集合必须与
+driver/opposing 实际引用精确一致；`mediated` 的承接 call 必须由中介信号真实驱动或反向引用；其余处置不得夹带 call。
+每个 call 的 `considered_signal_ids` 必须等于它直接引用和经台账传导到本 call 的信号并集。
+`unmapped_signal_ids` 必须机械重算为空；任何 signal 缺台账、重复处置、伪中介、陈旧信号参战或无理由悬空都拒绝发布。
+
+全信号台账之外，五个 `domain_impacts` 必须逐域写 `sector_disposition/sector_call_ids/sector_reason`：`linked` 精确
+承接 call，`neutral|not_applicable` 不得夹带 call；这一步保证 scheduled warning、其他 warning、T后 delta 和五域
+综合中没有生成独立 market_signal 的报告内容也被板块映射显式考虑。每个 call 的 `considered_domain_ids` 与这些引用
+双向闭合，`unmapped_domain_ids` 必须为空。
+
 ## 6. 板块综合调用
 
 `ashare_runtime_outlook.sector_calls[]` 是板块 bullet 的唯一事实源：
@@ -124,12 +149,31 @@ Agent③必须把运行时点信息分成三个不同目标，禁止用“下一
   "reasons": ["隔夜海外芯片同业相对宽基明显走强", "关键公司指引验证需求"],
   "driver_signal_ids": ["market-signal-001"],
   "opposing_signal_ids": ["market-signal-002"],
+  "considered_signal_ids": ["market-signal-001", "market-signal-002", "market-signal-003"],
+  "considered_domain_ids": ["scheduled_macro_policy", "cross_asset_stress"],
   "dominant_driver": "主导驱动及其胜过反向因素的原因",
   "confidence": "low|medium|high",
   "invalidators": ["竞价未跟随且开盘后行业相对收益迅速转负"],
   "source_refs": ["驱动与反向信号来源的完整并集"],
   "candidate_codes": ["600000"],
   "shadow": true
+}
+```
+
+板块调用之外，走势对象还必须保存：
+
+```json
+{
+  "signal_disposition_ledger": [
+    {
+      "signal_id": "market-signal-003",
+      "disposition": "mediated",
+      "sector_call_ids": ["sector-call-001"],
+      "mediated_by_signal_ids": ["market-signal-001"],
+      "reason": "宏观实际值先反映到利率，再通过折现率影响成长板块；避免重复计数"
+    }
+  ],
+  "unmapped_signal_ids": []
 }
 ```
 
@@ -155,8 +199,11 @@ Agent③必须把运行时点信息分成三个不同目标，禁止用“下一
 • 航空（若原油由供给冲击上涨，燃油成本承压；油价回落或航油附加费改善即失效）
 ```
 
-每个 bullet 同时显示预测窗口、置信度、来源链接和失效条件。原因必须放在中文括号内；不允许只有板块名，
-也不允许把全部原因塞入一段无法对应板块的总述。
+每个 bullet 同时显示预测窗口、置信度、来源链接、失效条件和机械派生的简短信号结论：
+`本板块已考虑信号N条（驱动N/反向N/中介N）；关联五域N域；全局信号N条/五域5域均已处置，未解释0项`。
+原因必须放在中文括号内；
+不允许只有板块名，也不允许把全部原因塞入一段无法对应板块的总述。审计附录必须完整展开全信号处置台账，
+顶部卡片只显示上述简短结论。
 
 ## 8. 候选股票双向下沉
 
@@ -202,7 +249,9 @@ Agent③必须把运行时点信息分成三个不同目标，禁止用“下一
 - v2或缺少八类预测输入覆盖；
 - 观测时点晚于检索时点、T/T后混账或陈旧信号充当主驱动；
 - signal/query/source/runtime 引用不双向；
+- `signal_disposition_ledger` 未精确覆盖全部信号、存在伪中介或 `unmapped_signal_ids` 非空；
 - 板块缺原因、来源、主驱动、失效条件或合法窗口；
+- `sector_call.considered_signal_ids` 未完整承接直接与中介信号；
 - `sector_beneficiaries/pressures` 不是由 calls 派生；
 - 提及候选所属行业却漏掉候选，或股票 context/HTML 未下沉；
 - 把海外已观察涨幅写成A股预计涨幅、概率或目标点位；
