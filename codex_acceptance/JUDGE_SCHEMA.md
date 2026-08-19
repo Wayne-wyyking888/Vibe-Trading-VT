@@ -118,7 +118,8 @@ bottom-fishing 启用 `bottom_search` 后按其 F10 ledger 执行：T 前实质�
 ## bottom-fishing 增量字段
 
 旧版、未启用 bottom search 的工件仍要求 `facts[].code` 覆盖每个过线票；`rulings` 写在
-`bottom_adjudication.json` 原位置，verdict 只能是 `✓/?/✗`。
+`bottom_adjudication.json` 固定写入
+`claude_code_Trading_skill_no_API_Doc/bottom-fishing/state/`，verdict 只能是 `✓/?/✗`。
 新生成的 bottom-fishing 裁定必须在 `codex_audit.bottom_search` 写入
 `bottom-search-audit/v1` 搜索审计；完整的检索、时间和来源规则见
 `claude_code_Trading_skill_no_API_Doc/bottom-fishing/references/WEB_EVIDENCE_PROTOCOL.md`。启用该审计时，
@@ -309,7 +310,7 @@ F10 seed key 只有两种：forecast 固定为 `{code}:forecast`，`raw_index=nu
 裁定写入前先运行：
 
 ```powershell
-python C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py validate-bottom-search --result C:\Trading_analysis\data\bottom_latest.json --audit C:\Trading_analysis\data\bottom_adjudication.json
+python C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py validate-bottom-search --result C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\bottom-fishing\state\bottom_latest.json --audit C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\bottom-fishing\state\bottom_adjudication.json
 ```
 
 最终验收还必须给 `validate` 增加 `--require-bottom-search`；任一搜索门禁失败都不得发布为最终报告。

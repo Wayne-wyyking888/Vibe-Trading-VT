@@ -257,8 +257,8 @@ T后 seed/query ──────────> bottom_search.post_t_safety_by_c
 
 ```powershell
 python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" validate-bottom-search `
-  --result "C:\Trading_analysis\data\bottom_latest.json" `
-  --audit "C:\Trading_analysis\data\bottom_adjudication.json"
+  --result "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\bottom-fishing\state\bottom_latest.json" `
+  --audit "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\bottom-fishing\state\bottom_adjudication.json"
 ```
 
 非零退出时不得运行 `--adjudicate`。最终验收必须再加 `--require-bottom-search`，防止 attach 或 HTML 阶段丢失搜索审计。

@@ -94,7 +94,7 @@ def main() -> int:
     ap.add_argument("--skill", required=True,
                     choices=("bottom-fishing", "stock-diagnostic", "weekly-ashare-rank"))
     ap.add_argument("--result", required=True, help="引擎结果 JSON")
-    ap.add_argument("--out", default=r"C:\Trading_analysis\data\codex_price_verification.json")
+    ap.add_argument("--out", help="输出 JSON；默认写到结果 JSON 同目录")
     args = ap.parse_args()
 
     result_path = pathlib.Path(args.result)
@@ -146,7 +146,7 @@ def main() -> int:
         "retrieved_at_beijing": eng._cn_now().isoformat(timespec="seconds"),
         "price_verification_by_code": rows,
     }
-    out = pathlib.Path(args.out)
+    out = pathlib.Path(args.out) if args.out else result_path.with_name("codex_price_verification.json")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     failed = [code for code, row in rows.items() if row["status"] != "verified"]

@@ -27,12 +27,16 @@ bottom-fishing/
 │  └─ board30_split_study/ # 30* 20%板独立profile预注册/A-B/holdout（shadow-only）
 ├─ README.md             # 研究存档: 全部方法论数字/否决清单/毒月专项
 ├─ DOC.md                # 本文件(操作文档)
+├─ state/                # Git跟踪的生产状态（标准workflow唯一读写位置）
+│  ├─ bottom_latest.json        # 最新一期结果(供回填/复查)
+│  ├─ bottom_adjudication.json  # T日裁定、Agent③预警、搜索审计和结构化证据
+│  ├─ bottom_shadow_log.jsonl   # 影子日志、冷却依据和复盘结果
+│  └─ codex_price_verification.json # 独立跨源验价留痕，发布时并入裁定审计
 └─ reports/              # HTML报告(gitignore, bottom_cn_完整北京时间戳[_裁定版].html)
-C:\Trading_analysis\data\
-├─ bottom_latest.json        # 最新一期结果(供回填/复查)
-├─ bottom_adjudication.json  # T日裁定、Agent③预警、搜索审计和Codex结构化证据
-└─ bottom_shadow_log.jsonl   # 影子日志: 每笔过线票+def_days/idx_rsv影子字段+结算结果
 ```
+
+共享行情、交易日历与 ETF 在线刷新副本继续位于
+`C:\Trading_analysis\data\cache\ashare_weekly`；它们可重建、不进 Git，也不属于上述持久状态。
 
 ## 引擎命令行
 ```powershell
@@ -95,8 +99,8 @@ UTC+8 的 `generated_at` / `adjudicated_at`。业务截止日 T 只写入正文�
 
 ```powershell
 python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" validate-bottom-search `
-  --result "C:\Trading_analysis\data\bottom_latest.json" `
-  --audit "C:\Trading_analysis\data\bottom_adjudication.json"
+  --result "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\bottom-fishing\state\bottom_latest.json" `
+  --audit "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\bottom-fishing\state\bottom_adjudication.json"
 ```
 
 ## 硬纪律速查（数字出处=README）

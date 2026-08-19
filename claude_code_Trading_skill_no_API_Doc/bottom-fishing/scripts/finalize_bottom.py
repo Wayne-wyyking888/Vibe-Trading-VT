@@ -24,10 +24,10 @@ ACCEPTANCE = REPO / "codex_acceptance" / "acceptance.py"
 RUN_ENGINE = REPO / "codex_acceptance" / "run_engine.py"
 VERIFY_PRICES = REPO / "codex_acceptance" / "verify_prices.py"
 NORMALIZE_AUDIT = SKILL / "scripts" / "normalize_bottom_audit.py"
-DATA = pathlib.Path(r"C:\Trading_analysis\data")
-RESULT = DATA / "bottom_latest.json"
-AUDIT = DATA / "bottom_adjudication.json"
-PRICE_RESULT = DATA / "codex_price_verification.json"
+STATE = SKILL / "state"
+RESULT = STATE / "bottom_latest.json"
+AUDIT = STATE / "bottom_adjudication.json"
+PRICE_RESULT = STATE / "codex_price_verification.json"
 
 
 def _run(args: list[str], *, accepted: set[int] | None = None) -> int:

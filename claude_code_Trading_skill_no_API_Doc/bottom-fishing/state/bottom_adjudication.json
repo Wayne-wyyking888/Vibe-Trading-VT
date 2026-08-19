@@ -1,0 +1,2572 @@
+{
+  "T": "2026-08-17",
+  "alerts": [
+    {
+      "warning_id": "tw-fed-minutes",
+      "level": "med",
+      "text": "Agent③ shadow影子预警：美联储7月会议纪要将发布；关注政策分歧与美债方向。",
+      "shadow": true,
+      "post_t": false
+    },
+    {
+      "warning_id": "tw-lpr",
+      "level": "med",
+      "text": "Agent③ shadow影子预警：中国8月LPR将公布；两个期限机构预测均已登记且不冒充调查共识。",
+      "shadow": true,
+      "post_t": false
+    },
+    {
+      "warning_id": "tw-us-ip",
+      "level": "med",
+      "text": "Agent③ shadow影子预警：美国7月工业生产将在8月18日发布，作为增长和利率路径验证点。",
+      "shadow": true,
+      "post_t": false
+    },
+    {
+      "warning_id": "tw-us-gdp",
+      "level": "med",
+      "text": "Agent③ shadow影子预警：美国二季度GDP二次估值将发布，需核对对初值的修订方向。",
+      "shadow": true,
+      "post_t": false
+    },
+    {
+      "warning_id": "tw-jackson-hole",
+      "level": "med",
+      "text": "Agent③ shadow影子预警：杰克逊霍尔研讨会将在未来窗口开始，政策沟通方向不确定。",
+      "shadow": true,
+      "post_t": false
+    },
+    {
+      "warning_id": "tw-hormuz",
+      "level": "high",
+      "text": "Agent③ shadow影子预警：截至T日霍尔木兹通航安全保证仍不足，能源、运费和供应链风险活跃。",
+      "shadow": true,
+      "post_t": false
+    }
+  ],
+  "rulings": {},
+  "codex_audit": {
+    "version": "codex-trading-audit/v1",
+    "skill": "bottom-fishing",
+    "evidence_cutoff_beijing": "2026-08-17 23:59:59+08:00",
+    "retrieved_on_beijing": "2026-08-18",
+    "facts": [],
+    "contrarian_challenge": {
+      "completed": true,
+      "arguments": [
+        "观察池中电子、新能源与制造标的具备反弹弹性，T日创业板走强。",
+        "国内高技术制造与全球设备同业基本面提供结构性支撑。"
+      ],
+      "responses": [
+        "ATR、五交易日冷却与最低分属于不可越过的硬门槛，不能事后补选。",
+        "结构性利好不等于候选过线，且外盘、利率和内需仍有反向约束；本轮保持空手。"
+      ]
+    },
+    "auditor_review": {
+      "passed": true,
+      "checks": [
+        "数据新鲜度",
+        "跨源价格",
+        "算术",
+        "rubric",
+        "价位逻辑",
+        "引用",
+        "引擎原始输出",
+        "零候选搜索豁免",
+        "T/T后证据隔离",
+        "五域风险覆盖",
+        "八类预测输入覆盖",
+        "重大排期预期完整性",
+        "来源血缘",
+        "shadow边界"
+      ],
+      "failed": [],
+      "notes": "结构化审计已完成，交由独立验收器与发布器机械复核。"
+    },
+    "price_verification_by_code": {},
+    "bottom_search": {
+      "version": "bottom-search-audit/v1",
+      "T": "2026-08-17",
+      "cutoff_beijing": "2026-08-17 23:59:59+08:00",
+      "retrieved_at_beijing": "2026-08-18 06:28:29+08:00",
+      "required_categories": [
+        "performance_operations",
+        "financial_credit",
+        "governance_regulatory",
+        "corporate_events",
+        "industry_policy_domestic",
+        "external_global_peer"
+      ],
+      "empty_reason": "不可变引擎本轮推荐线为零：底部区标的均被ATR、五交易日冷却或最低分门槛拦截。",
+      "sources": [],
+      "queries": [],
+      "coverage_by_code": {},
+      "f10_seed_ledger": [],
+      "post_t_safety_by_code": {},
+      "market_coverage": {
+        "status": "no_relevant_hit",
+        "query_ids": [],
+        "fact_ids": [],
+        "reason": "零候选，不启动个股网页裁定；市场级风险由Agent③独立覆盖。"
+      }
+    },
+    "toxic_risk_warning": {
+      "version": "bottom-toxic-risk-warning/v3",
+      "T": "2026-08-17",
+      "cutoff_beijing": "2026-08-17 23:59:59+08:00",
+      "retrieved_at_beijing": "2026-08-18 06:28:29+08:00",
+      "mode": "shadow",
+      "overall_status": "elevated",
+      "required_domains": [
+        "scheduled_macro_policy",
+        "domestic_regulatory_liquidity",
+        "external_geopolitics_trade",
+        "cross_asset_stress",
+        "holiday_information_gap"
+      ],
+      "sources": [
+        {
+          "source_ref": "ts-fed-calendar",
+          "access_url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+          "publisher": "Federal Reserve",
+          "source_kind": "official_direct",
+          "origin_id": "fed-calendar",
+          "published_at": "2026-06-17",
+          "published_at_beijing": "2026-06-17 12:00:00+08:00",
+          "phase": "as_of_t"
+        },
+        {
+          "source_ref": "ts-conference-fed-preview",
+          "access_url": "https://www.conference-board.org/research/global-economy-briefs/rapid-response-fomc-preview-july-2026",
+          "publisher": "The Conference Board",
+          "source_kind": "independent_research",
+          "origin_id": "conference-board",
+          "published_at": "2026-07-28",
+          "published_at_beijing": "2026-07-28 20:00:00+08:00",
+          "phase": "as_of_t"
+        },
+        {
+          "source_ref": "ts-lpr-rule",
+          "access_url": "https://www.psbc.com/cn/common/bjfw/dkscbjllcx/?eqid=9eddf3cf0017c314000000066460db45",
+          "publisher": "中国邮政储蓄银行",
+          "source_kind": "official_direct",
+          "origin_id": "psbc-lpr",
+          "published_at": "2026-07-20",
+          "published_at_beijing": "2026-07-20 09:30:00+08:00",
+          "phase": "as_of_t"
+        },
+        {
+          "source_ref": "ts-te-china-calendar",
+          "access_url": "https://tradingeconomics.com/china/calendar",
+          "publisher": "Trading Economics",
+          "source_kind": "independent_research",
+          "origin_id": "te-china",
+          "published_at": "2026-08-17",
+          "published_at_beijing": "2026-08-17 12:00:00+08:00",
+          "phase": "as_of_t"
+        },
+        {
+          "source_ref": "ts-fed-g17",
+          "access_url": "https://www.federalreserve.gov/releases/g17/default.htm",
+          "publisher": "Federal Reserve",
+          "source_kind": "official_direct",
+          "origin_id": "fed-g17",
+          "published_at": "2025-12-31",
+          "published_at_beijing": "2025-12-31 12:00:00+08:00",
+          "phase": "as_of_t"
+        },
+        {
+          "source_ref": "ts-ap-week-ahead",
+          "access_url": "https://apnews.com/article/7dd75609981e7e96b40aa82523b0ea57",
+          "publisher": "Associated Press",
+          "source_kind": "independent_media",
+          "origin_id": "ap-week",
+          "published_at": "2026-08-13",
+          "published_at_beijing": "2026-08-13 20:00:00+08:00",
+          "phase": "as_of_t"
+        },
+        {
+          "source_ref": "ts-bea-gdp",
+          "access_url": "https://www.bea.gov/news/2026/gdp-advance-estimate-2nd-quarter-2026",
+          "publisher": "U.S. Bureau of Economic Analysis",
+          "source_kind": "official_direct",
+          "origin_id": "bea-gdp",
+          "published_at": "2026-07-30",
+          "published_at_beijing": "2026-07-30 20:30:00+08:00",
+          "phase": "as_of_t"
+        },
+        {
+          "source_ref": "ts-kip-gdp",
+          "access_url": "https://www.kiplinger.com/economic-forecasts/gdp",
+          "publisher": "Kiplinger",
+          "source_kind": "independent_research",
+          "origin_id": "kiplinger-gdp",
+          "published_at": "2026-08-06",
+          "published_at_beijing": "2026-08-06 20:00:00+08:00",
+          "phase": "as_of_t"
+        },
+        {
+          "source_ref": "ts-kc-jackson",
+          "access_url": "https://www.kansascityfed.org/research/jackson-hole-economic-policy-symposium/",
+          "publisher": "Federal Reserve Bank of Kansas City",
+          "source_kind": "official_direct",
+          "origin_id": "kc-fed-jh",
+          "published_at": "2026-05-01",
+          "published_at_beijing": "2026-05-01 12:00:00+08:00",
+          "phase": "as_of_t"
+        },
+        {
+          "source_ref": "ts-kip-jackson",
+          "access_url": "https://www.kiplinger.com/investing/live/fed-meeting-updates-and-commentary-july-2026",
+          "publisher": "Kiplinger",
+          "source_kind": "independent_research",
+          "origin_id": "kiplinger-jh",
+          "published_at": "2026-07-29",
+          "published_at_beijing": "2026-07-29 20:00:00+08:00",
+          "phase": "as_of_t"
+        },
+        {
+          "source_ref": "ts-imo",
+          "access_url": "https://www.imo.org/en/mediacentre/pressbriefings/pages/statement-no-safe-passage-strait-of-hormuz.aspx",
+          "publisher": "International Maritime Organization",
+          "source_kind": "official_direct",
+          "origin_id": "imo-hormuz",
+          "published_at": "2026-06-09",
+          "published_at_beijing": "2026-06-09 18:00:00+08:00",
+          "phase": "as_of_t"
+        },
+        {
+          "source_ref": "ts-ap-hormuz-current",
+          "access_url": "https://apnews.com/article/iran-us-israel-lebanon-gaza-hormuz-august-17-2026-53ae10812e472a4e5bb228b9f318a5fc",
+          "publisher": "Associated Press",
+          "source_kind": "independent_media",
+          "origin_id": "ap-hormuz",
+          "published_at": "2026-08-17",
+          "published_at_beijing": "2026-08-17 17:37:00+08:00",
+          "phase": "as_of_t"
+        },
+        {
+          "source_ref": "ts-nbs-july",
+          "access_url": "https://www.stats.gov.cn/sj/zxfb/202608/t20260817_1965056.html",
+          "publisher": "国家统计局",
+          "source_kind": "official_direct",
+          "origin_id": "nbs-july",
+          "published_at": "2026-08-17",
+          "published_at_beijing": "2026-08-17 15:00:00+08:00",
+          "phase": "as_of_t"
+        },
+        {
+          "source_ref": "ts-amat-q3",
+          "access_url": "https://ir.appliedmaterials.com/news-releases/news-release-details/applied-materials-announces-third-quarter-2026-results",
+          "publisher": "Applied Materials",
+          "source_kind": "official_direct",
+          "origin_id": "amat-q3",
+          "published_at": "2026-08-14",
+          "published_at_beijing": "2026-08-14 04:05:00+08:00",
+          "phase": "as_of_t"
+        },
+        {
+          "source_ref": "ts-ap-us-close",
+          "access_url": "https://apnews.com/article/wall-street-stocks-dow-nasdaq-b20808a2f37a7c505013c9b301c8ebe0",
+          "publisher": "Associated Press",
+          "source_kind": "independent_media",
+          "origin_id": "ap-us-close",
+          "published_at": "2026-08-18",
+          "published_at_beijing": "2026-08-18 04:41:00+08:00",
+          "phase": "post_t_safety"
+        }
+      ],
+      "queries": [
+        {
+          "query_id": "tq-fed-a",
+          "domain": "scheduled_macro_policy",
+          "phase": "as_of_t",
+          "query_text": "美联储2026年7月会议纪要调查共识 August 19",
+          "date_from": "2026-05-01",
+          "date_to": "2026-08-17",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"
+          ],
+          "selected_warning_ids": [
+            "tw-fed-minutes"
+          ],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "纪要没有标准数值调查口径。"
+        },
+        {
+          "query_id": "tq-fed-b",
+          "domain": "scheduled_macro_policy",
+          "phase": "as_of_t",
+          "query_text": "FOMC July 2026 minutes official calendar release",
+          "date_from": "2026-05-01",
+          "date_to": "2026-08-17",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"
+          ],
+          "selected_warning_ids": [
+            "tw-fed-minutes"
+          ],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "官方日历确认发布时间。"
+        },
+        {
+          "query_id": "tq-fed-c",
+          "domain": "scheduled_macro_policy",
+          "phase": "as_of_t",
+          "query_text": "July 2026 FOMC institutional preview inflation policy division",
+          "date_from": "2026-05-01",
+          "date_to": "2026-08-17",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://www.conference-board.org/research/global-economy-briefs/rapid-response-fomc-preview-july-2026"
+          ],
+          "selected_warning_ids": [
+            "tw-fed-minutes"
+          ],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "机构预览支持政策分歧的定性预期。"
+        },
+        {
+          "query_id": "tq-lpr-a",
+          "domain": "scheduled_macro_policy",
+          "phase": "as_of_t",
+          "query_text": "2026年8月LPR调查一致预期 一年期 五年期",
+          "date_from": "2026-05-01",
+          "date_to": "2026-08-17",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://www.psbc.com/cn/common/bjfw/dkscbjllcx/?eqid=9eddf3cf0017c314000000066460db45"
+          ],
+          "selected_warning_ids": [
+            "tw-lpr"
+          ],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "未取得新的调查均值。"
+        },
+        {
+          "query_id": "tq-lpr-b",
+          "domain": "scheduled_macro_policy",
+          "phase": "as_of_t",
+          "query_text": "China August 2026 LPR economic calendar consensus",
+          "date_from": "2026-05-01",
+          "date_to": "2026-08-17",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://www.psbc.com/cn/common/bjfw/dkscbjllcx/?eqid=9eddf3cf0017c314000000066460db45"
+          ],
+          "selected_warning_ids": [
+            "tw-lpr"
+          ],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "官方银行页面确认LPR规则与期限。"
+        },
+        {
+          "query_id": "tq-lpr-c",
+          "domain": "scheduled_macro_policy",
+          "phase": "as_of_t",
+          "query_text": "China August 20 2026 LPR institutional forecast",
+          "date_from": "2026-05-01",
+          "date_to": "2026-08-17",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://tradingeconomics.com/china/calendar"
+          ],
+          "selected_warning_ids": [
+            "tw-lpr"
+          ],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "机构模型给出两个期限的完整预测。"
+        },
+        {
+          "query_id": "tq-ip-a",
+          "domain": "scheduled_macro_policy",
+          "phase": "as_of_t",
+          "query_text": "美国7月工业生产调查一致预期 2026年8月18日",
+          "date_from": "2026-05-01",
+          "date_to": "2026-08-17",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://apnews.com/article/7dd75609981e7e96b40aa82523b0ea57"
+          ],
+          "selected_warning_ids": [
+            "tw-us-ip"
+          ],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "未取得可靠数值调查共识。"
+        },
+        {
+          "query_id": "tq-ip-b",
+          "domain": "scheduled_macro_policy",
+          "phase": "as_of_t",
+          "query_text": "Federal Reserve G17 August 18 2026 release calendar",
+          "date_from": "2026-05-01",
+          "date_to": "2026-08-17",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://www.federalreserve.gov/releases/g17/default.htm"
+          ],
+          "selected_warning_ids": [
+            "tw-us-ip"
+          ],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "官方G.17日程确认发布时间。"
+        },
+        {
+          "query_id": "tq-ip-c",
+          "domain": "scheduled_macro_policy",
+          "phase": "as_of_t",
+          "query_text": "week ahead US industrial production August 18 2026 preview",
+          "date_from": "2026-05-01",
+          "date_to": "2026-08-17",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://apnews.com/article/7dd75609981e7e96b40aa82523b0ea57"
+          ],
+          "selected_warning_ids": [
+            "tw-us-ip"
+          ],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "周度预览提供增长信号定性基准。"
+        },
+        {
+          "query_id": "tq-gdp-a",
+          "domain": "scheduled_macro_policy",
+          "phase": "as_of_t",
+          "query_text": "US Q2 2026 GDP second estimate survey consensus August 26",
+          "date_from": "2026-05-01",
+          "date_to": "2026-08-17",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://www.bea.gov/news/2026/gdp-advance-estimate-2nd-quarter-2026"
+          ],
+          "selected_warning_ids": [
+            "tw-us-gdp"
+          ],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "未取得二次估值修订幅度的可靠调查共识。"
+        },
+        {
+          "query_id": "tq-gdp-b",
+          "domain": "scheduled_macro_policy",
+          "phase": "as_of_t",
+          "query_text": "BEA Q2 2026 GDP second estimate release schedule",
+          "date_from": "2026-05-01",
+          "date_to": "2026-08-17",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://www.bea.gov/news/2026/gdp-advance-estimate-2nd-quarter-2026"
+          ],
+          "selected_warning_ids": [
+            "tw-us-gdp"
+          ],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "BEA确认二次估值发布时间。"
+        },
+        {
+          "query_id": "tq-gdp-c",
+          "domain": "scheduled_macro_policy",
+          "phase": "as_of_t",
+          "query_text": "US GDP 2026 institutional outlook second quarter revision",
+          "date_from": "2026-05-01",
+          "date_to": "2026-08-17",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://www.kiplinger.com/economic-forecasts/gdp"
+          ],
+          "selected_warning_ids": [
+            "tw-us-gdp"
+          ],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "机构展望仅提供定性增长基准。"
+        },
+        {
+          "query_id": "tq-jh-a",
+          "domain": "scheduled_macro_policy",
+          "phase": "as_of_t",
+          "query_text": "Jackson Hole 2026 survey consensus policy speech",
+          "date_from": "2026-05-01",
+          "date_to": "2026-08-17",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://www.kansascityfed.org/research/jackson-hole-economic-policy-symposium/"
+          ],
+          "selected_warning_ids": [
+            "tw-jackson-hole"
+          ],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "会议无标准数值调查共识。"
+        },
+        {
+          "query_id": "tq-jh-b",
+          "domain": "scheduled_macro_policy",
+          "phase": "as_of_t",
+          "query_text": "Kansas City Fed Jackson Hole 2026 official dates theme",
+          "date_from": "2026-05-01",
+          "date_to": "2026-08-17",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://www.kansascityfed.org/research/jackson-hole-economic-policy-symposium/"
+          ],
+          "selected_warning_ids": [
+            "tw-jackson-hole"
+          ],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "主办方确认日期与主题。"
+        },
+        {
+          "query_id": "tq-jh-c",
+          "domain": "scheduled_macro_policy",
+          "phase": "as_of_t",
+          "query_text": "Jackson Hole 2026 institutional preview Warsh speech",
+          "date_from": "2026-05-01",
+          "date_to": "2026-08-17",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://www.kiplinger.com/investing/live/fed-meeting-updates-and-commentary-july-2026"
+          ],
+          "selected_warning_ids": [
+            "tw-jackson-hole"
+          ],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "发布前预览提供沟通风险定性基准。"
+        },
+        {
+          "query_id": "tq-ext-hormuz",
+          "domain": "external_geopolitics_trade",
+          "phase": "as_of_t",
+          "query_text": "霍尔木兹通航 2026-08-17 官方 最新",
+          "date_from": "2026-05-01",
+          "date_to": "2026-08-17",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://www.imo.org/en/mediacentre/pressbriefings/pages/statement-no-safe-passage-strait-of-hormuz.aspx",
+            "https://apnews.com/article/iran-us-israel-lebanon-gaza-hormuz-august-17-2026-53ae10812e472a4e5bb228b9f318a5fc"
+          ],
+          "selected_warning_ids": [
+            "tw-hormuz"
+          ],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [
+            "sig-hormuz"
+          ],
+          "notes": "IMO与AP确认截至T日通航风险未解除。"
+        },
+        {
+          "query_id": "tq-nbs-actual",
+          "domain": "scheduled_macro_policy",
+          "phase": "as_of_t",
+          "query_text": "国家统计局 2026年7月 国民经济 数据 实际值",
+          "date_from": "2026-05-01",
+          "date_to": "2026-08-17",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://www.stats.gov.cn/sj/zxfb/202608/t20260817_1965056.html"
+          ],
+          "selected_warning_ids": [],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [
+            "sig-cn-demand",
+            "sig-cn-hightech"
+          ],
+          "notes": "采用国家统计局T日正式发布核对内需与高技术制造分化。"
+        },
+        {
+          "query_id": "tq-dom-a",
+          "domain": "domestic_regulatory_liquidity",
+          "phase": "as_of_t",
+          "query_text": "site:sse.com.cn 2026-08-17 紧急交易 风险提示",
+          "date_from": "2026-05-01",
+          "date_to": "2026-08-17",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "no_relevant_hit",
+          "reviewed_urls": [
+            "https://www.sse.com.cn/disclosure/announcement/general/"
+          ],
+          "selected_warning_ids": [],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "未发现截至T的系统性交易制度冲击。"
+        },
+        {
+          "query_id": "tq-dom-b",
+          "domain": "domestic_regulatory_liquidity",
+          "phase": "as_of_t",
+          "query_text": "site:csrc.gov.cn 2026-08-17 市场流动性 重大措施",
+          "date_from": "2026-05-01",
+          "date_to": "2026-08-17",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "no_relevant_hit",
+          "reviewed_urls": [
+            "https://www.csrc.gov.cn/csrc/c100028/common_xq_list.shtml"
+          ],
+          "selected_warning_ids": [],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "未发现截至T的系统性监管或流动性冲击。"
+        },
+        {
+          "query_id": "tq-ext-b",
+          "domain": "external_geopolitics_trade",
+          "phase": "as_of_t",
+          "query_text": "site:ustr.gov August 2026 China restrictions",
+          "date_from": "2026-05-01",
+          "date_to": "2026-08-17",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "no_relevant_hit",
+          "reviewed_urls": [
+            "https://www.ustr.gov/about/policy-offices/press-office/press-releases/2026/august"
+          ],
+          "selected_warning_ids": [],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "未发现截至T独立于航运风险的新一轮重大对华限制。"
+        },
+        {
+          "query_id": "tq-amat-asof",
+          "domain": "cross_asset_stress",
+          "phase": "as_of_t",
+          "query_text": "Applied Materials Q3 2026 results official",
+          "date_from": "2026-05-01",
+          "date_to": "2026-08-17",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://ir.appliedmaterials.com/news-releases/news-release-details/applied-materials-announces-third-quarter-2026-results"
+          ],
+          "selected_warning_ids": [],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [
+            "sig-amat-fundamental"
+          ],
+          "notes": "采用公司官方业绩公告核对全球半导体设备同业。"
+        },
+        {
+          "query_id": "tq-cross-asof-b",
+          "domain": "cross_asset_stress",
+          "phase": "as_of_t",
+          "query_text": "2026-08-17 cross asset liquidation credit stress official",
+          "date_from": "2026-05-01",
+          "date_to": "2026-08-17",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "no_relevant_hit",
+          "reviewed_urls": [
+            "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"
+          ],
+          "selected_warning_ids": [],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "未发现截至T独立的系统性强平或信用失序证据。"
+        },
+        {
+          "query_id": "tq-cross-asof-c",
+          "domain": "cross_asset_stress",
+          "phase": "as_of_t",
+          "query_text": "2026-08-17 global credit volatility forced liquidation latest",
+          "date_from": "2026-05-01",
+          "date_to": "2026-08-17",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "no_relevant_hit",
+          "reviewed_urls": [
+            "https://apnews.com/article/wall-street-stocks-dow-nasdaq-b20808a2f37a7c505013c9b301c8ebe0"
+          ],
+          "selected_warning_ids": [],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "第二压力变体未发现截至T的系统性信用冲击。"
+        },
+        {
+          "query_id": "tq-holiday-a",
+          "domain": "holiday_information_gap",
+          "phase": "as_of_t",
+          "query_text": "上交所2026年休市安排 8月18日至27日",
+          "date_from": "2026-05-01",
+          "date_to": "2026-08-17",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "no_relevant_hit",
+          "reviewed_urls": [
+            "https://www.sse.com.cn/disclosure/dealinstruc/closed/?from=timeline&isappinstalled=0"
+          ],
+          "selected_warning_ids": [],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "未来窗口无A股长假信息缺口。"
+        },
+        {
+          "query_id": "tq-holiday-b",
+          "domain": "holiday_information_gap",
+          "phase": "as_of_t",
+          "query_text": "2026 Asian exchange holiday August 18 official",
+          "date_from": "2026-05-01",
+          "date_to": "2026-08-17",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "no_relevant_hit",
+          "reviewed_urls": [
+            "https://www.jpx.co.jp/english/derivatives/rules/holidaytrading/index.html"
+          ],
+          "selected_warning_ids": [],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "亚洲主要市场未见改变基准路径的长假缺口。"
+        },
+        {
+          "query_id": "tq-sched-post-a",
+          "domain": "scheduled_macro_policy",
+          "phase": "post_t_safety",
+          "query_text": "2026-08-18 China LPR Fed minutes latest",
+          "date_from": "2026-08-18",
+          "date_to": "2026-08-18",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "no_relevant_hit",
+          "reviewed_urls": [
+            "https://tradingeconomics.com/china/calendar"
+          ],
+          "selected_warning_ids": [],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "排期未见取消或提前。"
+        },
+        {
+          "query_id": "tq-sched-post-b",
+          "domain": "scheduled_macro_policy",
+          "phase": "post_t_safety",
+          "query_text": "site:federalreserve.gov August 18 2026 minutes industrial production latest",
+          "date_from": "2026-08-18",
+          "date_to": "2026-08-18",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "no_relevant_hit",
+          "reviewed_urls": [
+            "https://www.federalreserve.gov/releases/g17/default.htm"
+          ],
+          "selected_warning_ids": [],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "官方排期状态未变。"
+        },
+        {
+          "query_id": "tq-dom-post-a",
+          "domain": "domestic_regulatory_liquidity",
+          "phase": "post_t_safety",
+          "query_text": "site:sse.com.cn 2026-08-18 emergency trading notice",
+          "date_from": "2026-08-18",
+          "date_to": "2026-08-18",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "no_relevant_hit",
+          "reviewed_urls": [
+            "https://www.sse.com.cn/disclosure/announcement/general/"
+          ],
+          "selected_warning_ids": [],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "未发现交易制度紧急变化。"
+        },
+        {
+          "query_id": "tq-dom-post-b",
+          "domain": "domestic_regulatory_liquidity",
+          "phase": "post_t_safety",
+          "query_text": "site:csrc.gov.cn 2026-08-18 market risk notice",
+          "date_from": "2026-08-18",
+          "date_to": "2026-08-18",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "no_relevant_hit",
+          "reviewed_urls": [
+            "https://www.csrc.gov.cn/csrc/c100028/common_xq_list.shtml"
+          ],
+          "selected_warning_ids": [],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "未发现系统性监管冲击。"
+        },
+        {
+          "query_id": "tq-ext-post-a",
+          "domain": "external_geopolitics_trade",
+          "phase": "post_t_safety",
+          "query_text": "August 18 2026 Hormuz diplomacy shipping latest",
+          "date_from": "2026-08-18",
+          "date_to": "2026-08-18",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "no_relevant_hit",
+          "reviewed_urls": [
+            "https://apnews.com/article/iran-us-israel-lebanon-gaza-hormuz-august-17-2026-53ae10812e472a4e5bb228b9f318a5fc"
+          ],
+          "selected_warning_ids": [],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "T后窗口未出现可独立确认的新升级。"
+        },
+        {
+          "query_id": "tq-ext-post-b",
+          "domain": "external_geopolitics_trade",
+          "phase": "post_t_safety",
+          "query_text": "site:ustr.gov 2026-08-18 China trade restriction latest",
+          "date_from": "2026-08-18",
+          "date_to": "2026-08-18",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "no_relevant_hit",
+          "reviewed_urls": [
+            "https://www.ustr.gov/about/policy-offices/press-office/press-releases/2026/august"
+          ],
+          "selected_warning_ids": [],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "未发现新的重大对华贸易限制。"
+        },
+        {
+          "query_id": "tq-cross-post-a",
+          "domain": "cross_asset_stress",
+          "phase": "post_t_safety",
+          "query_text": "August 17 2026 US close Treasury yield Brent",
+          "date_from": "2026-08-18",
+          "date_to": "2026-08-18",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://apnews.com/article/wall-street-stocks-dow-nasdaq-b20808a2f37a7c505013c9b301c8ebe0"
+          ],
+          "selected_warning_ids": [],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [
+            "sig-us-close",
+            "sig-us10y",
+            "sig-brent"
+          ],
+          "notes": "采用最新完成美股会话的宽基、利率和商品信号。"
+        },
+        {
+          "query_id": "tq-cross-post-b",
+          "domain": "cross_asset_stress",
+          "phase": "post_t_safety",
+          "query_text": "August 18 2026 Asia equities China-linked assets latest open",
+          "date_from": "2026-08-18",
+          "date_to": "2026-08-18",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "no_relevant_hit",
+          "reviewed_urls": [
+            "https://www.jpx.co.jp/english/derivatives/rules/holidaytrading/index.html"
+          ],
+          "selected_warning_ids": [],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "检索时亚洲现货尚未开盘，未伪造方向。"
+        },
+        {
+          "query_id": "tq-holiday-post-a",
+          "domain": "holiday_information_gap",
+          "phase": "post_t_safety",
+          "query_text": "site:sse.com.cn 2026-08-18 trading calendar latest",
+          "date_from": "2026-08-18",
+          "date_to": "2026-08-18",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "no_relevant_hit",
+          "reviewed_urls": [
+            "https://www.sse.com.cn/disclosure/dealinstruc/closed/?from=timeline&isappinstalled=0"
+          ],
+          "selected_warning_ids": [],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "核对无A股休市缺口。"
+        },
+        {
+          "query_id": "tq-holiday-post-b",
+          "domain": "holiday_information_gap",
+          "phase": "post_t_safety",
+          "query_text": "site:jpx.co.jp August 18 2026 holiday trading latest",
+          "date_from": "2026-08-18",
+          "date_to": "2026-08-18",
+          "executed_at_beijing": "2026-08-18 06:28:29+08:00",
+          "outcome": "no_relevant_hit",
+          "reviewed_urls": [
+            "https://www.jpx.co.jp/english/derivatives/rules/holidaytrading/index.html"
+          ],
+          "selected_warning_ids": [],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "第二变体完成，未见新增假期缺口。"
+        }
+      ],
+      "coverage": {
+        "scheduled_macro_policy": {
+          "status": "hit",
+          "query_ids": [
+            "tq-fed-a",
+            "tq-fed-b",
+            "tq-fed-c",
+            "tq-lpr-a",
+            "tq-lpr-b",
+            "tq-lpr-c",
+            "tq-ip-a",
+            "tq-ip-b",
+            "tq-ip-c",
+            "tq-gdp-a",
+            "tq-gdp-b",
+            "tq-gdp-c",
+            "tq-jh-a",
+            "tq-jh-b",
+            "tq-jh-c",
+            "tq-nbs-actual"
+          ],
+          "warning_ids": [
+            "tw-fed-minutes",
+            "tw-lpr",
+            "tw-us-ip",
+            "tw-us-gdp",
+            "tw-jackson-hole"
+          ],
+          "reason": "五项未来十日重大排期已登记并完成三路预期检索。"
+        },
+        "domestic_regulatory_liquidity": {
+          "status": "no_relevant_hit",
+          "query_ids": [
+            "tq-dom-a",
+            "tq-dom-b"
+          ],
+          "warning_ids": [],
+          "reason": "两种官方入口检索均未见系统性监管或流动性冲击。"
+        },
+        "external_geopolitics_trade": {
+          "status": "hit",
+          "query_ids": [
+            "tq-ext-hormuz",
+            "tq-ext-b"
+          ],
+          "warning_ids": [
+            "tw-hormuz"
+          ],
+          "reason": "海峡通航风险持续，未见独立的新对华限制。"
+        },
+        "cross_asset_stress": {
+          "status": "no_relevant_hit",
+          "query_ids": [
+            "tq-amat-asof",
+            "tq-cross-asof-b",
+            "tq-cross-asof-c"
+          ],
+          "warning_ids": [],
+          "reason": "虽有同业基本面信号，但两种压力检索未见系统性强平或信用失序。"
+        },
+        "holiday_information_gap": {
+          "status": "no_relevant_hit",
+          "query_ids": [
+            "tq-holiday-a",
+            "tq-holiday-b"
+          ],
+          "warning_ids": [],
+          "reason": "两种交易日历检索均未见长假信息缺口。"
+        }
+      },
+      "warnings": [
+        {
+          "warning_id": "tw-fed-minutes",
+          "level": "med",
+          "risk_family": "macro_calendar",
+          "status": "scheduled",
+          "scope": "market",
+          "first_public_at": "2026-06-17",
+          "event_start": "2026-08-20",
+          "event_end": null,
+          "direction_certainty": "uncertain",
+          "why": "美联储7月会议纪要将发布；关注政策分歧与美债方向。",
+          "affected_industries": [],
+          "codes": [],
+          "source_refs": [
+            "ts-fed-calendar",
+            "ts-conference-fed-preview"
+          ],
+          "query_ids": [
+            "tq-fed-a",
+            "tq-fed-b",
+            "tq-fed-c"
+          ],
+          "evaluation": {
+            "fact_basis": "官方日历确认纪要发布时间，机构预览说明会议焦点。",
+            "consensus": "无标准数值共识；可靠预览指向通胀与政策路径分歧。",
+            "consensus_source_refs": [
+              "ts-conference-fed-preview"
+            ],
+            "base_case": "基准情形是纪要呈现偏鹰与耐心派并存，A股成长估值由美债和美元实际反应确认。",
+            "confidence": "medium",
+            "upside_scenario": "若风险缓和且国内量价确认，A股风险偏好可能改善。",
+            "downside_scenario": "若风险升级并传导到利率、汇率或成本端，A股相关风格可能承压。",
+            "transmission_paths": [
+              "外部与国内变量→风险偏好、折现率或投入成本→A股指数与行业分化"
+            ],
+            "watch_variables": [
+              "官方发布与后续修订",
+              "美债、美元、人民币与油价",
+              "A股竞价和成交宽度"
+            ],
+            "invalidators": [
+              "官方信息方向反转",
+              "A股开盘后量价显著背离映射"
+            ],
+            "inference_boundary": "Agent③仅作shadow影子推断，不改分数、裁定、排序、仓位或预算熔断。"
+          },
+          "shadow": true
+        },
+        {
+          "warning_id": "tw-lpr",
+          "level": "med",
+          "risk_family": "macro_calendar",
+          "status": "scheduled",
+          "scope": "market",
+          "first_public_at": "2026-07-20",
+          "event_start": "2026-08-20",
+          "event_end": null,
+          "direction_certainty": "uncertain",
+          "why": "中国8月LPR将公布；两个期限机构预测均已登记且不冒充调查共识。",
+          "affected_industries": [],
+          "codes": [],
+          "source_refs": [
+            "ts-lpr-rule",
+            "ts-te-china-calendar"
+          ],
+          "query_ids": [
+            "tq-lpr-a",
+            "tq-lpr-b",
+            "tq-lpr-c"
+          ],
+          "evaluation": {
+            "fact_basis": "官方银行页面确认LPR规则，机构模型给出两个期限预测。",
+            "consensus": "未取得新调查均值；机构预测一年期维持3.0%、五年期以上维持3.5%。",
+            "consensus_source_refs": [
+              "ts-te-china-calendar"
+            ],
+            "base_case": "基准情形是LPR维持不变，A股地产链、银行与高股息仅在意外调整时明显重定价。",
+            "confidence": "medium",
+            "upside_scenario": "若风险缓和且国内量价确认，A股风险偏好可能改善。",
+            "downside_scenario": "若风险升级并传导到利率、汇率或成本端，A股相关风格可能承压。",
+            "transmission_paths": [
+              "外部与国内变量→风险偏好、折现率或投入成本→A股指数与行业分化"
+            ],
+            "watch_variables": [
+              "官方发布与后续修订",
+              "美债、美元、人民币与油价",
+              "A股竞价和成交宽度"
+            ],
+            "invalidators": [
+              "官方信息方向反转",
+              "A股开盘后量价显著背离映射"
+            ],
+            "inference_boundary": "Agent③仅作shadow影子推断，不改分数、裁定、排序、仓位或预算熔断。"
+          },
+          "shadow": true
+        },
+        {
+          "warning_id": "tw-us-ip",
+          "level": "med",
+          "risk_family": "macro_calendar",
+          "status": "scheduled",
+          "scope": "market",
+          "first_public_at": "2025-12-31",
+          "event_start": "2026-08-18",
+          "event_end": null,
+          "direction_certainty": "uncertain",
+          "why": "美国7月工业生产将在8月18日发布，作为增长和利率路径验证点。",
+          "affected_industries": [],
+          "codes": [],
+          "source_refs": [
+            "ts-fed-g17",
+            "ts-ap-week-ahead"
+          ],
+          "query_ids": [
+            "tq-ip-a",
+            "tq-ip-b",
+            "tq-ip-c"
+          ],
+          "evaluation": {
+            "fact_basis": "美联储G.17排期与周度预览确认事件。",
+            "consensus": "未找到可靠数值共识；周度预览仅提供定性增长基准。",
+            "consensus_source_refs": [
+              "ts-ap-week-ahead"
+            ],
+            "base_case": "基准情形是数据只通过实际值与利率反应影响A股制造链和成长估值。",
+            "confidence": "medium",
+            "upside_scenario": "若风险缓和且国内量价确认，A股风险偏好可能改善。",
+            "downside_scenario": "若风险升级并传导到利率、汇率或成本端，A股相关风格可能承压。",
+            "transmission_paths": [
+              "外部与国内变量→风险偏好、折现率或投入成本→A股指数与行业分化"
+            ],
+            "watch_variables": [
+              "官方发布与后续修订",
+              "美债、美元、人民币与油价",
+              "A股竞价和成交宽度"
+            ],
+            "invalidators": [
+              "官方信息方向反转",
+              "A股开盘后量价显著背离映射"
+            ],
+            "inference_boundary": "Agent③仅作shadow影子推断，不改分数、裁定、排序、仓位或预算熔断。"
+          },
+          "shadow": true
+        },
+        {
+          "warning_id": "tw-us-gdp",
+          "level": "med",
+          "risk_family": "macro_calendar",
+          "status": "scheduled",
+          "scope": "market",
+          "first_public_at": "2026-07-30",
+          "event_start": "2026-08-26",
+          "event_end": null,
+          "direction_certainty": "uncertain",
+          "why": "美国二季度GDP二次估值将发布，需核对对初值的修订方向。",
+          "affected_industries": [],
+          "codes": [],
+          "source_refs": [
+            "ts-bea-gdp",
+            "ts-kip-gdp"
+          ],
+          "query_ids": [
+            "tq-gdp-a",
+            "tq-gdp-b",
+            "tq-gdp-c"
+          ],
+          "evaluation": {
+            "fact_basis": "BEA确认二次估值排期，机构展望提供增长背景。",
+            "consensus": "未找到可靠修订幅度共识；机构材料只支持定性增长基准。",
+            "consensus_source_refs": [
+              "ts-kip-gdp"
+            ],
+            "base_case": "基准情形是修订幅度有限，A股主要经美债、美元与全球增长预期间接反应。",
+            "confidence": "medium",
+            "upside_scenario": "若风险缓和且国内量价确认，A股风险偏好可能改善。",
+            "downside_scenario": "若风险升级并传导到利率、汇率或成本端，A股相关风格可能承压。",
+            "transmission_paths": [
+              "外部与国内变量→风险偏好、折现率或投入成本→A股指数与行业分化"
+            ],
+            "watch_variables": [
+              "官方发布与后续修订",
+              "美债、美元、人民币与油价",
+              "A股竞价和成交宽度"
+            ],
+            "invalidators": [
+              "官方信息方向反转",
+              "A股开盘后量价显著背离映射"
+            ],
+            "inference_boundary": "Agent③仅作shadow影子推断，不改分数、裁定、排序、仓位或预算熔断。"
+          },
+          "shadow": true
+        },
+        {
+          "warning_id": "tw-jackson-hole",
+          "level": "med",
+          "risk_family": "macro_calendar",
+          "status": "scheduled",
+          "scope": "market",
+          "first_public_at": "2026-05-01",
+          "event_start": "2026-08-27",
+          "event_end": null,
+          "direction_certainty": "uncertain",
+          "why": "杰克逊霍尔研讨会将在未来窗口开始，政策沟通方向不确定。",
+          "affected_industries": [],
+          "codes": [],
+          "source_refs": [
+            "ts-kc-jackson",
+            "ts-kip-jackson"
+          ],
+          "query_ids": [
+            "tq-jh-a",
+            "tq-jh-b",
+            "tq-jh-c"
+          ],
+          "evaluation": {
+            "fact_basis": "主办方确认8月27日至29日及金融创新主题，预览提示演讲指引仍不明。",
+            "consensus": "无标准数值共识；可靠预览仅支持沟通不确定性的定性判断。",
+            "consensus_source_refs": [
+              "ts-kip-jackson"
+            ],
+            "base_case": "基准情形是会议前A股不预判单边方向，待美债、美元和官方措辞共同确认。",
+            "confidence": "medium",
+            "upside_scenario": "若风险缓和且国内量价确认，A股风险偏好可能改善。",
+            "downside_scenario": "若风险升级并传导到利率、汇率或成本端，A股相关风格可能承压。",
+            "transmission_paths": [
+              "外部与国内变量→风险偏好、折现率或投入成本→A股指数与行业分化"
+            ],
+            "watch_variables": [
+              "官方发布与后续修订",
+              "美债、美元、人民币与油价",
+              "A股竞价和成交宽度"
+            ],
+            "invalidators": [
+              "官方信息方向反转",
+              "A股开盘后量价显著背离映射"
+            ],
+            "inference_boundary": "Agent③仅作shadow影子推断，不改分数、裁定、排序、仓位或预算熔断。"
+          },
+          "shadow": true
+        },
+        {
+          "warning_id": "tw-hormuz",
+          "level": "high",
+          "risk_family": "war_energy",
+          "status": "active",
+          "scope": "industry",
+          "first_public_at": "2026-02-28",
+          "event_start": "2026-02-28",
+          "event_end": null,
+          "direction_certainty": "negative",
+          "why": "截至T日霍尔木兹通航安全保证仍不足，能源、运费和供应链风险活跃。",
+          "affected_industries": [
+            "油气",
+            "航运",
+            "航空",
+            "化工",
+            "物流"
+          ],
+          "codes": [],
+          "source_refs": [
+            "ts-imo",
+            "ts-ap-hormuz-current"
+          ],
+          "query_ids": [
+            "tq-ext-hormuz"
+          ],
+          "evaluation": {
+            "fact_basis": "IMO官方声明与AP当日报道共同确认海峡通航风险和谈判不确定性。",
+            "consensus": "多源一致确认风险未解除，但恢复时间未形成可靠精确共识。",
+            "consensus_source_refs": [
+              "ts-imo",
+              "ts-ap-hormuz-current"
+            ],
+            "base_case": "A股更可能体现为能源上游受益与航空、化工、物流成本链承压的分化。",
+            "confidence": "medium",
+            "upside_scenario": "若风险缓和且国内量价确认，A股风险偏好可能改善。",
+            "downside_scenario": "若风险升级并传导到利率、汇率或成本端，A股相关风格可能承压。",
+            "transmission_paths": [
+              "外部与国内变量→风险偏好、折现率或投入成本→A股指数与行业分化"
+            ],
+            "watch_variables": [
+              "官方发布与后续修订",
+              "美债、美元、人民币与油价",
+              "A股竞价和成交宽度"
+            ],
+            "invalidators": [
+              "官方信息方向反转",
+              "A股开盘后量价显著背离映射"
+            ],
+            "inference_boundary": "Agent③仅作shadow影子推断，不改分数、裁定、排序、仓位或预算熔断。"
+          },
+          "shadow": true
+        }
+      ],
+      "by_code": {},
+      "post_t_safety_items": [],
+      "market_signals": [
+        {
+          "signal_id": "sig-cn-demand",
+          "coverage_category": "macro_surprises",
+          "family": "macro_surprise",
+          "phase": "as_of_t",
+          "observed_at_beijing": "2026-08-17 15:00:00+08:00",
+          "market_session_date": "2026-08-17",
+          "instrument": "中国7月工业、消费、投资与就业数据",
+          "direction": "negative",
+          "value_text": "工业增加值同比4.5%、社零同比0.6%、前七月固投同比下降6.7%、失业率5.2%",
+          "benchmark": "前值分别为5.3%、1.0%、下降5.7%和5.0%",
+          "surprise": "多数需求指标弱于机构预测",
+          "shock_type": "demand",
+          "horizons": [
+            "opening_auction",
+            "next_1_5_sessions"
+          ],
+          "source_refs": [
+            "ts-nbs-july"
+          ],
+          "query_ids": [
+            "tq-nbs-actual"
+          ],
+          "freshness": "fresh",
+          "summary": "内需与投资读数偏弱，压制顺周期风险偏好。"
+        },
+        {
+          "signal_id": "sig-cn-hightech",
+          "coverage_category": "domestic_policy_industry",
+          "family": "domestic_policy_industry",
+          "phase": "as_of_t",
+          "observed_at_beijing": "2026-08-17 15:00:00+08:00",
+          "market_session_date": "2026-08-17",
+          "instrument": "中国高技术制造与设备产量",
+          "direction": "positive",
+          "value_text": "前七月高技术产业投资增长5.0%，工业机器人等产量保持较快增长",
+          "benchmark": "相对整体固定资产投资明显更强",
+          "surprise": "结构性强于总量需求",
+          "shock_type": "policy",
+          "horizons": [
+            "intraday_followthrough",
+            "next_1_5_sessions"
+          ],
+          "source_refs": [
+            "ts-nbs-july"
+          ],
+          "query_ids": [
+            "tq-nbs-actual"
+          ],
+          "freshness": "fresh",
+          "summary": "高技术制造形成结构性支撑。"
+        },
+        {
+          "signal_id": "sig-amat-fundamental",
+          "coverage_category": "global_peer_events",
+          "family": "global_peer_event",
+          "phase": "as_of_t",
+          "observed_at_beijing": "2026-08-14 04:05:00+08:00",
+          "market_session_date": "2026-08-13",
+          "instrument": "Applied Materials第三财季业绩",
+          "direction": "positive",
+          "value_text": "季度营收创纪录，非GAAP每股收益同比增长41%",
+          "benchmark": "公司同时提高系统业务收入展望",
+          "surprise": "基本面强于此前基准",
+          "shock_type": "demand",
+          "horizons": [
+            "opening_auction",
+            "next_1_5_sessions"
+          ],
+          "source_refs": [
+            "ts-amat-q3"
+          ],
+          "query_ids": [
+            "tq-amat-asof"
+          ],
+          "freshness": "fresh",
+          "summary": "全球半导体设备需求基本面偏强。"
+        },
+        {
+          "signal_id": "sig-hormuz",
+          "coverage_category": "commodities_freight",
+          "family": "physical_supply_chain",
+          "phase": "as_of_t",
+          "observed_at_beijing": "2026-08-17 17:37:00+08:00",
+          "market_session_date": "2026-08-17",
+          "instrument": "霍尔木兹海峡通航与安全风险",
+          "direction": "negative",
+          "value_text": "海峡仍缺乏可信安全保证，谈判尚未解决通航问题",
+          "benchmark": "相对正常通航状态显著受限",
+          "surprise": "实体供应与航运风险未解除",
+          "shock_type": "supply",
+          "horizons": [
+            "opening_auction",
+            "next_1_5_sessions"
+          ],
+          "source_refs": [
+            "ts-imo",
+            "ts-ap-hormuz-current"
+          ],
+          "query_ids": [
+            "tq-ext-hormuz"
+          ],
+          "freshness": "fresh",
+          "summary": "供给风险支撑能源溢价并抬升运输成本。"
+        },
+        {
+          "signal_id": "sig-us-close",
+          "coverage_category": "us_equity_sectors",
+          "family": "overseas_equity_sector",
+          "phase": "post_t_safety",
+          "observed_at_beijing": "2026-08-18 04:41:00+08:00",
+          "market_session_date": "2026-08-17",
+          "instrument": "美国主要股指",
+          "direction": "negative",
+          "value_text": "标普500与道指均下跌0.5%，纳指下跌0.3%，罗素2000下跌0.4%",
+          "benchmark": "纳指相对标普少跌0.2个百分点但宽基均收低",
+          "surprise": "风险偏好整体偏弱",
+          "shock_type": "risk_aversion",
+          "horizons": [
+            "opening_auction"
+          ],
+          "source_refs": [
+            "ts-ap-us-close"
+          ],
+          "query_ids": [
+            "tq-cross-post-a"
+          ],
+          "freshness": "fresh",
+          "summary": "最新美股收盘给A股竞价提供偏弱外盘背景。"
+        },
+        {
+          "signal_id": "sig-us10y",
+          "coverage_category": "rates_fx_volatility",
+          "family": "rates_fx_volatility",
+          "phase": "post_t_safety",
+          "observed_at_beijing": "2026-08-18 04:41:00+08:00",
+          "market_session_date": "2026-08-17",
+          "instrument": "美国10年期国债收益率",
+          "direction": "negative",
+          "value_text": "收益率升至4.72%",
+          "benchmark": "前值4.68%",
+          "surprise": "折现率压力上升",
+          "shock_type": "discount_rate",
+          "horizons": [
+            "opening_auction",
+            "intraday_followthrough"
+          ],
+          "source_refs": [
+            "ts-ap-us-close"
+          ],
+          "query_ids": [
+            "tq-cross-post-a"
+          ],
+          "freshness": "fresh",
+          "summary": "长端利率上行压制高估值成长。"
+        },
+        {
+          "signal_id": "sig-brent",
+          "coverage_category": "commodities_freight",
+          "family": "commodity_freight",
+          "phase": "post_t_safety",
+          "observed_at_beijing": "2026-08-18 04:41:00+08:00",
+          "market_session_date": "2026-08-17",
+          "instrument": "布伦特原油",
+          "direction": "mixed",
+          "value_text": "上涨2.7%至每桶90.87美元",
+          "benchmark": "相对前一交易日明显上行",
+          "surprise": "供给风险溢价升高",
+          "shock_type": "supply",
+          "horizons": [
+            "opening_auction",
+            "next_1_5_sessions"
+          ],
+          "source_refs": [
+            "ts-ap-us-close"
+          ],
+          "query_ids": [
+            "tq-cross-post-a"
+          ],
+          "freshness": "fresh",
+          "summary": "油价上行利好上游但压制燃料与原料成本敏感链。"
+        }
+      ],
+      "predictive_input_coverage": {
+        "us_equity_sectors": {
+          "status": "hit",
+          "signal_ids": [
+            "sig-us-close"
+          ],
+          "query_ids": [
+            "tq-cross-post-a"
+          ],
+          "as_of_beijing": "2026-08-18 06:28:29+08:00",
+          "reason": "已登记可核验的fresh信号。"
+        },
+        "global_peer_events": {
+          "status": "hit",
+          "signal_ids": [
+            "sig-amat-fundamental"
+          ],
+          "query_ids": [
+            "tq-amat-asof",
+            "tq-cross-post-b"
+          ],
+          "as_of_beijing": "2026-08-18 06:28:29+08:00",
+          "reason": "已登记可核验的fresh信号。"
+        },
+        "asia_equity_peers": {
+          "status": "not_open",
+          "signal_ids": [],
+          "query_ids": [
+            "tq-cross-post-b"
+          ],
+          "as_of_beijing": "2026-08-18 06:28:29+08:00",
+          "reason": "检索时市场未开盘。"
+        },
+        "china_linked_assets": {
+          "status": "no_relevant_hit",
+          "signal_ids": [],
+          "query_ids": [
+            "tq-cross-post-b"
+          ],
+          "as_of_beijing": "2026-08-18 06:28:29+08:00",
+          "reason": "未取得同会话可核验方向。"
+        },
+        "rates_fx_volatility": {
+          "status": "hit",
+          "signal_ids": [
+            "sig-us10y"
+          ],
+          "query_ids": [
+            "tq-cross-post-a"
+          ],
+          "as_of_beijing": "2026-08-18 06:28:29+08:00",
+          "reason": "已登记可核验的fresh信号。"
+        },
+        "commodities_freight": {
+          "status": "hit",
+          "signal_ids": [
+            "sig-hormuz",
+            "sig-brent"
+          ],
+          "query_ids": [
+            "tq-ext-hormuz",
+            "tq-ext-post-a",
+            "tq-cross-post-a"
+          ],
+          "as_of_beijing": "2026-08-18 06:28:29+08:00",
+          "reason": "已登记可核验的fresh信号。"
+        },
+        "macro_surprises": {
+          "status": "hit",
+          "signal_ids": [
+            "sig-cn-demand"
+          ],
+          "query_ids": [
+            "tq-nbs-actual",
+            "tq-sched-post-a"
+          ],
+          "as_of_beijing": "2026-08-18 06:28:29+08:00",
+          "reason": "已登记可核验的fresh信号。"
+        },
+        "domestic_policy_industry": {
+          "status": "hit",
+          "signal_ids": [
+            "sig-cn-hightech"
+          ],
+          "query_ids": [
+            "tq-nbs-actual",
+            "tq-dom-post-a"
+          ],
+          "as_of_beijing": "2026-08-18 06:28:29+08:00",
+          "reason": "已登记可核验的fresh信号。"
+        }
+      },
+      "scheduled_event_expectations": [
+        {
+          "event_id": "event-fed-minutes",
+          "warning_id": "tw-fed-minutes",
+          "event_name": "美联储2026年7月会议纪要",
+          "event_class": "central_bank_communication",
+          "scheduled_for": "2026-08-20 02:00:00+08:00",
+          "time_precision": "datetime",
+          "official_source_refs": [
+            "ts-fed-calendar"
+          ],
+          "consensus_status": "qualitative_only",
+          "consensus_source_refs": [
+            "ts-conference-fed-preview"
+          ],
+          "consensus_query_ids": [
+            "tq-fed-a",
+            "tq-fed-b",
+            "tq-fed-c"
+          ],
+          "required_metric_ids": [],
+          "metrics": [],
+          "expectation_search_coverage": {
+            "survey_consensus": {
+              "status": "no_relevant_hit",
+              "query_ids": [
+                "tq-fed-a"
+              ],
+              "source_refs": [],
+              "reason": "未取得可复核的标准数值调查共识。"
+            },
+            "economic_calendar": {
+              "status": "no_relevant_hit",
+              "query_ids": [
+                "tq-fed-b"
+              ],
+              "source_refs": [],
+              "reason": "官方或经济日历仅用于确认发布时间。"
+            },
+            "institution_preview": {
+              "status": "hit",
+              "query_ids": [
+                "tq-fed-c"
+              ],
+              "source_refs": [
+                "ts-conference-fed-preview"
+              ],
+              "reason": "可靠预览提供定性基准，不冒充调查数值。"
+            }
+          },
+          "metric_search_ledger": [],
+          "qualitative_expectation": "预计重点揭示通胀持续性与未来政策路径的内部分歧。",
+          "consensus_note": "无标准数值共识；保留可靠预览的定性基准。",
+          "display_summary": "美联储2026年7月会议纪要：8月20日02:00发布，重点核对政策路径分歧。",
+          "watch_after_release": [
+            "核对官方原文和后续修订",
+            "观察美债、美元、人民币与A股量价反应"
+          ]
+        },
+        {
+          "event_id": "event-cn-lpr",
+          "warning_id": "tw-lpr",
+          "event_name": "中国2026年8月LPR",
+          "event_class": "lpr",
+          "scheduled_for": "2026-08-20 09:00:00+08:00",
+          "time_precision": "datetime",
+          "official_source_refs": [
+            "ts-lpr-rule"
+          ],
+          "consensus_status": "forecast_available",
+          "consensus_source_refs": [
+            "ts-te-china-calendar"
+          ],
+          "consensus_query_ids": [
+            "tq-lpr-a",
+            "tq-lpr-b",
+            "tq-lpr-c"
+          ],
+          "required_metric_ids": [
+            "lpr_1y",
+            "lpr_5y"
+          ],
+          "metrics": [
+            {
+              "metric_id": "lpr_1y",
+              "label": "中国1年期LPR",
+              "consensus": "3.0",
+              "previous": "3.0",
+              "unit": "%",
+              "estimate_kind": "institution_forecast",
+              "metric_definition": "中国贷款市场报价利率1年期，Trading Economics机构模型预测。",
+              "source_refs": [
+                "ts-te-china-calendar"
+              ]
+            },
+            {
+              "metric_id": "lpr_5y",
+              "label": "中国5年期以上LPR",
+              "consensus": "3.5",
+              "previous": "3.5",
+              "unit": "%",
+              "estimate_kind": "institution_forecast",
+              "metric_definition": "中国贷款市场报价利率5年期以上，Trading Economics机构模型预测。",
+              "source_refs": [
+                "ts-te-china-calendar"
+              ]
+            }
+          ],
+          "expectation_search_coverage": {
+            "survey_consensus": {
+              "status": "no_relevant_hit",
+              "query_ids": [
+                "tq-lpr-a"
+              ],
+              "source_refs": [],
+              "reason": "未取得新的调查均值。"
+            },
+            "economic_calendar": {
+              "status": "no_relevant_hit",
+              "query_ids": [
+                "tq-lpr-b"
+              ],
+              "source_refs": [],
+              "reason": "官方页面仅确认规则与期限。"
+            },
+            "institution_preview": {
+              "status": "hit",
+              "query_ids": [
+                "tq-lpr-c"
+              ],
+              "source_refs": [
+                "ts-te-china-calendar"
+              ],
+              "reason": "机构模型给出两个期限完整预测。"
+            }
+          },
+          "metric_search_ledger": [
+            {
+              "metric_id": "lpr_1y",
+              "status": "available",
+              "query_ids": [
+                "tq-lpr-c"
+              ],
+              "source_refs": [
+                "ts-te-china-calendar"
+              ],
+              "reason": "机构模型预测可用，明确非调查共识。"
+            },
+            {
+              "metric_id": "lpr_5y",
+              "status": "available",
+              "query_ids": [
+                "tq-lpr-c"
+              ],
+              "source_refs": [
+                "ts-te-china-calendar"
+              ],
+              "reason": "机构模型预测可用，明确非调查共识。"
+            }
+          ],
+          "qualitative_expectation": "机构模型预计两个期限均维持不变；仅作发布前基准。",
+          "consensus_note": "两个期限均有机构模型预测，没有冒充调查共识。",
+          "display_summary": "中国2026年8月LPR：机构预测一年期3.0%、五年期以上3.5%，均与前值一致。",
+          "watch_after_release": [
+            "核对正式报价",
+            "观察地产链、银行、高股息与人民币反应"
+          ]
+        },
+        {
+          "event_id": "event-us-ip",
+          "warning_id": "tw-us-ip",
+          "event_name": "美国2026年7月工业生产",
+          "event_class": "other",
+          "scheduled_for": "2026-08-18 21:15:00+08:00",
+          "time_precision": "datetime",
+          "official_source_refs": [
+            "ts-fed-g17"
+          ],
+          "consensus_status": "qualitative_only",
+          "consensus_source_refs": [
+            "ts-ap-week-ahead"
+          ],
+          "consensus_query_ids": [
+            "tq-ip-a",
+            "tq-ip-b",
+            "tq-ip-c"
+          ],
+          "required_metric_ids": [],
+          "metrics": [],
+          "expectation_search_coverage": {
+            "survey_consensus": {
+              "status": "no_relevant_hit",
+              "query_ids": [
+                "tq-ip-a"
+              ],
+              "source_refs": [],
+              "reason": "未取得可复核的标准数值调查共识。"
+            },
+            "economic_calendar": {
+              "status": "no_relevant_hit",
+              "query_ids": [
+                "tq-ip-b"
+              ],
+              "source_refs": [],
+              "reason": "官方或经济日历仅用于确认发布时间。"
+            },
+            "institution_preview": {
+              "status": "hit",
+              "query_ids": [
+                "tq-ip-c"
+              ],
+              "source_refs": [
+                "ts-ap-week-ahead"
+              ],
+              "reason": "可靠预览提供定性基准，不冒充调查数值。"
+            }
+          },
+          "metric_search_ledger": [],
+          "qualitative_expectation": "数据用于验证美国实体增长动能；无可靠数值共识时仅观察实际值与利率反应。",
+          "consensus_note": "无标准数值共识；保留可靠预览的定性基准。",
+          "display_summary": "美国2026年7月工业生产：8月18日21:15发布，暂无可靠数值共识。",
+          "watch_after_release": [
+            "核对官方原文和后续修订",
+            "观察美债、美元、人民币与A股量价反应"
+          ]
+        },
+        {
+          "event_id": "event-us-gdp",
+          "warning_id": "tw-us-gdp",
+          "event_name": "美国2026年二季度GDP二次估值",
+          "event_class": "gdp",
+          "scheduled_for": "2026-08-26 20:30:00+08:00",
+          "time_precision": "datetime",
+          "official_source_refs": [
+            "ts-bea-gdp"
+          ],
+          "consensus_status": "qualitative_only",
+          "consensus_source_refs": [
+            "ts-kip-gdp"
+          ],
+          "consensus_query_ids": [
+            "tq-gdp-a",
+            "tq-gdp-b",
+            "tq-gdp-c"
+          ],
+          "required_metric_ids": [],
+          "metrics": [],
+          "expectation_search_coverage": {
+            "survey_consensus": {
+              "status": "no_relevant_hit",
+              "query_ids": [
+                "tq-gdp-a"
+              ],
+              "source_refs": [],
+              "reason": "未取得可复核的标准数值调查共识。"
+            },
+            "economic_calendar": {
+              "status": "no_relevant_hit",
+              "query_ids": [
+                "tq-gdp-b"
+              ],
+              "source_refs": [],
+              "reason": "官方或经济日历仅用于确认发布时间。"
+            },
+            "institution_preview": {
+              "status": "hit",
+              "query_ids": [
+                "tq-gdp-c"
+              ],
+              "source_refs": [
+                "ts-kip-gdp"
+              ],
+              "reason": "可靠预览提供定性基准，不冒充调查数值。"
+            }
+          },
+          "metric_search_ledger": [],
+          "qualitative_expectation": "二次估值主要验证初值修订方向，暂无可靠修订幅度调查共识。",
+          "consensus_note": "无标准数值共识；保留可靠预览的定性基准。",
+          "display_summary": "美国2026年二季度GDP二次估值：8月26日20:30发布，重点核对初值修订。",
+          "watch_after_release": [
+            "核对官方原文和后续修订",
+            "观察美债、美元、人民币与A股量价反应"
+          ]
+        },
+        {
+          "event_id": "event-jackson-hole",
+          "warning_id": "tw-jackson-hole",
+          "event_name": "2026年杰克逊霍尔经济政策研讨会",
+          "event_class": "central_bank_communication",
+          "scheduled_for": "2026-08-27至2026-08-29（北京时间窗口）",
+          "time_precision": "window",
+          "official_source_refs": [
+            "ts-kc-jackson"
+          ],
+          "consensus_status": "qualitative_only",
+          "consensus_source_refs": [
+            "ts-kip-jackson"
+          ],
+          "consensus_query_ids": [
+            "tq-jh-a",
+            "tq-jh-b",
+            "tq-jh-c"
+          ],
+          "required_metric_ids": [],
+          "metrics": [],
+          "expectation_search_coverage": {
+            "survey_consensus": {
+              "status": "no_relevant_hit",
+              "query_ids": [
+                "tq-jh-a"
+              ],
+              "source_refs": [],
+              "reason": "未取得可复核的标准数值调查共识。"
+            },
+            "economic_calendar": {
+              "status": "no_relevant_hit",
+              "query_ids": [
+                "tq-jh-b"
+              ],
+              "source_refs": [],
+              "reason": "官方或经济日历仅用于确认发布时间。"
+            },
+            "institution_preview": {
+              "status": "hit",
+              "query_ids": [
+                "tq-jh-c"
+              ],
+              "source_refs": [
+                "ts-kip-jackson"
+              ],
+              "reason": "可靠预览提供定性基准，不冒充调查数值。"
+            }
+          },
+          "metric_search_ledger": [],
+          "qualitative_expectation": "会议关注金融创新对支付与政策的影响，政策沟通方向仍不确定。",
+          "consensus_note": "无标准数值共识；保留可靠预览的定性基准。",
+          "display_summary": "2026年杰克逊霍尔经济政策研讨会：8月27日至29日举行，政策沟通方向待确认。",
+          "watch_after_release": [
+            "核对官方原文和后续修订",
+            "观察美债、美元、人民币与A股量价反应"
+          ]
+        }
+      ],
+      "runtime_evaluation": {
+        "scheduled_macro_policy": {
+          "status": "hit",
+          "evaluated_at_beijing": "2026-08-18 06:28:29+08:00",
+          "latest_source_published_at": "2026-08-17",
+          "query_ids": [
+            "tq-fed-a",
+            "tq-fed-b",
+            "tq-fed-c",
+            "tq-lpr-a",
+            "tq-lpr-b",
+            "tq-lpr-c",
+            "tq-ip-a",
+            "tq-ip-b",
+            "tq-ip-c",
+            "tq-gdp-a",
+            "tq-gdp-b",
+            "tq-gdp-c",
+            "tq-jh-a",
+            "tq-jh-b",
+            "tq-jh-c",
+            "tq-nbs-actual",
+            "tq-sched-post-a",
+            "tq-sched-post-b"
+          ],
+          "warning_ids": [
+            "tw-fed-minutes",
+            "tw-lpr",
+            "tw-us-ip",
+            "tw-us-gdp",
+            "tw-jackson-hole"
+          ],
+          "delta_ids": [],
+          "signal_ids": [
+            "sig-cn-demand",
+            "sig-cn-hightech"
+          ],
+          "source_refs": [
+            "ts-fed-calendar",
+            "ts-conference-fed-preview",
+            "ts-lpr-rule",
+            "ts-te-china-calendar",
+            "ts-fed-g17",
+            "ts-ap-week-ahead",
+            "ts-bea-gdp",
+            "ts-kip-gdp",
+            "ts-kc-jackson",
+            "ts-kip-jackson",
+            "ts-nbs-july"
+          ],
+          "evaluation": {
+            "fact_basis": "T日国内总量偏弱但高技术制造偏强，未来十日有五项重大宏观与政策沟通排期。",
+            "consensus": "机构材料对LPR给出维持不变预测，其余事件以定性基准为主。",
+            "consensus_source_refs": [
+              "ts-te-china-calendar",
+              "ts-nbs-july"
+            ],
+            "base_case": "A股短线更可能表现为内需顺周期承压、高技术制造相对有支撑，随后由排期结果修正。",
+            "confidence": "medium",
+            "upside_scenario": "若风险缓和且国内量价确认，A股风险偏好可能改善。",
+            "downside_scenario": "若风险升级并传导到利率、汇率或成本端，A股相关风格可能承压。",
+            "transmission_paths": [
+              "外部与国内变量→风险偏好、折现率或投入成本→A股指数与行业分化"
+            ],
+            "watch_variables": [
+              "官方发布与后续修订",
+              "美债、美元、人民币与油价",
+              "A股竞价和成交宽度"
+            ],
+            "invalidators": [
+              "官方信息方向反转",
+              "A股开盘后量价显著背离映射"
+            ],
+            "inference_boundary": "Agent③仅作shadow影子推断，不改分数、裁定、排序、仓位或预算熔断。运行时点信息与T日裁定隔离，不倒灌。"
+          }
+        },
+        "domestic_regulatory_liquidity": {
+          "status": "no_relevant_hit",
+          "evaluated_at_beijing": "2026-08-18 06:28:29+08:00",
+          "latest_source_published_at": null,
+          "query_ids": [
+            "tq-dom-a",
+            "tq-dom-b",
+            "tq-dom-post-a",
+            "tq-dom-post-b"
+          ],
+          "warning_ids": [],
+          "delta_ids": [],
+          "signal_ids": [],
+          "source_refs": [],
+          "evaluation": {
+            "fact_basis": "两种独立检索变体均未发现需要升级为重大风险的可核验事实。",
+            "consensus": "未找到可靠共识，故不编造方向。",
+            "consensus_source_refs": [],
+            "base_case": "基准情形是本域不额外改变A股震荡分化判断。",
+            "confidence": "low",
+            "upside_scenario": "若风险缓和且国内量价确认，A股风险偏好可能改善。",
+            "downside_scenario": "若风险升级并传导到利率、汇率或成本端，A股相关风格可能承压。",
+            "transmission_paths": [
+              "外部与国内变量→风险偏好、折现率或投入成本→A股指数与行业分化"
+            ],
+            "watch_variables": [
+              "官方发布与后续修订",
+              "美债、美元、人民币与油价",
+              "A股竞价和成交宽度"
+            ],
+            "invalidators": [
+              "官方信息方向反转",
+              "A股开盘后量价显著背离映射"
+            ],
+            "inference_boundary": "Agent③仅作shadow影子推断，不改分数、裁定、排序、仓位或预算熔断。运行时点信息与T日裁定隔离，不倒灌。"
+          }
+        },
+        "external_geopolitics_trade": {
+          "status": "hit",
+          "evaluated_at_beijing": "2026-08-18 06:28:29+08:00",
+          "latest_source_published_at": "2026-08-17",
+          "query_ids": [
+            "tq-ext-hormuz",
+            "tq-ext-b",
+            "tq-ext-post-a",
+            "tq-ext-post-b"
+          ],
+          "warning_ids": [
+            "tw-hormuz"
+          ],
+          "delta_ids": [],
+          "signal_ids": [
+            "sig-hormuz"
+          ],
+          "source_refs": [
+            "ts-imo",
+            "ts-ap-hormuz-current"
+          ],
+          "evaluation": {
+            "fact_basis": "IMO和AP确认霍尔木兹通航安全风险截至T日仍未解除。",
+            "consensus": "多源方向一致，但恢复时间未形成可靠精确共识。",
+            "consensus_source_refs": [
+              "ts-imo",
+              "ts-ap-hormuz-current"
+            ],
+            "base_case": "A股油气上游相对受益，航空、化工和物流成本链相对承压。",
+            "confidence": "medium",
+            "upside_scenario": "若风险缓和且国内量价确认，A股风险偏好可能改善。",
+            "downside_scenario": "若风险升级并传导到利率、汇率或成本端，A股相关风格可能承压。",
+            "transmission_paths": [
+              "外部与国内变量→风险偏好、折现率或投入成本→A股指数与行业分化"
+            ],
+            "watch_variables": [
+              "官方发布与后续修订",
+              "美债、美元、人民币与油价",
+              "A股竞价和成交宽度"
+            ],
+            "invalidators": [
+              "官方信息方向反转",
+              "A股开盘后量价显著背离映射"
+            ],
+            "inference_boundary": "Agent③仅作shadow影子推断，不改分数、裁定、排序、仓位或预算熔断。运行时点信息与T日裁定隔离，不倒灌。"
+          }
+        },
+        "cross_asset_stress": {
+          "status": "hit",
+          "evaluated_at_beijing": "2026-08-18 06:28:29+08:00",
+          "latest_source_published_at": "2026-08-18",
+          "query_ids": [
+            "tq-amat-asof",
+            "tq-cross-asof-b",
+            "tq-cross-asof-c",
+            "tq-cross-post-a",
+            "tq-cross-post-b"
+          ],
+          "warning_ids": [],
+          "delta_ids": [],
+          "signal_ids": [
+            "sig-amat-fundamental",
+            "sig-us-close",
+            "sig-us10y",
+            "sig-brent"
+          ],
+          "source_refs": [
+            "ts-amat-q3",
+            "ts-ap-us-close"
+          ],
+          "evaluation": {
+            "fact_basis": "AMAT业绩偏强；T后美股宽基收低、美债收益率与油价上行。",
+            "consensus": "跨资产方向分化，未形成单一可靠共识。",
+            "consensus_source_refs": [
+              "ts-amat-q3",
+              "ts-ap-us-close"
+            ],
+            "base_case": "A股竞价偏谨慎，高估值成长受折现率约束，但半导体设备基本面提供缓冲。",
+            "confidence": "medium",
+            "upside_scenario": "若风险缓和且国内量价确认，A股风险偏好可能改善。",
+            "downside_scenario": "若风险升级并传导到利率、汇率或成本端，A股相关风格可能承压。",
+            "transmission_paths": [
+              "外部与国内变量→风险偏好、折现率或投入成本→A股指数与行业分化"
+            ],
+            "watch_variables": [
+              "官方发布与后续修订",
+              "美债、美元、人民币与油价",
+              "A股竞价和成交宽度"
+            ],
+            "invalidators": [
+              "官方信息方向反转",
+              "A股开盘后量价显著背离映射"
+            ],
+            "inference_boundary": "Agent③仅作shadow影子推断，不改分数、裁定、排序、仓位或预算熔断。运行时点信息与T日裁定隔离，不倒灌。"
+          }
+        },
+        "holiday_information_gap": {
+          "status": "no_relevant_hit",
+          "evaluated_at_beijing": "2026-08-18 06:28:29+08:00",
+          "latest_source_published_at": null,
+          "query_ids": [
+            "tq-holiday-a",
+            "tq-holiday-b",
+            "tq-holiday-post-a",
+            "tq-holiday-post-b"
+          ],
+          "warning_ids": [],
+          "delta_ids": [],
+          "signal_ids": [],
+          "source_refs": [],
+          "evaluation": {
+            "fact_basis": "两种独立检索变体均未发现需要升级为重大风险的可核验事实。",
+            "consensus": "未找到可靠共识，故不编造方向。",
+            "consensus_source_refs": [],
+            "base_case": "基准情形是本域不额外改变A股震荡分化判断。",
+            "confidence": "low",
+            "upside_scenario": "若风险缓和且国内量价确认，A股风险偏好可能改善。",
+            "downside_scenario": "若风险升级并传导到利率、汇率或成本端，A股相关风格可能承压。",
+            "transmission_paths": [
+              "外部与国内变量→风险偏好、折现率或投入成本→A股指数与行业分化"
+            ],
+            "watch_variables": [
+              "官方发布与后续修订",
+              "美债、美元、人民币与油价",
+              "A股竞价和成交宽度"
+            ],
+            "invalidators": [
+              "官方信息方向反转",
+              "A股开盘后量价显著背离映射"
+            ],
+            "inference_boundary": "Agent③仅作shadow影子推断，不改分数、裁定、排序、仓位或预算熔断。运行时点信息与T日裁定隔离，不倒灌。"
+          }
+        }
+      },
+      "ashare_runtime_outlook": {
+        "evaluated_at_beijing": "2026-08-18 06:28:29+08:00",
+        "basis_domains": [
+          "scheduled_macro_policy",
+          "domestic_regulatory_liquidity",
+          "external_geopolitics_trade",
+          "cross_asset_stress",
+          "holiday_information_gap"
+        ],
+        "source_refs": [
+          "ts-fed-calendar",
+          "ts-conference-fed-preview",
+          "ts-lpr-rule",
+          "ts-te-china-calendar",
+          "ts-fed-g17",
+          "ts-ap-week-ahead",
+          "ts-bea-gdp",
+          "ts-kip-gdp",
+          "ts-kc-jackson",
+          "ts-kip-jackson",
+          "ts-nbs-july",
+          "ts-imo",
+          "ts-ap-hormuz-current",
+          "ts-amat-q3",
+          "ts-ap-us-close"
+        ],
+        "domain_impacts": {
+          "scheduled_macro_policy": {
+            "direction": "mixed",
+            "mechanism": "T日内需偏弱而高技术制造偏强，使A股顺周期与成长制造分化。",
+            "sector_disposition": "linked",
+            "sector_call_ids": [
+              "call-consumer",
+              "call-hightech"
+            ],
+            "sector_reason": "国内实际数据直接映射两个板块方向。"
+          },
+          "domestic_regulatory_liquidity": {
+            "direction": "neutral",
+            "mechanism": "未见系统性监管或流动性冲击，本域不额外改变A股基准路径。",
+            "sector_disposition": "neutral",
+            "sector_call_ids": [],
+            "sector_reason": "无可核验的新板块冲击。"
+          },
+          "external_geopolitics_trade": {
+            "direction": "negative",
+            "mechanism": "海峡通航风险通过能源与运输成本反映到A股行业分化。",
+            "sector_disposition": "linked",
+            "sector_call_ids": [
+              "call-oil",
+              "call-cost"
+            ],
+            "sector_reason": "供给溢价与成本冲击方向相反。"
+          },
+          "cross_asset_stress": {
+            "direction": "mixed",
+            "mechanism": "美股偏弱和美债上行压制A股成长估值，油价与同业业绩形成行业分化。",
+            "sector_disposition": "linked",
+            "sector_call_ids": [
+              "call-oil",
+              "call-cost",
+              "call-growth",
+              "call-hightech"
+            ],
+            "sector_reason": "四条跨资产路径已下沉至对应板块。"
+          },
+          "holiday_information_gap": {
+            "direction": "neutral",
+            "mechanism": "无长假信息累积，A股不需为休市缺口额外计提方向风险。",
+            "sector_disposition": "not_applicable",
+            "sector_call_ids": [],
+            "sector_reason": "交易日历未触发板块映射。"
+          }
+        },
+        "opening_auction": {
+          "bias": "neutral_negative",
+          "path": "A股竞价预计偏谨慎，能源上游相对偏强，高估值成长和成本敏感链承压。",
+          "confidence": "medium"
+        },
+        "intraday_followthrough": {
+          "bias": "mixed",
+          "path": "A股盘中更可能围绕油价、利率与国内结构性数据继续分化。",
+          "confidence": "medium"
+        },
+        "next_session": {
+          "bias": "neutral_negative",
+          "path": "A股下一交易日基准为震荡偏弱，但高技术制造存在结构性支撑。",
+          "confidence": "medium"
+        },
+        "next_1_5_sessions": {
+          "bias": "mixed",
+          "path": "A股未来一至五个交易日由LPR、FOMC纪要和地缘风险共同驱动，维持震荡分化。",
+          "confidence": "low"
+        },
+        "index_style_implications": [
+          "高股息能源相对更稳，高估值成长受美债约束",
+          "总量内需偏弱但高技术制造具有结构性支撑"
+        ],
+        "sector_calls": [
+          {
+            "call_id": "call-oil",
+            "direction": "beneficiary",
+            "sector_name": "油气开采与油服",
+            "sector_keys": [
+              {
+                "taxonomy": "SW2021",
+                "level": "L2",
+                "id": "801018",
+                "name": "石油开采"
+              }
+            ],
+            "industry_matches": [],
+            "horizon": "opening_auction",
+            "reasons": [
+              "Brent油价上行",
+              "海峡实体供应风险未解除"
+            ],
+            "driver_signal_ids": [
+              "sig-brent",
+              "sig-hormuz"
+            ],
+            "opposing_signal_ids": [],
+            "considered_signal_ids": [
+              "sig-brent",
+              "sig-hormuz"
+            ],
+            "considered_domain_ids": [
+              "external_geopolitics_trade",
+              "cross_asset_stress"
+            ],
+            "dominant_driver": "供给风险溢价与油价上行共同支撑上游。",
+            "confidence": "medium",
+            "invalidators": [
+              "海峡通航恢复且油价快速回落"
+            ],
+            "source_refs": [
+              "ts-ap-us-close",
+              "ts-imo",
+              "ts-ap-hormuz-current"
+            ],
+            "candidate_codes": [],
+            "shadow": true
+          },
+          {
+            "call_id": "call-cost",
+            "direction": "pressure",
+            "sector_name": "航空、化工与物流成本链",
+            "sector_keys": [
+              {
+                "taxonomy": "SW2021",
+                "level": "L1",
+                "id": "801170",
+                "name": "交通运输"
+              }
+            ],
+            "industry_matches": [],
+            "horizon": "next_1_5_sessions",
+            "reasons": [
+              "油价上行推升燃料与原料成本",
+              "航运与保险风险未解除"
+            ],
+            "driver_signal_ids": [
+              "sig-brent",
+              "sig-hormuz"
+            ],
+            "opposing_signal_ids": [],
+            "considered_signal_ids": [
+              "sig-brent",
+              "sig-hormuz"
+            ],
+            "considered_domain_ids": [
+              "external_geopolitics_trade",
+              "cross_asset_stress"
+            ],
+            "dominant_driver": "能源与运输成本冲击形成主要约束。",
+            "confidence": "medium",
+            "invalidators": [
+              "油价和运费显著回落且通航恢复"
+            ],
+            "source_refs": [
+              "ts-ap-us-close",
+              "ts-imo",
+              "ts-ap-hormuz-current"
+            ],
+            "candidate_codes": [],
+            "shadow": true
+          },
+          {
+            "call_id": "call-consumer",
+            "direction": "pressure",
+            "sector_name": "可选消费、地产与内需顺周期",
+            "sector_keys": [
+              {
+                "taxonomy": "SW2021",
+                "level": "L1",
+                "id": "801880",
+                "name": "汽车"
+              }
+            ],
+            "industry_matches": [],
+            "horizon": "next_1_5_sessions",
+            "reasons": [
+              "社零与投资读数偏弱",
+              "就业读数边际走弱"
+            ],
+            "driver_signal_ids": [
+              "sig-cn-demand"
+            ],
+            "opposing_signal_ids": [],
+            "considered_signal_ids": [
+              "sig-cn-demand"
+            ],
+            "considered_domain_ids": [
+              "scheduled_macro_policy"
+            ],
+            "dominant_driver": "T日国内需求数据偏弱。",
+            "confidence": "medium",
+            "invalidators": [
+              "后续政策与高频需求数据显著改善"
+            ],
+            "source_refs": [
+              "ts-nbs-july"
+            ],
+            "candidate_codes": [],
+            "shadow": true
+          },
+          {
+            "call_id": "call-growth",
+            "direction": "pressure",
+            "sector_name": "高估值成长",
+            "sector_keys": [
+              {
+                "taxonomy": "CITIC",
+                "level": "style",
+                "id": "growth",
+                "name": "高估值成长"
+              }
+            ],
+            "industry_matches": [],
+            "horizon": "opening_auction",
+            "reasons": [
+              "美股宽基收低",
+              "美国长端利率上行"
+            ],
+            "driver_signal_ids": [
+              "sig-us-close",
+              "sig-us10y"
+            ],
+            "opposing_signal_ids": [],
+            "considered_signal_ids": [
+              "sig-us-close",
+              "sig-us10y"
+            ],
+            "considered_domain_ids": [
+              "cross_asset_stress"
+            ],
+            "dominant_driver": "外盘风险偏好与折现率共同施压。",
+            "confidence": "medium",
+            "invalidators": [
+              "美债快速回落且A股成长竞价放量走强"
+            ],
+            "source_refs": [
+              "ts-ap-us-close"
+            ],
+            "candidate_codes": [],
+            "shadow": true
+          },
+          {
+            "call_id": "call-hightech",
+            "direction": "beneficiary",
+            "sector_name": "高技术制造、半导体设备与工业自动化",
+            "sector_keys": [
+              {
+                "taxonomy": "SW2021",
+                "level": "L2",
+                "id": "801081",
+                "name": "半导体"
+              }
+            ],
+            "industry_matches": [],
+            "horizon": "next_1_5_sessions",
+            "reasons": [
+              "国内高技术投资与设备产量保持结构性强势",
+              "全球半导体设备同业业绩偏强"
+            ],
+            "driver_signal_ids": [
+              "sig-cn-hightech",
+              "sig-amat-fundamental"
+            ],
+            "opposing_signal_ids": [
+              "sig-us-close",
+              "sig-us10y"
+            ],
+            "considered_signal_ids": [
+              "sig-cn-hightech",
+              "sig-amat-fundamental",
+              "sig-us-close",
+              "sig-us10y"
+            ],
+            "considered_domain_ids": [
+              "scheduled_macro_policy",
+              "cross_asset_stress"
+            ],
+            "dominant_driver": "国内结构性数据与全球同业基本面形成支撑，但外盘与利率构成反向约束。",
+            "confidence": "medium",
+            "invalidators": [
+              "A股相关链量价走弱且美债继续上行"
+            ],
+            "source_refs": [
+              "ts-nbs-july",
+              "ts-amat-q3",
+              "ts-ap-us-close"
+            ],
+            "candidate_codes": [],
+            "shadow": true
+          }
+        ],
+        "signal_disposition_ledger": [
+          {
+            "signal_id": "sig-cn-demand",
+            "disposition": "direct_driver",
+            "sector_call_ids": [
+              "call-consumer"
+            ],
+            "mediated_by_signal_ids": [],
+            "reason": "偏弱内需数据直接映射顺周期压力。"
+          },
+          {
+            "signal_id": "sig-cn-hightech",
+            "disposition": "direct_driver",
+            "sector_call_ids": [
+              "call-hightech"
+            ],
+            "mediated_by_signal_ids": [],
+            "reason": "高技术制造数据直接支撑相关板块。"
+          },
+          {
+            "signal_id": "sig-amat-fundamental",
+            "disposition": "direct_driver",
+            "sector_call_ids": [
+              "call-hightech"
+            ],
+            "mediated_by_signal_ids": [],
+            "reason": "全球设备同业强业绩提供基本面支撑。"
+          },
+          {
+            "signal_id": "sig-hormuz",
+            "disposition": "direct_driver",
+            "sector_call_ids": [
+              "call-oil",
+              "call-cost"
+            ],
+            "mediated_by_signal_ids": [],
+            "reason": "通航风险同时支撑上游并压制成本敏感链。"
+          },
+          {
+            "signal_id": "sig-us-close",
+            "disposition": "direct_mixed",
+            "sector_call_ids": [
+              "call-growth",
+              "call-hightech"
+            ],
+            "mediated_by_signal_ids": [],
+            "reason": "宽基收低压制成长，并构成高技术制造判断的反向信号。"
+          },
+          {
+            "signal_id": "sig-us10y",
+            "disposition": "direct_mixed",
+            "sector_call_ids": [
+              "call-growth",
+              "call-hightech"
+            ],
+            "mediated_by_signal_ids": [],
+            "reason": "长端利率上行压制成长并抵消部分基本面支撑。"
+          },
+          {
+            "signal_id": "sig-brent",
+            "disposition": "direct_driver",
+            "sector_call_ids": [
+              "call-oil",
+              "call-cost"
+            ],
+            "mediated_by_signal_ids": [],
+            "reason": "油价上行同时利好上游并抬升成本。"
+          }
+        ],
+        "unmapped_signal_ids": [],
+        "unmapped_domain_ids": [],
+        "sector_beneficiaries": [
+          "油气开采与油服（Brent油价上行；海峡实体供应风险未解除）",
+          "高技术制造、半导体设备与工业自动化（国内高技术投资与设备产量保持结构性强势；全球半导体设备同业业绩偏强）"
+        ],
+        "sector_pressures": [
+          "航空、化工与物流成本链（油价上行推升燃料与原料成本；航运与保险风险未解除）",
+          "可选消费、地产与内需顺周期（社零与投资读数偏弱；就业读数边际走弱）",
+          "高估值成长（美股宽基收低；美国长端利率上行）"
+        ],
+        "opening_triggers": [
+          "核对油价、美债、人民币与A50方向",
+          "观察能源、高技术制造与成本链竞价成交确认"
+        ],
+        "upside_conditions": [
+          "海峡风险缓和且油价与美债回落",
+          "国内政策和高频需求数据改善并带动成交宽度"
+        ],
+        "downside_conditions": [
+          "通航风险升级并继续推高油价与运费",
+          "美债与美元继续走强且内需数据进一步走弱"
+        ],
+        "invalidators": [
+          "开盘前出现足以反转航运、油价或利率方向的官方信息",
+          "A股量价与海外及国内数据映射显著背离"
+        ],
+        "plain_language_verdict": "A股更像震荡偏弱和板块分化：能源上游与高技术制造相对占优，内需顺周期、高估值成长及成本敏感链偏承压。",
+        "inference_boundary": "仅作shadow影子走势推断，不改分数、裁定、排序、仓位或熔断；与T日裁定隔离，不倒灌。"
+      },
+      "clear_reason": "虽无个股候选，仍完成五域风险、八类预测输入与重大排期的独立shadow审计。"
+    }
+  }
+}

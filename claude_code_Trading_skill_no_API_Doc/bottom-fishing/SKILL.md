@@ -18,6 +18,11 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
 
 ## 执行步骤（一句话就跑完）
 
+生产状态固定写入本 skill 的 `state/`，其中
+`bottom_latest.json`、`bottom_adjudication.json`、`bottom_shadow_log.jsonl` 和
+`codex_price_verification.json` 均随唯一真相源进入 Git；共享行情/ETF缓存仍保留在
+`C:\Trading_analysis\data\cache\ashare_weekly`，不得与持久状态混放。
+
 0. **先跑不可变基线门禁**。失败即停止，不得生成或宣称最终报告：
    ```powershell
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" baseline
@@ -30,7 +35,7 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
 1. **跑引擎**（PowerShell；从第一次请求开始使用可访问公开行情的网络执行；拉取约480只K线通常需要数分钟，网络慢时可能超过10分钟）：
    ```powershell
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" bottom --
-   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" validate-bottom-engine --json "C:\Trading_analysis\data\bottom_latest.json" --html "<引擎stdout给出的原始HTML绝对路径>"
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" validate-bottom-engine --json "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\bottom-fishing\state\bottom_latest.json" --html "<引擎stdout给出的原始HTML绝对路径>"
    ```
    **长任务等待与防重跑纪律（强制）**：引擎会串行拉取大量免费行情，长时间无新 stdout、调用层超时或暂时没有返回码，
    都不等于引擎已经失败。若执行工具返回可继续等待的任务/cell ID，必须沿用该 ID 分段等待并向用户报告进度，禁止另开第二个
@@ -167,7 +172,8 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
      映射候选的再同步到 `rulings[code].alerts`，都带 `warning_id/level/text/shadow/post_t`。
    Agent③尚未完成无前视 shadow 样本验证，**不得改分、禁买、降级、调仓位或替代两个预算熔断**。
 4. **裁定与预警同步进HTML（--adjudicate，2026-07-15 新增）**：把每只过线票的裁定和 Agent③预警写入
-   `C:\Trading_analysis\data\bottom_adjudication.json`（格式
+   `state/bottom_adjudication.json`（绝对路径为
+   `C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\bottom-fishing\state\bottom_adjudication.json`；格式
    `{"T":"引擎T日","alerts":[组合级警示],"rulings":{"代码":{"verdict":"✓|?|✗","why":"理由+日期来源",
    "alerts":[{"level":"high|med","text":"警示"}]}},"codex_audit":{"bottom_search":{...},
    "toxic_risk_warning":{...}}}`——搜索审计必须严格遵守
@@ -176,7 +182,7 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
    **凡影响大的点必须抽成 alerts 高亮**（P9利好兑现/
    见光死、低价股滑点、重复过线旋转门、硬否决项等），high=红条/med=琥珀条，别埋在 why 长文里），然后跑：
    ```powershell
-   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" validate-bottom-search --result "C:\Trading_analysis\data\bottom_latest.json" --audit "C:\Trading_analysis\data\bottom_adjudication.json"
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" validate-bottom-search --result "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\bottom-fishing\state\bottom_latest.json" --audit "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\bottom-fishing\state\bottom_adjudication.json"
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" bottom -- --adjudicate
    ```
     `validate-bottom-search` 会同时验 Agent② 与 Agent③；非零退出时禁止 adjudicate：自动定位并补齐搜索、来源链、
@@ -202,11 +208,11 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
    手工排障时才拆开运行以下等价步骤。先对每个 `✓` 票执行独立跨源验价，
    并把输出的 `price_verification_by_code` 并入 `codex_audit`；没有 `✓` 时输出为空对象即可：
    ```powershell
-   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\verify_prices.py" --skill bottom-fishing --result "C:\Trading_analysis\data\bottom_latest.json"
-   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" attach-audit --result "C:\Trading_analysis\data\bottom_latest.json" --audit "C:\Trading_analysis\data\bottom_adjudication.json"
-   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" augment-report --skill bottom-fishing --json "C:\Trading_analysis\data\bottom_latest.json" --html "<裁定版HTML绝对路径>"
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\verify_prices.py" --skill bottom-fishing --result "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\bottom-fishing\state\bottom_latest.json" --out "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\bottom-fishing\state\codex_price_verification.json"
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" attach-audit --result "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\bottom-fishing\state\bottom_latest.json" --audit "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\bottom-fishing\state\bottom_adjudication.json"
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" augment-report --skill bottom-fishing --json "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\bottom-fishing\state\bottom_latest.json" --html "<裁定版HTML绝对路径>"
    python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" brand-report --html "<裁定版HTML绝对路径>"
-   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" validate --skill bottom-fishing --json "C:\Trading_analysis\data\bottom_latest.json" --html "<裁定版HTML绝对路径>" --require-bottom-search
+   python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" validate --skill bottom-fishing --json "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\bottom-fishing\state\bottom_latest.json" --html "<裁定版HTML绝对路径>" --require-bottom-search
    ```
     任一命令非零退出时由自动发布器对可恢复环节换源重试；重试完成前不得回复“获取失败”或发布半成品。
     **一次出结果闭环（强制）**：首次校验失败后读取全部错误，能由已有证据机械同步的交给 normalizer；缺来源、缺查询、

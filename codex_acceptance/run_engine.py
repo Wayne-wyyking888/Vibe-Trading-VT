@@ -9,8 +9,8 @@
   python run_engine.py stock -- --code 600519 --cost 1500
 
 `--` 之后的参数原样交给原引擎。所有量化、阈值、数据源顺序和 renderer
-仍由 hash 锁定的原文件执行；启动层只重定向缓存，并把 bottom 报告的历史
-“T日+北京时间时分秒”混合文件名归一为完整 UTC+8 生成时间戳。
+仍由 hash 锁定的原文件执行；启动层重定向共享缓存与 bottom 的 skill 内状态目录，
+并把 bottom 报告的历史“T日+北京时间时分秒”混合文件名归一为完整 UTC+8 生成时间戳。
 """
 from __future__ import annotations
 
@@ -30,6 +30,7 @@ HERE = pathlib.Path(__file__).resolve().parent
 REPO = HERE.parent
 SKILLS = REPO / "claude_code_Trading_skill_no_API_Doc"
 CACHE = pathlib.Path(r"C:\Trading_analysis\data\cache\ashare_weekly")
+BOTTOM_STATE = SKILLS / "bottom-fishing" / "state"
 
 ENTRIES = {
     "bottom": SKILLS / "bottom-fishing" / "bottom_fishing.py",
@@ -77,6 +78,15 @@ def _redirect_cache(mod: ModuleType, seen: set[int] | None = None) -> None:
         child = getattr(mod, attr, None)
         if isinstance(child, ModuleType):
             _redirect_cache(child, seen)
+
+
+def _redirect_bottom_state(mod: ModuleType, state: pathlib.Path) -> None:
+    """把 bottom 的四个持久状态文件绑定到指定目录。"""
+    state.mkdir(parents=True, exist_ok=True)
+    mod.DATA = state
+    mod.SHADOW = state / "bottom_shadow_log.jsonl"
+    mod.OUT_JSON = state / "bottom_latest.json"
+    mod.ADJUD = state / "bottom_adjudication.json"
 
 
 def _bottom_report_t(path: pathlib.Path) -> str | None:
@@ -184,17 +194,15 @@ def main() -> int:
     CACHE.mkdir(parents=True, exist_ok=True)
     mod = _load(path, f"codex_entry_{entry.replace('-', '_')}")
     _redirect_cache(mod)
+    if entry == "bottom":
+        _redirect_bottom_state(mod, BOTTOM_STATE)
     if entry in {"bottom", "bottom-smoke"}:
         _install_bottom_cn_report_naming(mod, similarity_max=20 if entry == "bottom-smoke" else None)
     sys.argv = [str(path), *passthrough]
 
     if entry == "bottom-smoke":
         smoke = pathlib.Path(r"C:\Trading_analysis\data\codex_smoke\bottom")
-        smoke.mkdir(parents=True, exist_ok=True)
-        mod.DATA = smoke
-        mod.SHADOW = smoke / "bottom_shadow_log.jsonl"
-        mod.OUT_JSON = smoke / "bottom_latest.json"
-        mod.ADJUD = smoke / "bottom_adjudication.json"
+        _redirect_bottom_state(mod, smoke)
         mod.REPORTS = smoke / "reports"
         if passthrough:
             print("bottom-smoke 不接受原引擎参数", file=sys.stderr)

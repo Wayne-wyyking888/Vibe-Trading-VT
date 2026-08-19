@@ -30,6 +30,7 @@ HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
 SKILLS_SOURCE = ROOT / "claude_code_Trading_skill_no_API_Doc"
 DATA = pathlib.Path(r"C:\Trading_analysis\data")
+BOTTOM_STATE = SKILLS_SOURCE / "bottom-fishing" / "state"
 MANIFEST = HERE / "baseline_manifest.json"
 DATE_RE = re.compile(r"^20\d{2}-\d{2}-\d{2}$")
 CODE_RE = re.compile(r"(?<!\d)(?:00|30|60|68)\d{4}(?!\d)")
@@ -4708,7 +4709,7 @@ def fixture_check() -> Result:
     out.check(html_count >= 56, f"迁移前历史 HTML 有缺失: {html_count} < 56")
     out.check(json_count >= 14, f"迁移前历史 JSON 有缺失: {json_count} < 14")
 
-    bottom = _load(DATA / "bottom_latest.json")
+    bottom = _load(BOTTOM_STATE / "bottom_latest.json")
     stock = _load(DATA / "diag_latest.json")
     weekly = _load(DATA / "rank_latest.json")
     out.merge(validate_bottom(bottom, strict=False))
@@ -5502,7 +5503,7 @@ def strict_self_test() -> Result:
     out = Result("self-test")
     out.merge(baseline_check())
 
-    bottom = copy.deepcopy(_load(DATA / "bottom_latest.json"))
+    bottom = copy.deepcopy(_load(BOTTOM_STATE / "bottom_latest.json"))
     b_date = str(bottom.get("T"))
     b_facts: list[dict[str, Any]] = []
     for row in bottom.get("candidates") or []:
@@ -6157,7 +6158,7 @@ def rerender_test() -> Result:
     out = Result("rerender-test")
     out.merge(baseline_check())
     inputs = {
-        "bottom-fishing": DATA / "bottom_latest.json",
+        "bottom-fishing": BOTTOM_STATE / "bottom_latest.json",
         "stock-diagnostic": DATA / "diag_latest.json",
         "weekly-ashare-rank": DATA / "rank_latest.json",
     }

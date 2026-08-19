@@ -1,8 +1,8 @@
 {
   "schema": "codex-trading-baseline/v1",
-  "purpose": "Lock deterministic pre-migration engine files before the Codex workflow migration. Text instructions and independent validators are intentionally outside this list.",
+  "purpose": "Lock deterministic engine files after the approved bottom-fishing state-path relocation. Text instructions and independent validators are intentionally outside this list.",
   "files": {
-    "bottom-fishing/bottom_fishing.py": "4DF078597134A74D3FE1D0D6B77AEA48CC23E88FF987ECCEB1F531B7CEFCEA6B",
+    "bottom-fishing/bottom_fishing.py": "979BFB6A4ABAC25AB138B2BD3A98580743B32C9405295C6AE4F49C623C592E49",
     "stock-diagnostic/stock_diagnostic.py": "5D8649A1D3ABDD7F773EA0B0F1F9BE9DDF3A460DE06B0B54BAA277D88E0C49BC",
     "stock-diagnostic/make_diag_report.py": "C3C17D3FF8B1B78A2F1BF8F5EA5DCD258E25503A6C4AD8A3B223B81C39BBFBB3",
     "stock-diagnostic/recheck_diag.py": "F34D6A6284A8F46BC53FB8D60584A0910274ED917E07126F2775C51DB7EC0C6F",

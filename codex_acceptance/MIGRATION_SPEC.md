@@ -31,6 +31,10 @@ Codex 工作区安装位置：`C:\Trading_analysis\.agents\skills`。三个目�
 - `weekly-ashare-rank/recheck.py`
 - `weekly-ashare-rank/make_report.py`
 
+bottom-fishing 生产状态迁入唯一真相源时，唯一获准的核心文件字节变化是
+`bottom_fishing.py` 的 `DATA` 根目录从外部 `C:\Trading_analysis\data` 改为相对的 `HERE/state`；
+量化算法、阈值、数据源顺序和 renderer 均未变化，manifest 已按该路径迁移后的字节重新锁定。
+
 两份 `weights.json` 是原引擎会自动更新的合法运行状态，不能锁死字节。验收器锁定其 schema：
 
 - `fwd_days` 为 1–60 的整数；
@@ -45,8 +49,10 @@ Codex 工作区安装位置：`C:\Trading_analysis\.agents\skills`。三个目�
 只允许原项目免费公开行情源：东方财富、腾讯、新浪、雅虎，以及原引擎已有的免费交易日历/F10接口。
 不调用付费 LLM API、付费行情 API、MCP 或外部 agent。
 
-`run_engine.py` 只把 weekly 数据客户端的用户主目录缓存重定向到：
-`C:\Trading_analysis\data\cache\ashare_weekly`。它不改业务计算。原引擎的正式状态文件路径保持不变。
+`run_engine.py` 把 weekly 数据客户端的用户主目录缓存重定向到
+`C:\Trading_analysis\data\cache\ashare_weekly`，并把 bottom-fishing 的四个生产状态文件重定向到唯一真相源内的
+`claude_code_Trading_skill_no_API_Doc/bottom-fishing/state/`。两项都只改变落盘位置，不改业务计算；
+stock-diagnostic 与 weekly-ashare-rank 的正式状态路径保持不变。
 若本机已安装的可选 `pyarrow.compute` 因 DLL/应用控制策略无法导入，启动层将其按“未安装”处理；三个生产
 引擎不使用 Arrow I/O，因此该兼容只解除 pandas 的可选依赖探测，不改行情、因子或 renderer。显式 Parquet
 研究脚本不走此兼容层。
@@ -89,7 +95,9 @@ Agent③市场预警：每次扫描固定覆盖排期宏观政策、国内监管
 按 T 日与 T 后分账写入 `codex_audit.toxic_risk_warning`。顶部白话卡片置于“市况”正下方。当前只允许
 `mode=shadow`；warning 可进入报告级/个股级 alerts，但不得改分、裁定、仓位、推荐线或两个预算熔断。
 
-状态：`bottom_latest.json`、`bottom_adjudication.json`、`bottom_shadow_log.jsonl` 与 reports HTML。
+Git 跟踪的生产状态固定为 `bottom-fishing/state/` 下的 `bottom_latest.json`、
+`bottom_adjudication.json`、`bottom_shadow_log.jsonl`、`codex_price_verification.json`；reports HTML 仍由
+`bottom-fishing/reports/` 管理。共享行情、日历与 ETF 刷新副本仍留在外部缓存目录，不属于持久状态。
 `--review` 的影子样本、裁定子集、滚动停做统计由原引擎执行。
 
 HTML 必须呈现 T、市况/防守天数、大盘 RSV、底部区数量、阈值/命中、冷却、dd250、F10、裁定层、

@@ -548,8 +548,8 @@ HTML 顶部“市况”正下方必须先显示“Agent③ A股走势映射（�
 
 ```powershell
 python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" validate-bottom-search `
-  --result "C:\Trading_analysis\data\bottom_latest.json" `
-  --audit "C:\Trading_analysis\data\bottom_adjudication.json"
+  --result "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\bottom-fishing\state\bottom_latest.json" `
+  --audit "C:\Trading_analysis\Vibe-Trading-VT\claude_code_Trading_skill_no_API_Doc\bottom-fishing\state\bottom_adjudication.json"
 ```
 
 该命令同时验证 Agent② `bottom_search` 和 Agent③ `toxic_risk_warning`。Agent③缺五域运行时点评估、

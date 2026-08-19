@@ -22,6 +22,17 @@ from bottom_etf import (
 
 
 class BottomEtfTest(unittest.TestCase):
+    def test_wrapper_redirects_all_bottom_state_files_together(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            state = pathlib.Path(folder) / "state"
+            module = types.SimpleNamespace()
+            run_engine._redirect_bottom_state(module, state)
+            self.assertTrue(state.is_dir())
+            self.assertEqual(module.DATA, state)
+            self.assertEqual(module.OUT_JSON, state / "bottom_latest.json")
+            self.assertEqual(module.ADJUD, state / "bottom_adjudication.json")
+            self.assertEqual(module.SHADOW, state / "bottom_shadow_log.jsonl")
+
     def test_etf_filter_excludes_link_fund(self) -> None:
         base = {
             "FUND_CODE": "510300",

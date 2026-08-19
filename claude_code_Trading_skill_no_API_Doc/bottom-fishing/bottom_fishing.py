@@ -25,7 +25,7 @@ WEEKLY = HERE.parent / "weekly-ashare-rank"
 sys.path.insert(0, str(WEEKLY))
 import ashare_weekly_rank as WK  # noqa: E402  复用: get_spot(带缓存) / _cn_now(北京时间)
 
-DATA = pathlib.Path(r"C:\Trading_analysis\data")
+DATA = HERE / "state"
 SHADOW = DATA / "bottom_shadow_log.jsonl"
 OUT_JSON = DATA / "bottom_latest.json"
 ADJUD = DATA / "bottom_adjudication.json"   # Agent②裁定(人工消息面), --adjudicate 合并进HTML
