@@ -131,6 +131,19 @@ Agent③必须主动检索 T+1 起未来10个自然日的重大统计、央行�
   `qualitative_expectation` 和来源。不得让用户提醒、补数或把“待补”带入报告；
 - 每条记录还必须有可读摘要与 `watch_after_release`，并在 HTML 顶部展示排期、预期/前值、基准/上下行情景和来源。
 
+### 4.2 排期事件发布后对账
+
+`scheduled_event_expectations[]` 保存截至 T 的事前预期，不得被 T 后实际结果覆盖；但每条事件必须以同一
+`event_id` 一对一进入 `scheduled_event_reconciliations[]`，反映截至 `retrieved_at_beijing` 的最新状态：
+
+- 未到官方排期时点写 `pending`，不得夹带实际值、T 后来源或板块调用；
+- 已到精确排期时点后禁止继续写 `pending`，必须登记 `released|delayed|cancelled|blocked`；
+- `released` 必须保存 `actual_released_at_beijing`、官方实际来源、实际摘要、相对事前预期、关联
+  `delta_ids/signal_ids/query_ids`、`sector_call_ids` 和 shadow/T 后隔离边界；固定指标事件的
+  `actual_metrics` 必须逐项覆盖 `required_metric_ids`；
+- `delayed|cancelled` 必须由 T 后 delta 和可核来源支撑；`blocked` 必须保留实际受阻查询，不得伪装成未命中；
+- 顶部同一事件卡必须并列显示“事前预期”和“运行时实际/状态/A股映射”，不能只在底部附录另列一条 delta。
+
 ## 5. 五域合并后的A股走势映射
 
 完成五个 `runtime_evaluation` 和八类 `predictive_input_coverage` 后，必须再写一个顶层
@@ -141,6 +154,9 @@ Agent③必须主动检索 T+1 起未来10个自然日的重大统计、央行�
   同时写 `sector_disposition=linked|neutral|not_applicable`、`sector_call_ids` 与 `sector_reason`，把本域全部 warning、
   delta、排期预期和运行时信息的综合结果明确承接到板块 call，或说明为何不形成相对板块方向。不能停在
   “全球风险资产可能波动”。
+- 每域另以 `considered_warning_ids/considered_delta_ids` 精确承接本域运行时点评估中的全部 warning 与 T 后 delta；
+  `ashare_runtime_outlook.risk_item_disposition_ledger` 必须与两类风险项一对一，逐条记录所属域、
+  `linked|neutral|not_applicable`、板块调用和理由，`unmapped_risk_item_ids` 必须为空。
 - `opening_auction` 明确竞价/开盘缺口的 `bias`、路径和定性置信度。
 - `intraday_followthrough` 明确开盘后延续或回吐的 `bias`、路径和定性置信度。
 - `next_session` 保留下一交易日综合 `bias`、路径和定性置信度，不得替代两个日内窗口。
@@ -149,7 +165,7 @@ Agent③必须主动检索 T+1 起未来10个自然日的重大统计、央行�
 - `sector_calls` 作为板块结论唯一事实源，每条都写方向、行业键、预测窗口、括号原因、驱动/反向信号、
   `considered_signal_ids`、`considered_domain_ids`、主导驱动、置信度、来源、失效条件和关联候选；二者分别与全信号
   台账和五域板块处置双向闭合。
-- `unmapped_signal_ids` 与 `unmapped_domain_ids` 必须机械重算为空；非空拒绝发布。
+- `unmapped_signal_ids`、`unmapped_risk_item_ids` 与 `unmapped_domain_ids` 必须机械重算为空；非空拒绝发布。
 - `sector_beneficiaries` / `sector_pressures` 只能由 `sector_calls` 机械派生为
   `板块名（原因1；原因2）`；没有明确映射时写协议规定的未识别占位，不得手写第二套结论。
 - `opening_triggers` 写开盘前和开盘后优先核对的海外股指、商品、汇率、利率、官方消息等。
@@ -410,6 +426,31 @@ HTML 顶部“市况”正下方必须先显示“Agent③ A股走势映射（�
         "watch_after_release": ["实际值相对预期差", "利率/汇率/风格反应"]
       }
     ],
+    "scheduled_event_reconciliations": [
+      {
+        "event_id": "event-us-cpi-YYYY-MM",
+        "status": "pending|released|delayed|cancelled|blocked",
+        "checked_at_beijing": "YYYY-MM-DD HH:MM:SS+08:00",
+        "actual_released_at_beijing": "YYYY-MM-DD HH:MM:SS+08:00|null",
+        "actual_summary": "截至运行时点的实际内容或尚未发布/受阻边界",
+        "actual_metrics": [
+          {
+            "metric_id": "cpi_headline_mom",
+            "actual": "+0.2%",
+            "unit": "%",
+            "surprise": "高于一致预期0.1个百分点",
+            "source_refs": ["actual-official-source-ref"]
+          }
+        ],
+        "surprise_assessment": "实际相对事前预期的方向与幅度；未发布时写不适用",
+        "delta_ids": ["toxic-delta-001"],
+        "signal_ids": ["market-signal-actual-001"],
+        "source_refs": ["actual-official-source-ref"],
+        "query_ids": ["toxic-query-actual-001"],
+        "sector_call_ids": ["sector-call-001"],
+        "inference_boundary": "运行时点shadow对账；实际结果不倒灌T日裁定"
+      }
+    ],
     "by_code": {
       "600000": {
         "exposure": "none|watch|high",
@@ -497,7 +538,9 @@ HTML 顶部“市况”正下方必须先显示“Agent③ A股走势映射（�
           "mechanism": "本域如何反映到A股",
           "sector_disposition": "linked|neutral|not_applicable",
           "sector_call_ids": ["sector-call-001"],
-          "sector_reason": "为何承接或为何不形成相对板块方向"
+          "sector_reason": "为何承接或为何不形成相对板块方向",
+          "considered_warning_ids": ["toxic-warning-001"],
+          "considered_delta_ids": ["toxic-delta-001"]
         }
       },
       "next_session": {
@@ -523,7 +566,9 @@ HTML 顶部“市况”正下方必须先显示“Agent③ A股走势映射（�
       "index_style_implications": ["指数与风格映射"],
       "sector_calls": ["完整对象见 AGENT3_SECTOR_MAPPING_PROTOCOL.md"],
       "signal_disposition_ledger": ["全部 market_signals 的唯一处置，完整对象见 AGENT3_SECTOR_MAPPING_PROTOCOL.md"],
+      "risk_item_disposition_ledger": ["全部 warning/T后 delta 的唯一处置，完整对象见 AGENT3_SECTOR_MAPPING_PROTOCOL.md"],
       "unmapped_signal_ids": [],
+      "unmapped_risk_item_ids": [],
       "unmapped_domain_ids": [],
       "sector_beneficiaries": ["由sector_calls派生的板块名（原因）"],
       "sector_pressures": ["由sector_calls派生的板块名（原因）"],
@@ -557,7 +602,8 @@ python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" vali
 CPI/PPI 漏事件专属四指标的逐项搜索台账、混用指标口径、指标缺前值/来源/口径定义、缺事件推断、
 只写“方向不确定”、末端扫描未覆盖至实际运行日、无来源精确概率、
 缺分窗口A股走势综合、存在未处置信号、板块 bullet 无括号原因、板块与候选股票未双向下沉、没有逐域说明如何反映到A股、
-编造A股精确涨跌概率/幅度/点位或发生 T 后倒灌时均失败。最终发布只接受 v3；历史 v2 仅保留非严格读取兼容。
+已到排期时点仍未对账实际结果、存在未处置 warning/T后 delta、编造A股精确涨跌概率/幅度/点位或发生 T 后倒灌时均失败。
+最终发布只接受 v3；历史 v2 仅保留非严格读取兼容。
 任一失败都不得运行 `--adjudicate`。最终 `augment-report` 会生成 Agent③ 独立审计表，
 `validate --require-bottom-search` 还会检查A股白话综合确实位于顶部市况下、重大排期事件的北京时间、
 全部指标预期/前值/情景/来源、运行时点共识/基准情景、

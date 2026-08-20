@@ -143,11 +143,19 @@ bottom-fishing 启用 `bottom_search` 后按其 F10 ledger 执行：T 前实质�
 每路采用来源必须回指本路查询 URL，指标来源必须与调查/市场定价/机构预测标签对应；混合口径须逐项显示类型，
 没有调查共识但存在可靠机构预测或定性预览时必须分级展示，不得丢弃或冒充一致预期；三路未闭合、存在 blocked 或
 指标无逐项搜索台账时不得写“无可靠共识”，禁止编数或把补齐责任转给用户。
+每条排期事件还必须以同一 `event_id` 一对一写入 `scheduled_event_reconciliations`。未到时点写 `pending`；已到时点
+必须登记 `released|delayed|cancelled|blocked`，其中 released 必须包含官方实际来源、实际发布时间、实际摘要/逐项实际值、
+相对预期、关联 delta/signal/query、板块调用与 T 后隔离边界。HTML 顶部同一卡片同时显示事前预期和运行时实际。
+外盘信号按北京时间实际可得时点分 phase：07:xx 报告必须采用当时最新已完成的美国股债时段，美国本地 T 日
+收盘只能登记为 `post_t_safety`，不得错记北京时间来倒灌 as-of-T。财政部官方美债日值优先于盘中媒体报价；
+二者并存时分别标注，并区分财政部回购、FOMC沟通等并存驱动。
 五域完成后还必须写 `ashare_runtime_outlook`：逐域解释如何反映到A股，并明确下一交易日、未来1—5日、
 指数/风格、相对受益与承压板块、开盘触发和一句白话走势结论。该综合只允许定性置信度，禁止未经校准的
 涨跌概率、涨跌幅或指数目标点位；全部 `market_signals` 必须一对一进入信号处置台账，直接/反向/中介/中性/
 不适用/陈旧排除均留理由；五个 `domain_impacts` 也必须逐域写板块处置，和 call 的 `considered_domain_ids`
-双向闭合。任何未解释信号、未解释五域或板块 call 漏承接直接/中介输入都拒绝发布。HTML白话卡片必须位于
+双向闭合；每条 warning/T后 delta 必须一对一进入 `risk_item_disposition_ledger`，并由所属域的
+`considered_warning_ids/considered_delta_ids` 精确承接。任何未解释信号、未解释风险项、未解释五域或板块 call
+漏承接直接/中介输入都拒绝发布。HTML白话卡片必须位于
 顶部“市况”正下方；每个相对受益/承压 bullet 显示信号+五域简短处置结论与“未解释0项”，完整台账进入审计附录。
 
 ```json

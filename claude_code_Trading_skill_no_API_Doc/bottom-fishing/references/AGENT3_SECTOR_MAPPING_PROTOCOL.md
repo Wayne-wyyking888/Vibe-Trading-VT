@@ -72,6 +72,10 @@ Agent③必须把运行时点信息分成三个不同目标，禁止用“下一
 - `market_session_date` 是原市场交易日，不得用北京时间自然日替代；美国T日收盘可能在北京时间T+1凌晨可得。
 - v3来源同时保存本地 `published_at` 和 `published_at_beijing`；phase 一律按北京时间戳相对T日截止判断，
   禁止用美国当地发布日期把北京时间T+1凌晨才可得的收盘信息误归入 as-of-T。
+- 07:xx北京时间运行时，美股/美债必须采用当时最新已完成的美国交易时段；若原市场交易日等于A股T日，
+  该收盘或官方日值只能是 `post_t_safety`。验收器据此拒绝“美国T日收盘 + 北京时间T日观测”的伪时点组合。
+- 美债盘中媒体报价与财政部官方日值要分开标注；官方日值优先进入顶部“已观察事实”，盘中值不得冒充收盘，
+  且必须区分财政部回购、FOMC沟通等并存驱动，不把同日变化单因果归给某一事件。
 - `phase=as_of_t` 的观测时点不得晚于T；`phase=post_t_safety` 的观测时点必须晚于T，且不得倒灌T日裁定。
 - `freshness=fresh` 表示采用最新已完成的相应交易时段或最新可靠发布；`stale` 只能留作审计，不能进入板块主驱动。
 - 07:xx运行至少核验最新美欧收盘、国内夜盘、商品、利率和汇率；若做09:15刷新，再纳入日韩台早盘、A50和CNH。
@@ -132,6 +136,24 @@ driver/opposing 实际引用精确一致；`mediated` 的承接 call 必须由�
 综合中没有生成独立 market_signal 的报告内容也被板块映射显式考虑。每个 call 的 `considered_domain_ids` 与这些引用
 双向闭合，`unmapped_domain_ids` 必须为空。
 
+为避免“域字段存在但具体风险项语义悬空”，每个 `domain_impacts` 还必须保存
+`considered_warning_ids/considered_delta_ids`，并与对应 `runtime_evaluation` 精确一致；同时
+`risk_item_disposition_ledger` 必须对每条 warning/T后 delta 唯一记录：
+
+```json
+{
+  "item_id": "toxic-delta-001",
+  "item_kind": "post_t_delta",
+  "domain_ids": ["scheduled_macro_policy"],
+  "disposition": "linked|neutral|not_applicable",
+  "sector_call_ids": ["sector-call-001"],
+  "reason": "该增量如何进入板块调用，或为何不形成相对行业方向"
+}
+```
+
+`linked` 必须由所属域的真实 call 承接；`neutral|not_applicable` 不得夹带 call。
+`unmapped_risk_item_ids` 必须机械重算为空，不能用泛化 `domain_impacts` 文案代替逐条处置。
+
 ## 6. 板块综合调用
 
 `ashare_runtime_outlook.sector_calls[]` 是板块 bullet 的唯一事实源：
@@ -186,8 +208,9 @@ driver/opposing 实际引用精确一致；`mediated` 的承接 call 必须由�
 
 ## 7. HTML bullet 格式
 
-顶部 A股走势映射先显示 `scheduled_event_expectations` 中每个重大排期事件的北京时间、完整一致预期/前值、
-基准/上下行情景和来源；随后独立显示：
+顶部 A股走势映射先把 `scheduled_event_expectations` 与 `scheduled_event_reconciliations` 按 `event_id` 合并到同一卡片，
+同时显示北京时间、事前一致预期/前值、基准/上下行情景、运行时状态、实际结果、相对预期、来源及 A股板块调用；
+已到排期时点不得仍只显示“待观察”。随后独立显示：
 
 ```text
 相对受益
@@ -250,6 +273,8 @@ driver/opposing 实际引用精确一致；`mediated` 的承接 call 必须由�
 - 观测时点晚于检索时点、T/T后混账或陈旧信号充当主驱动；
 - signal/query/source/runtime 引用不双向；
 - `signal_disposition_ledger` 未精确覆盖全部信号、存在伪中介或 `unmapped_signal_ids` 非空；
+- `risk_item_disposition_ledger` 未精确覆盖全部 warning/T后 delta，或 `unmapped_risk_item_ids` 非空；
+- 已到排期时点仍为 `pending`、缺官方实际结果/逐项实际值，或顶部卡没有显示运行时实际对账；
 - 板块缺原因、来源、主驱动、失效条件或合法窗口；
 - `sector_call.considered_signal_ids` 未完整承接直接与中介信号；
 - `sector_beneficiaries/pressures` 不是由 calls 派生；

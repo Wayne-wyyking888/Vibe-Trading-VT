@@ -1,6 +1,6 @@
 ---
 name: bottom-fishing
-description: A股底部区与超跌修复扫描（0 API、Codex 原生）。用于抄底、超跌、底部扫描、低吸扫描、bottom-fishing、毒月风险预警、错杀裁定、抄底复盘等请求；运行不可变 Python 引擎，执行双路径推荐线、ATR gate、5交易日冷却、官方源优先的多轮网页检索、F10逐条对账、Agent③五域最新风险检索、重大排期事件完整预期、外盘/宏观预测输入与分窗口A股板块映射、候选股票信息下沉、T日证据与运行时点增量隔离、结构化搜索覆盖审计、✓/?/✗分层、shadow warning、影子日志、adjudicate/review，并在一次性自修复与独立验收通过后输出原生 HTML。
+description: A股底部区与超跌修复扫描（0 API、Codex 原生）。用于抄底、超跌、底部扫描、低吸扫描、bottom-fishing、毒月风险预警、错杀裁定、抄底复盘等请求；运行不可变 Python 引擎，执行双路径推荐线、ATR gate、5交易日冷却、官方源优先的多轮网页检索、F10逐条对账、Agent③五域最新风险检索、重大排期事件完整预期与发布后对账、外盘/宏观预测输入与分窗口A股板块映射、候选股票信息下沉、T日证据与运行时点增量隔离、结构化搜索覆盖审计、✓/?/✗分层、shadow warning、影子日志、adjudicate/review，并在一次性自修复与独立验收通过后输出原生 HTML。
 ---
 
 # A股抄底扫描（0 API · Codex 原生 · 影子复验期）
@@ -126,6 +126,10 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
    - **八类预测输入**：逐类覆盖美股行业、全球同业事件、亚洲早盘同业、中国相关离岸资产、利率汇率波动、
      商品运价、宏观预期差、国内政策产业信息；记录原市场交易日、北京时间可得时点、相对基准、冲击类型、
      新鲜度和来源。市场未开写 `not_open`，来源受阻写 `blocked`，两者都不得伪造方向。
+     07:xx 北京时间报告必须采用当时最新已完成的美国交易时段：美国本地 T 日收盘在北京时间 T+1 凌晨可得，
+     必须写 `phase=post_t_safety`，禁止通过把 `observed_at_beijing` 错记成 T 日来冒充 as-of-T。美债同时存在盘中
+     媒体报价与财政部官方日值时，卡片以最新官方日值为准，盘中值只能明确标作盘中参考，并说明主导变动的
+     财政部操作、FOMC或其他驱动，不能把相关性写成单一因果。
     - **逐项证据约束推断**：每条 warning、每条 T 后 delta、每个五域运行时点综合都必须分开写
       `事实/当前共识/基准情景+置信度/上下行情景/传导链/观察变量/失效条件/推断边界`。
       有市场定价、调查或可靠机构来源才可写精确概率/基点；否则只给定性置信度。推断不是交易指令。
@@ -141,6 +145,11 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
       共识而丢弃可核验的机构预测或定性预览。只有三路均完成、无 blocked、指标逐项留痕后才允许写
       `consensus_status=no_reliable_consensus`；否则继续换查询与来源自修复。不得编数，也不得只漏字段，用户不负责提醒、
       搜索或补齐宏观预期。
+      **运行时发布后对账（强制）**：每条排期预期还必须一对一进入 `scheduled_event_reconciliations`。截至
+      `retrieved_at_beijing` 未到时点写 `pending`；已到时点禁止继续显示成单纯“待观察”，必须登记
+      `released|delayed|cancelled|blocked`。`released` 必须保留官方实际来源、实际发布时间、实际内容/逐项实际值、
+      相对事前预期、关联 T 后 delta/市场信号、A股板块调用与推断边界。HTML 顶部同一卡片同时显示“事前预期”和
+      “运行时实际”，保留无前视审计但不得让已发布事件仍停留在预期态。
    - **五域+预测输入合并映射到A股**：完成五域与八类输入后输出 `ashare_runtime_outlook`，分别直说竞价/开盘、
      开盘后延续或回吐、下一交易日综合及未来1—5个交易日的偏强、偏弱、震荡或分化路径。相对受益/承压板块
      必须来自结构化 `sector_calls`，在HTML逐条 bullet 为 `板块（原因）`，并显示窗口、置信度、来源与失效条件；
@@ -148,9 +157,11 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
       `market_signals` 必须一对一进入 `signal_disposition_ledger`，明确是直接驱动、反向、经其他信号传导、中性、
       不适用或陈旧排除；每个 `sector_call.considered_signal_ids` 必须与台账和 driver/opposing 引用闭合。五个
       `domain_impacts` 也必须逐域写板块处置并与 `sector_call.considered_domain_ids` 双向闭合；
-      `unmapped_signal_ids/unmapped_domain_ids` 必须为空。任何新鲜信号或报告域无解释悬空（包括“已进八类覆盖但未进
+      每条 T 日 warning 与 T 后 delta 还必须一对一进入 `risk_item_disposition_ledger`，并由每域
+      `considered_warning_ids/considered_delta_ids` 精确承接，明确 `linked|neutral|not_applicable`；
+      `unmapped_signal_ids/unmapped_risk_item_ids/unmapped_domain_ids` 必须为空。任何新鲜信号或报告域无解释悬空（包括“已进八类覆盖但未进
       板块调用”）都拒绝发布。报告开头每个相对受益/承压 bullet 必须机械显示“本板块已考虑信号N条
-      （驱动N/反向N/中介N）；关联五域N域；全局信号N条/五域5域均已处置，未解释0项”的简短结论，完整逐条理由
+      （驱动N/反向N/中介N）；关联五域N域；全局信号N条/风险项N条/五域5域均已处置，未解释0项”的简短结论，完整逐条理由
       保留在审计附录。
     - **排期风险**：统计数据、LPR、FOMC、政策生效日、长假闭市等只给 med 黄色提示，
       `direction_certainty=uncertain`；但仍须评估当前最普遍预期和条件式市场传导，不能只写“方向不确定”。结构化预期
@@ -163,11 +174,12 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
      **不改变 Agent② 的 ✓/?/✗**。
    - **T后隔离**：检索日晚于T时五域都做截至实际运行日的末端扫描；突发风险只进
      `post_t_safety_items`，`used_in_asof_t_warning=false`，但必须进入 `runtime_evaluation` 被综合评价；
-     HTML 明示“T后”和运行时点评估，不得倒灌成事前命中。
+     HTML 明示“T后”和运行时点评估，不得倒灌成事前命中；若增量是已排期事件的实际发布，还必须通过同一
+     `event_id` 回连顶部发布后对账卡，并在风险项处置台账中进入板块调用、neutral 或不适用。
    - **结构化落盘**：写入 `codex_audit.toxic_risk_warning`，固定
       `version=bottom-toxic-risk-warning/v3`、`mode=shadow`、五域 coverage、sources、queries、warnings、
-      `scheduled_event_expectations`、`market_signals`、八类 `predictive_input_coverage`、含 `sector_context` 的 by_code、post-T 增量、五域
-     `runtime_evaluation`、含分窗口 `sector_calls` 的 `ashare_runtime_outlook` 和 clear_reason。
+      `scheduled_event_expectations`、`scheduled_event_reconciliations`、`market_signals`、八类 `predictive_input_coverage`、含 `sector_context` 的 by_code、post-T 增量、五域
+      `runtime_evaluation`、含分窗口 `sector_calls` 的 `ashare_runtime_outlook` 和 clear_reason。
      每条 warning/delta 同步到顶层 `alerts`；
      映射候选的再同步到 `rulings[code].alerts`，都带 `warning_id/level/text/shadow/post_t`。
    Agent③尚未完成无前视 shadow 样本验证，**不得改分、禁买、降级、调仓位或替代两个预算熔断**。

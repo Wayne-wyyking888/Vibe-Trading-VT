@@ -649,17 +649,31 @@ _ETF_CSS = """
 
 
 def inject_etf_sections(raw: str, result: dict[str, Any]) -> str:
-    """幂等地把 ETF 区块插入每张候选卡片的 F10 行之后。"""
+    """幂等地插入或刷新每张候选卡片的 ETF 区块。"""
     if VERSION not in str((result.get("etf_holdings_meta") or {}).get("version")):
-        return raw
-    if "codex-bottom-etf:" in raw:
         return raw
     if "</style>" in raw and ".etf-box{" not in raw:
         raw = raw.replace("</style>", _ETF_CSS + "</style>", 1)
     html_top = int((result.get("etf_holdings_meta") or {}).get("html_top") or DEFAULT_HTML_TOP)
+    refreshed_codes: set[str] = set()
+    for candidate in result.get("candidates") or []:
+        code = str(candidate.get("code") or "")
+        start_marker = f"<!-- codex-bottom-etf:{code}:start -->"
+        end_marker = f"<!-- codex-bottom-etf:{code}:end -->"
+        pattern = re.compile(re.escape(start_marker) + r".*?" + re.escape(end_marker), re.S)
+        section = _etf_section(
+            code,
+            candidate.get("etf_holdings") or _blocked_payload("未生成ETF数据"),
+            html_top,
+        )
+        raw, count = pattern.subn(lambda _match, replacement=section: replacement, raw, count=1)
+        if count:
+            refreshed_codes.add(code)
     search_from = 0
     for candidate in result.get("candidates") or []:
         code = str(candidate.get("code") or "")
+        if code in refreshed_codes:
+            continue
         start = raw.find("<div class=card", search_from)
         if start < 0:
             break

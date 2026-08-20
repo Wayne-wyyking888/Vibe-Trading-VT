@@ -106,348 +106,56 @@
         },
         "all_etfs": [
           {
-            "code": "159608",
-            "secucode": "159608.SZ",
-            "name": "广发中证稀有金属主题ETF",
-            "full_name": "广发中证稀有金属主题交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "广发基金管理有限公司",
-            "holding_weight_pct": 4.06,
-            "holding_value_yuan": 206295833.36,
-            "shares": 3718382.0,
-            "change_type": "增持",
-            "correlation": 0.774,
-            "path_rmse": 11.321,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -30.53,
-            "etf_return_pct": -14.48,
-            "same_direction_pct": 81.7,
-            "similarity_status": "ok",
-            "similarity_rank": 10
+            "code": "159608"
           },
           {
-            "code": "561800",
-            "secucode": "561800.SH",
-            "name": "华富中证稀有金属主题ETF",
-            "full_name": "华富中证稀有金属主题交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "华富基金管理有限公司",
-            "holding_weight_pct": 4.06,
-            "holding_value_yuan": 11046068.0,
-            "shares": 199100.0,
-            "change_type": "增持",
-            "correlation": 0.7717,
-            "path_rmse": 11.63,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -30.53,
-            "etf_return_pct": -14.24,
-            "same_direction_pct": 80.0,
-            "similarity_status": "ok",
-            "similarity_rank": 11
+            "code": "561800"
           },
           {
-            "code": "562800",
-            "secucode": "562800.SH",
-            "name": "嘉实中证稀有金属主题ETF",
-            "full_name": "嘉实中证稀有金属主题交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "嘉实基金管理有限公司",
-            "holding_weight_pct": 4.04,
-            "holding_value_yuan": 275950252.12,
-            "shares": 4973869.0,
-            "change_type": "增持",
-            "correlation": 0.7805,
-            "path_rmse": 11.249,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -30.53,
-            "etf_return_pct": -14.66,
-            "same_direction_pct": 80.0,
-            "similarity_status": "ok",
-            "similarity_rank": 8
+            "code": "562800"
           },
           {
-            "code": "159671",
-            "secucode": "159671.SZ",
-            "name": "工银瑞信中证稀有金属主题ETF",
-            "full_name": "工银瑞信中证稀有金属主题交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "工银瑞信基金管理有限公司",
-            "holding_weight_pct": 4.03,
-            "holding_value_yuan": 63813096.0,
-            "shares": 1150200.0,
-            "change_type": "增持",
-            "correlation": 0.7791,
-            "path_rmse": 11.299,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -30.53,
-            "etf_return_pct": -14.52,
-            "same_direction_pct": 80.0,
-            "similarity_status": "ok",
-            "similarity_rank": 9
+            "code": "159671"
           },
           {
-            "code": "515700",
-            "secucode": "515700.SH",
-            "name": "平安中证新能源汽车产业ETF",
-            "full_name": "平安中证新能源汽车产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "平安基金管理有限公司",
-            "holding_weight_pct": 2.93,
-            "holding_value_yuan": 54534398.88,
-            "shares": 982956.0,
-            "change_type": "减持",
-            "correlation": 0.8071,
-            "path_rmse": 7.22,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -30.53,
-            "etf_return_pct": -19.7,
-            "same_direction_pct": 81.7,
-            "similarity_status": "ok",
-            "similarity_rank": 2
+            "code": "515700"
           },
           {
-            "code": "159806",
-            "secucode": "159806.SZ",
-            "name": "国泰中证新能源汽车ETF",
-            "full_name": "国泰中证新能源汽车交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "国泰基金管理有限公司",
-            "holding_weight_pct": 2.93,
-            "holding_value_yuan": 25094491.68,
-            "shares": 452316.0,
-            "change_type": "减持",
-            "correlation": 0.8068,
-            "path_rmse": 7.32,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -30.53,
-            "etf_return_pct": -19.62,
-            "same_direction_pct": 83.3,
-            "similarity_status": "ok",
-            "similarity_rank": 3
+            "code": "159806"
           },
           {
-            "code": "516390",
-            "secucode": "516390.SH",
-            "name": "汇添富中证新能源汽车产业ETF",
-            "full_name": "汇添富中证新能源汽车产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "汇添富基金管理股份有限公司",
-            "holding_weight_pct": 2.92,
-            "holding_value_yuan": 6352460.0,
-            "shares": 114500.0,
-            "change_type": "减持",
-            "correlation": 0.8159,
-            "path_rmse": 6.768,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -30.53,
-            "etf_return_pct": -20.68,
-            "same_direction_pct": 81.7,
-            "similarity_status": "ok",
-            "similarity_rank": 1
+            "code": "516390"
           },
           {
-            "code": "159637",
-            "secucode": "159637.SZ",
-            "name": "新能源车龙头ETF",
-            "full_name": "东财中证新能源汽车交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "东财基金管理有限公司",
-            "holding_weight_pct": 2.9,
-            "holding_value_yuan": 23593369.32,
-            "shares": 425259.0,
-            "change_type": "减持",
-            "correlation": 0.8052,
-            "path_rmse": 7.677,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -30.53,
-            "etf_return_pct": -18.27,
-            "same_direction_pct": 81.7,
-            "similarity_status": "ok",
-            "similarity_rank": 5
+            "code": "159637"
           },
           {
-            "code": "515030",
-            "secucode": "515030.SH",
-            "name": "华夏中证新能源汽车ETF",
-            "full_name": "华夏中证新能源汽车交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "华夏基金管理有限公司",
-            "holding_weight_pct": 2.89,
-            "holding_value_yuan": 130815348.84,
-            "shares": 2357883.0,
-            "change_type": "增持",
-            "correlation": 0.8054,
-            "path_rmse": 7.413,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -30.53,
-            "etf_return_pct": -19.3,
-            "same_direction_pct": 83.3,
-            "similarity_status": "ok",
-            "similarity_rank": 4
+            "code": "515030"
           },
           {
-            "code": "516660",
-            "secucode": "516660.SH",
-            "name": "华安中证新能源汽车ETF",
-            "full_name": "华安中证新能源汽车交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "华安基金管理有限公司",
-            "holding_weight_pct": 2.89,
-            "holding_value_yuan": 7428772.0,
-            "shares": 133900.0,
-            "change_type": "减持",
-            "correlation": 0.7962,
-            "path_rmse": 7.244,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -30.53,
-            "etf_return_pct": -19.77,
-            "same_direction_pct": 83.3,
-            "similarity_status": "ok",
-            "similarity_rank": 7
+            "code": "516660"
           },
           {
-            "code": "159824",
-            "secucode": "159824.SZ",
-            "name": "博时新能源汽车ETF",
-            "full_name": "博时中证新能源汽车交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "博时基金管理有限公司",
-            "holding_weight_pct": 2.88,
-            "holding_value_yuan": 6889561.88,
-            "shares": 124181.0,
-            "change_type": "减持",
-            "correlation": 0.8051,
-            "path_rmse": 7.557,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -30.53,
-            "etf_return_pct": -19.25,
-            "same_direction_pct": 83.3,
-            "similarity_status": "ok",
-            "similarity_rank": 6
+            "code": "159824"
           },
           {
-            "code": "512400",
-            "secucode": "512400.SH",
-            "name": "南方中证申万有色金属ETF",
-            "full_name": "中国工商银行股份有限公司-南方中证申万有色金属交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "南方基金管理股份有限公司",
-            "holding_weight_pct": 2.61,
-            "holding_value_yuan": 718632384.52,
-            "shares": 12952999.0,
-            "change_type": "增持",
-            "correlation": 0.6268,
-            "path_rmse": 11.791,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -30.53,
-            "etf_return_pct": -11.03,
-            "same_direction_pct": 71.7,
-            "similarity_status": "ok",
-            "similarity_rank": 13
+            "code": "512400"
           },
           {
-            "code": "516650",
-            "secucode": "516650.SH",
-            "name": "华夏中证细分有色金属产业主题ETF",
-            "full_name": "中信银行股份有限公司-华夏中证细分有色金属产业主题交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "华夏基金管理有限公司",
-            "holding_weight_pct": 2.54,
-            "holding_value_yuan": 327198848.0,
-            "shares": 5897600.0,
-            "change_type": "增持",
-            "correlation": 0.6395,
-            "path_rmse": 12.207,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -30.53,
-            "etf_return_pct": -9.97,
-            "same_direction_pct": 73.3,
-            "similarity_status": "ok",
-            "similarity_rank": 12
+            "code": "516650"
           },
           {
-            "code": "510300",
-            "secucode": "510300.SH",
-            "name": "华泰柏瑞沪深300ETF",
-            "full_name": "中国工商银行股份有限公司-华泰柏瑞沪深300交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "华泰柏瑞基金管理有限公司",
-            "holding_weight_pct": 0.23,
-            "holding_value_yuan": 461269596.8,
-            "shares": 8314160.0,
-            "change_type": "减持",
-            "correlation": 0.4681,
-            "path_rmse": 18.169,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -30.53,
-            "etf_return_pct": -6.4,
-            "same_direction_pct": 71.7,
-            "similarity_status": "ok",
-            "similarity_rank": 14
+            "code": "510300"
           },
           {
-            "code": "510310",
-            "secucode": "510310.SH",
-            "name": "易方达沪深300ETF",
-            "full_name": "中国建设银行股份有限公司-易方达沪深300交易型开放式指数发起式证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "易方达基金管理有限公司",
-            "holding_weight_pct": 0.23,
-            "holding_value_yuan": 320967223.44,
-            "shares": 5785278.0,
-            "change_type": "减持",
-            "correlation": 0.4558,
-            "path_rmse": 18.36,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -30.53,
-            "etf_return_pct": -6.21,
-            "same_direction_pct": 66.7,
-            "similarity_status": "ok",
-            "similarity_rank": 15
+            "code": "510310"
           }
         ],
         "ranked": [
           {
             "code": "516390",
-            "secucode": "516390.SH",
             "name": "汇添富中证新能源汽车产业ETF",
-            "full_name": "汇添富中证新能源汽车产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "汇添富基金管理股份有限公司",
             "holding_weight_pct": 2.92,
-            "holding_value_yuan": 6352460.0,
-            "shares": 114500.0,
-            "change_type": "减持",
             "correlation": 0.8159,
             "path_rmse": 6.768,
             "common_return_days": 60,
@@ -456,20 +164,12 @@
             "stock_return_pct": -30.53,
             "etf_return_pct": -20.68,
             "same_direction_pct": 81.7,
-            "similarity_status": "ok",
             "similarity_rank": 1
           },
           {
             "code": "515700",
-            "secucode": "515700.SH",
             "name": "平安中证新能源汽车产业ETF",
-            "full_name": "平安中证新能源汽车产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "平安基金管理有限公司",
             "holding_weight_pct": 2.93,
-            "holding_value_yuan": 54534398.88,
-            "shares": 982956.0,
-            "change_type": "减持",
             "correlation": 0.8071,
             "path_rmse": 7.22,
             "common_return_days": 60,
@@ -478,20 +178,12 @@
             "stock_return_pct": -30.53,
             "etf_return_pct": -19.7,
             "same_direction_pct": 81.7,
-            "similarity_status": "ok",
             "similarity_rank": 2
           },
           {
             "code": "159806",
-            "secucode": "159806.SZ",
             "name": "国泰中证新能源汽车ETF",
-            "full_name": "国泰中证新能源汽车交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "国泰基金管理有限公司",
             "holding_weight_pct": 2.93,
-            "holding_value_yuan": 25094491.68,
-            "shares": 452316.0,
-            "change_type": "减持",
             "correlation": 0.8068,
             "path_rmse": 7.32,
             "common_return_days": 60,
@@ -500,20 +192,12 @@
             "stock_return_pct": -30.53,
             "etf_return_pct": -19.62,
             "same_direction_pct": 83.3,
-            "similarity_status": "ok",
             "similarity_rank": 3
           },
           {
             "code": "515030",
-            "secucode": "515030.SH",
             "name": "华夏中证新能源汽车ETF",
-            "full_name": "华夏中证新能源汽车交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "华夏基金管理有限公司",
             "holding_weight_pct": 2.89,
-            "holding_value_yuan": 130815348.84,
-            "shares": 2357883.0,
-            "change_type": "增持",
             "correlation": 0.8054,
             "path_rmse": 7.413,
             "common_return_days": 60,
@@ -522,20 +206,12 @@
             "stock_return_pct": -30.53,
             "etf_return_pct": -19.3,
             "same_direction_pct": 83.3,
-            "similarity_status": "ok",
             "similarity_rank": 4
           },
           {
             "code": "159637",
-            "secucode": "159637.SZ",
             "name": "新能源车龙头ETF",
-            "full_name": "东财中证新能源汽车交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "东财基金管理有限公司",
             "holding_weight_pct": 2.9,
-            "holding_value_yuan": 23593369.32,
-            "shares": 425259.0,
-            "change_type": "减持",
             "correlation": 0.8052,
             "path_rmse": 7.677,
             "common_return_days": 60,
@@ -544,20 +220,12 @@
             "stock_return_pct": -30.53,
             "etf_return_pct": -18.27,
             "same_direction_pct": 81.7,
-            "similarity_status": "ok",
             "similarity_rank": 5
           },
           {
             "code": "159824",
-            "secucode": "159824.SZ",
             "name": "博时新能源汽车ETF",
-            "full_name": "博时中证新能源汽车交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "博时基金管理有限公司",
             "holding_weight_pct": 2.88,
-            "holding_value_yuan": 6889561.88,
-            "shares": 124181.0,
-            "change_type": "减持",
             "correlation": 0.8051,
             "path_rmse": 7.557,
             "common_return_days": 60,
@@ -566,20 +234,12 @@
             "stock_return_pct": -30.53,
             "etf_return_pct": -19.25,
             "same_direction_pct": 83.3,
-            "similarity_status": "ok",
             "similarity_rank": 6
           },
           {
             "code": "516660",
-            "secucode": "516660.SH",
             "name": "华安中证新能源汽车ETF",
-            "full_name": "华安中证新能源汽车交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "华安基金管理有限公司",
             "holding_weight_pct": 2.89,
-            "holding_value_yuan": 7428772.0,
-            "shares": 133900.0,
-            "change_type": "减持",
             "correlation": 0.7962,
             "path_rmse": 7.244,
             "common_return_days": 60,
@@ -588,20 +248,12 @@
             "stock_return_pct": -30.53,
             "etf_return_pct": -19.77,
             "same_direction_pct": 83.3,
-            "similarity_status": "ok",
             "similarity_rank": 7
           },
           {
             "code": "562800",
-            "secucode": "562800.SH",
             "name": "嘉实中证稀有金属主题ETF",
-            "full_name": "嘉实中证稀有金属主题交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "嘉实基金管理有限公司",
             "holding_weight_pct": 4.04,
-            "holding_value_yuan": 275950252.12,
-            "shares": 4973869.0,
-            "change_type": "增持",
             "correlation": 0.7805,
             "path_rmse": 11.249,
             "common_return_days": 60,
@@ -610,20 +262,12 @@
             "stock_return_pct": -30.53,
             "etf_return_pct": -14.66,
             "same_direction_pct": 80.0,
-            "similarity_status": "ok",
             "similarity_rank": 8
           },
           {
             "code": "159671",
-            "secucode": "159671.SZ",
             "name": "工银瑞信中证稀有金属主题ETF",
-            "full_name": "工银瑞信中证稀有金属主题交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "工银瑞信基金管理有限公司",
             "holding_weight_pct": 4.03,
-            "holding_value_yuan": 63813096.0,
-            "shares": 1150200.0,
-            "change_type": "增持",
             "correlation": 0.7791,
             "path_rmse": 11.299,
             "common_return_days": 60,
@@ -632,20 +276,12 @@
             "stock_return_pct": -30.53,
             "etf_return_pct": -14.52,
             "same_direction_pct": 80.0,
-            "similarity_status": "ok",
             "similarity_rank": 9
           },
           {
             "code": "159608",
-            "secucode": "159608.SZ",
             "name": "广发中证稀有金属主题ETF",
-            "full_name": "广发中证稀有金属主题交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "广发基金管理有限公司",
             "holding_weight_pct": 4.06,
-            "holding_value_yuan": 206295833.36,
-            "shares": 3718382.0,
-            "change_type": "增持",
             "correlation": 0.774,
             "path_rmse": 11.321,
             "common_return_days": 60,
@@ -654,20 +290,12 @@
             "stock_return_pct": -30.53,
             "etf_return_pct": -14.48,
             "same_direction_pct": 81.7,
-            "similarity_status": "ok",
             "similarity_rank": 10
           },
           {
             "code": "561800",
-            "secucode": "561800.SH",
             "name": "华富中证稀有金属主题ETF",
-            "full_name": "华富中证稀有金属主题交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "华富基金管理有限公司",
             "holding_weight_pct": 4.06,
-            "holding_value_yuan": 11046068.0,
-            "shares": 199100.0,
-            "change_type": "增持",
             "correlation": 0.7717,
             "path_rmse": 11.63,
             "common_return_days": 60,
@@ -676,20 +304,12 @@
             "stock_return_pct": -30.53,
             "etf_return_pct": -14.24,
             "same_direction_pct": 80.0,
-            "similarity_status": "ok",
             "similarity_rank": 11
           },
           {
             "code": "516650",
-            "secucode": "516650.SH",
             "name": "华夏中证细分有色金属产业主题ETF",
-            "full_name": "中信银行股份有限公司-华夏中证细分有色金属产业主题交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "华夏基金管理有限公司",
             "holding_weight_pct": 2.54,
-            "holding_value_yuan": 327198848.0,
-            "shares": 5897600.0,
-            "change_type": "增持",
             "correlation": 0.6395,
             "path_rmse": 12.207,
             "common_return_days": 60,
@@ -698,20 +318,12 @@
             "stock_return_pct": -30.53,
             "etf_return_pct": -9.97,
             "same_direction_pct": 73.3,
-            "similarity_status": "ok",
             "similarity_rank": 12
           },
           {
             "code": "512400",
-            "secucode": "512400.SH",
             "name": "南方中证申万有色金属ETF",
-            "full_name": "中国工商银行股份有限公司-南方中证申万有色金属交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "南方基金管理股份有限公司",
             "holding_weight_pct": 2.61,
-            "holding_value_yuan": 718632384.52,
-            "shares": 12952999.0,
-            "change_type": "增持",
             "correlation": 0.6268,
             "path_rmse": 11.791,
             "common_return_days": 60,
@@ -720,20 +332,12 @@
             "stock_return_pct": -30.53,
             "etf_return_pct": -11.03,
             "same_direction_pct": 71.7,
-            "similarity_status": "ok",
             "similarity_rank": 13
           },
           {
             "code": "510300",
-            "secucode": "510300.SH",
             "name": "华泰柏瑞沪深300ETF",
-            "full_name": "中国工商银行股份有限公司-华泰柏瑞沪深300交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "华泰柏瑞基金管理有限公司",
             "holding_weight_pct": 0.23,
-            "holding_value_yuan": 461269596.8,
-            "shares": 8314160.0,
-            "change_type": "减持",
             "correlation": 0.4681,
             "path_rmse": 18.169,
             "common_return_days": 60,
@@ -742,20 +346,12 @@
             "stock_return_pct": -30.53,
             "etf_return_pct": -6.4,
             "same_direction_pct": 71.7,
-            "similarity_status": "ok",
             "similarity_rank": 14
           },
           {
             "code": "510310",
-            "secucode": "510310.SH",
             "name": "易方达沪深300ETF",
-            "full_name": "中国建设银行股份有限公司-易方达沪深300交易型开放式指数发起式证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "易方达基金管理有限公司",
             "holding_weight_pct": 0.23,
-            "holding_value_yuan": 320967223.44,
-            "shares": 5785278.0,
-            "change_type": "减持",
             "correlation": 0.4558,
             "path_rmse": 18.36,
             "common_return_days": 60,
@@ -764,12 +360,12 @@
             "stock_return_pct": -30.53,
             "etf_return_pct": -6.21,
             "same_direction_pct": 66.7,
-            "similarity_status": "ok",
             "similarity_rank": 15
           }
         ],
         "similarity_failure_count": 0,
-        "uncomputed_due_to_cap": 0
+        "uncomputed_due_to_cap": 0,
+        "reused_verified_snapshot": "2026-08-20T07:29:49+08:00"
       }
     },
     {
@@ -851,370 +447,59 @@
         },
         "all_etfs": [
           {
-            "code": "560980",
-            "secucode": "560980.SH",
-            "name": "广发中证光伏龙头30ETF",
-            "full_name": "广发中证光伏龙头30交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "广发基金管理有限公司",
-            "holding_weight_pct": 4.0,
-            "holding_value_yuan": 19484213.1,
-            "shares": 184965.0,
-            "change_type": "减持",
-            "correlation": 0.7267,
-            "path_rmse": 9.889,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -33.35,
-            "etf_return_pct": -25.17,
-            "same_direction_pct": 75.0,
-            "similarity_status": "ok",
-            "similarity_rank": 14
+            "code": "560980"
           },
           {
-            "code": "159857",
-            "secucode": "159857.SZ",
-            "name": "天弘中证光伏产业ETF",
-            "full_name": "天弘中证光伏产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "天弘基金管理有限公司",
-            "holding_weight_pct": 2.38,
-            "holding_value_yuan": 56097447.58,
-            "shares": 532537.0,
-            "change_type": "减持",
-            "correlation": 0.7719,
-            "path_rmse": 10.498,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -33.35,
-            "etf_return_pct": -23.63,
-            "same_direction_pct": 73.3,
-            "similarity_status": "ok",
-            "similarity_rank": 9
+            "code": "159857"
           },
           {
-            "code": "515370",
-            "secucode": "515370.SH",
-            "name": "华夏中证光伏产业ETF",
-            "full_name": "华夏中证光伏产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "华夏基金管理有限公司",
-            "holding_weight_pct": 2.38,
-            "holding_value_yuan": 32307778.0,
-            "shares": 306700.0,
-            "change_type": "减持",
-            "correlation": 0.7733,
-            "path_rmse": 10.517,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -33.35,
-            "etf_return_pct": -23.53,
-            "same_direction_pct": 73.3,
-            "similarity_status": "ok",
-            "similarity_rank": 8
+            "code": "515370"
           },
           {
-            "code": "159863",
-            "secucode": "159863.SZ",
-            "name": "鹏华中证光伏产业ETF",
-            "full_name": "鹏华中证光伏产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "鹏华基金管理有限公司",
-            "holding_weight_pct": 2.38,
-            "holding_value_yuan": 5571011.24,
-            "shares": 52886.0,
-            "change_type": "减持",
-            "correlation": 0.7746,
-            "path_rmse": 10.522,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -33.35,
-            "etf_return_pct": -23.58,
-            "same_direction_pct": 78.3,
-            "similarity_status": "ok",
-            "similarity_rank": 5
+            "code": "159863"
           },
           {
-            "code": "516180",
-            "secucode": "516180.SH",
-            "name": "平安中证光伏产业ETF",
-            "full_name": "平安中证光伏产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "平安基金管理有限公司",
-            "holding_weight_pct": 2.38,
-            "holding_value_yuan": 4803504.0,
-            "shares": 45600.0,
-            "change_type": "增持",
-            "correlation": 0.7646,
-            "path_rmse": 10.588,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -33.35,
-            "etf_return_pct": -23.61,
-            "same_direction_pct": 75.0,
-            "similarity_status": "ok",
-            "similarity_rank": 12
+            "code": "516180"
           },
           {
-            "code": "562970",
-            "secucode": "562970.SH",
-            "name": "易方达中证光伏产业ETF",
-            "full_name": "易方达中证光伏产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "易方达基金管理有限公司",
-            "holding_weight_pct": 2.37,
-            "holding_value_yuan": 16496244.0,
-            "shares": 156600.0,
-            "change_type": "增持",
-            "correlation": 0.767,
-            "path_rmse": 10.819,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -33.35,
-            "etf_return_pct": -23.02,
-            "same_direction_pct": 76.7,
-            "similarity_status": "ok",
-            "similarity_rank": 11
+            "code": "562970"
           },
           {
-            "code": "516290",
-            "secucode": "516290.SH",
-            "name": "汇添富中证光伏产业ETF",
-            "full_name": "汇添富中证光伏产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "汇添富基金管理股份有限公司",
-            "holding_weight_pct": 2.37,
-            "holding_value_yuan": 15474446.0,
-            "shares": 146900.0,
-            "change_type": "减持",
-            "correlation": 0.7751,
-            "path_rmse": 10.162,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -33.35,
-            "etf_return_pct": -23.95,
-            "same_direction_pct": 73.3,
-            "similarity_status": "ok",
-            "similarity_rank": 4
+            "code": "516290"
           },
           {
-            "code": "560230",
-            "secucode": "560230.SH",
-            "name": "富国中证光伏产业ETF",
-            "full_name": "富国中证光伏产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "富国基金管理有限公司",
-            "holding_weight_pct": 2.37,
-            "holding_value_yuan": 2127868.0,
-            "shares": 20200.0,
-            "change_type": "增持",
-            "correlation": 0.784,
-            "path_rmse": 10.219,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -33.35,
-            "etf_return_pct": -24.5,
-            "same_direction_pct": 76.7,
-            "similarity_status": "ok",
-            "similarity_rank": 1
+            "code": "560230"
           },
           {
-            "code": "516880",
-            "secucode": "516880.SH",
-            "name": "银华中证光伏产业ETF",
-            "full_name": "银华中证光伏产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "银华基金管理股份有限公司",
-            "holding_weight_pct": 2.36,
-            "holding_value_yuan": 28042350.72,
-            "shares": 266208.0,
-            "change_type": "减持",
-            "correlation": 0.7787,
-            "path_rmse": 10.629,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -33.35,
-            "etf_return_pct": -23.49,
-            "same_direction_pct": 76.7,
-            "similarity_status": "ok",
-            "similarity_rank": 3
+            "code": "516880"
           },
           {
-            "code": "159123",
-            "secucode": "159123.SZ",
-            "name": "嘉实中证光伏产业ETF",
-            "full_name": "嘉实中证光伏产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "嘉实基金管理有限公司",
-            "holding_weight_pct": 2.36,
-            "holding_value_yuan": 14010220.0,
-            "shares": 133000.0,
-            "change_type": "增持",
-            "correlation": 0.7742,
-            "path_rmse": 10.834,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -33.35,
-            "etf_return_pct": -23.11,
-            "same_direction_pct": 76.7,
-            "similarity_status": "ok",
-            "similarity_rank": 6
+            "code": "159123"
           },
           {
-            "code": "159864",
-            "secucode": "159864.SZ",
-            "name": "国泰中证光伏产业ETF",
-            "full_name": "国泰中证光伏产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "国泰基金管理有限公司",
-            "holding_weight_pct": 2.36,
-            "holding_value_yuan": 13308023.56,
-            "shares": 126334.0,
-            "change_type": "减持",
-            "correlation": 0.7733,
-            "path_rmse": 10.271,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -33.35,
-            "etf_return_pct": -24.25,
-            "same_direction_pct": 75.0,
-            "similarity_status": "ok",
-            "similarity_rank": 7
+            "code": "159864"
           },
           {
-            "code": "516230",
-            "secucode": "516230.SH",
-            "name": "招商中证光伏产业ETF",
-            "full_name": "招商中证光伏产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "招商基金管理有限公司",
-            "holding_weight_pct": 2.36,
-            "holding_value_yuan": 1938256.0,
-            "shares": 18400.0,
-            "change_type": "增持",
-            "correlation": 0.7712,
-            "path_rmse": 10.771,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -33.35,
-            "etf_return_pct": -23.21,
-            "same_direction_pct": 78.3,
-            "similarity_status": "ok",
-            "similarity_rank": 10
+            "code": "516230"
           },
           {
-            "code": "159618",
-            "secucode": "159618.SZ",
-            "name": "华安中证光伏产业ETF",
-            "full_name": "华安中证光伏产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "华安基金管理有限公司",
-            "holding_weight_pct": 2.36,
-            "holding_value_yuan": 1603906.84,
-            "shares": 15226.0,
-            "change_type": "增持",
-            "correlation": 0.7479,
-            "path_rmse": 10.378,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -33.35,
-            "etf_return_pct": -24.32,
-            "same_direction_pct": 76.7,
-            "similarity_status": "ok",
-            "similarity_rank": 13
+            "code": "159618"
           },
           {
-            "code": "159609",
-            "secucode": "159609.SZ",
-            "name": "浦银安盛中证光伏产业ETF",
-            "full_name": "浦银安盛中证光伏产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "浦银安盛基金管理有限公司",
-            "holding_weight_pct": 2.33,
-            "holding_value_yuan": 4940446.0,
-            "shares": 46900.0,
-            "change_type": "减持",
-            "correlation": 0.7814,
-            "path_rmse": 10.222,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -33.35,
-            "etf_return_pct": -24.0,
-            "same_direction_pct": 76.7,
-            "similarity_status": "ok",
-            "similarity_rank": 2
+            "code": "159609"
           },
           {
-            "code": "159966",
-            "secucode": "159966.SZ",
-            "name": "华夏创业板低波价值ETF",
-            "full_name": "华夏创业板低波价值交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "华夏基金管理有限公司",
-            "holding_weight_pct": 2.04,
-            "holding_value_yuan": 7205256.0,
-            "shares": 68400.0,
-            "change_type": "减持",
-            "correlation": 0.5799,
-            "path_rmse": 18.406,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -33.35,
-            "etf_return_pct": -14.98,
-            "same_direction_pct": 70.0,
-            "similarity_status": "ok",
-            "similarity_rank": 15
+            "code": "159966"
           },
           {
-            "code": "159915",
-            "secucode": "159915.SZ",
-            "name": "易方达创业板ETF",
-            "full_name": "中国工商银行股份有限公司-易方达创业板交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "易方达基金管理有限公司",
-            "holding_weight_pct": 0.55,
-            "holding_value_yuan": 279368527.1,
-            "shares": 2652065.0,
-            "change_type": "减持",
-            "correlation": 0.5464,
-            "path_rmse": 21.948,
-            "common_return_days": 60,
-            "window_start": "2026-05-26",
-            "window_end": "2026-08-19",
-            "stock_return_pct": -33.35,
-            "etf_return_pct": -13.74,
-            "same_direction_pct": 73.3,
-            "similarity_status": "ok",
-            "similarity_rank": 16
+            "code": "159915"
           }
         ],
         "ranked": [
           {
             "code": "560230",
-            "secucode": "560230.SH",
             "name": "富国中证光伏产业ETF",
-            "full_name": "富国中证光伏产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "富国基金管理有限公司",
             "holding_weight_pct": 2.37,
-            "holding_value_yuan": 2127868.0,
-            "shares": 20200.0,
-            "change_type": "增持",
             "correlation": 0.784,
             "path_rmse": 10.219,
             "common_return_days": 60,
@@ -1223,20 +508,12 @@
             "stock_return_pct": -33.35,
             "etf_return_pct": -24.5,
             "same_direction_pct": 76.7,
-            "similarity_status": "ok",
             "similarity_rank": 1
           },
           {
             "code": "159609",
-            "secucode": "159609.SZ",
             "name": "浦银安盛中证光伏产业ETF",
-            "full_name": "浦银安盛中证光伏产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "浦银安盛基金管理有限公司",
             "holding_weight_pct": 2.33,
-            "holding_value_yuan": 4940446.0,
-            "shares": 46900.0,
-            "change_type": "减持",
             "correlation": 0.7814,
             "path_rmse": 10.222,
             "common_return_days": 60,
@@ -1245,20 +522,12 @@
             "stock_return_pct": -33.35,
             "etf_return_pct": -24.0,
             "same_direction_pct": 76.7,
-            "similarity_status": "ok",
             "similarity_rank": 2
           },
           {
             "code": "516880",
-            "secucode": "516880.SH",
             "name": "银华中证光伏产业ETF",
-            "full_name": "银华中证光伏产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "银华基金管理股份有限公司",
             "holding_weight_pct": 2.36,
-            "holding_value_yuan": 28042350.72,
-            "shares": 266208.0,
-            "change_type": "减持",
             "correlation": 0.7787,
             "path_rmse": 10.629,
             "common_return_days": 60,
@@ -1267,20 +536,12 @@
             "stock_return_pct": -33.35,
             "etf_return_pct": -23.49,
             "same_direction_pct": 76.7,
-            "similarity_status": "ok",
             "similarity_rank": 3
           },
           {
             "code": "516290",
-            "secucode": "516290.SH",
             "name": "汇添富中证光伏产业ETF",
-            "full_name": "汇添富中证光伏产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "汇添富基金管理股份有限公司",
             "holding_weight_pct": 2.37,
-            "holding_value_yuan": 15474446.0,
-            "shares": 146900.0,
-            "change_type": "减持",
             "correlation": 0.7751,
             "path_rmse": 10.162,
             "common_return_days": 60,
@@ -1289,20 +550,12 @@
             "stock_return_pct": -33.35,
             "etf_return_pct": -23.95,
             "same_direction_pct": 73.3,
-            "similarity_status": "ok",
             "similarity_rank": 4
           },
           {
             "code": "159863",
-            "secucode": "159863.SZ",
             "name": "鹏华中证光伏产业ETF",
-            "full_name": "鹏华中证光伏产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "鹏华基金管理有限公司",
             "holding_weight_pct": 2.38,
-            "holding_value_yuan": 5571011.24,
-            "shares": 52886.0,
-            "change_type": "减持",
             "correlation": 0.7746,
             "path_rmse": 10.522,
             "common_return_days": 60,
@@ -1311,20 +564,12 @@
             "stock_return_pct": -33.35,
             "etf_return_pct": -23.58,
             "same_direction_pct": 78.3,
-            "similarity_status": "ok",
             "similarity_rank": 5
           },
           {
             "code": "159123",
-            "secucode": "159123.SZ",
             "name": "嘉实中证光伏产业ETF",
-            "full_name": "嘉实中证光伏产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "嘉实基金管理有限公司",
             "holding_weight_pct": 2.36,
-            "holding_value_yuan": 14010220.0,
-            "shares": 133000.0,
-            "change_type": "增持",
             "correlation": 0.7742,
             "path_rmse": 10.834,
             "common_return_days": 60,
@@ -1333,20 +578,12 @@
             "stock_return_pct": -33.35,
             "etf_return_pct": -23.11,
             "same_direction_pct": 76.7,
-            "similarity_status": "ok",
             "similarity_rank": 6
           },
           {
             "code": "159864",
-            "secucode": "159864.SZ",
             "name": "国泰中证光伏产业ETF",
-            "full_name": "国泰中证光伏产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "国泰基金管理有限公司",
             "holding_weight_pct": 2.36,
-            "holding_value_yuan": 13308023.56,
-            "shares": 126334.0,
-            "change_type": "减持",
             "correlation": 0.7733,
             "path_rmse": 10.271,
             "common_return_days": 60,
@@ -1355,20 +592,12 @@
             "stock_return_pct": -33.35,
             "etf_return_pct": -24.25,
             "same_direction_pct": 75.0,
-            "similarity_status": "ok",
             "similarity_rank": 7
           },
           {
             "code": "515370",
-            "secucode": "515370.SH",
             "name": "华夏中证光伏产业ETF",
-            "full_name": "华夏中证光伏产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "华夏基金管理有限公司",
             "holding_weight_pct": 2.38,
-            "holding_value_yuan": 32307778.0,
-            "shares": 306700.0,
-            "change_type": "减持",
             "correlation": 0.7733,
             "path_rmse": 10.517,
             "common_return_days": 60,
@@ -1377,20 +606,12 @@
             "stock_return_pct": -33.35,
             "etf_return_pct": -23.53,
             "same_direction_pct": 73.3,
-            "similarity_status": "ok",
             "similarity_rank": 8
           },
           {
             "code": "159857",
-            "secucode": "159857.SZ",
             "name": "天弘中证光伏产业ETF",
-            "full_name": "天弘中证光伏产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "天弘基金管理有限公司",
             "holding_weight_pct": 2.38,
-            "holding_value_yuan": 56097447.58,
-            "shares": 532537.0,
-            "change_type": "减持",
             "correlation": 0.7719,
             "path_rmse": 10.498,
             "common_return_days": 60,
@@ -1399,20 +620,12 @@
             "stock_return_pct": -33.35,
             "etf_return_pct": -23.63,
             "same_direction_pct": 73.3,
-            "similarity_status": "ok",
             "similarity_rank": 9
           },
           {
             "code": "516230",
-            "secucode": "516230.SH",
             "name": "招商中证光伏产业ETF",
-            "full_name": "招商中证光伏产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "招商基金管理有限公司",
             "holding_weight_pct": 2.36,
-            "holding_value_yuan": 1938256.0,
-            "shares": 18400.0,
-            "change_type": "增持",
             "correlation": 0.7712,
             "path_rmse": 10.771,
             "common_return_days": 60,
@@ -1421,20 +634,12 @@
             "stock_return_pct": -33.35,
             "etf_return_pct": -23.21,
             "same_direction_pct": 78.3,
-            "similarity_status": "ok",
             "similarity_rank": 10
           },
           {
             "code": "562970",
-            "secucode": "562970.SH",
             "name": "易方达中证光伏产业ETF",
-            "full_name": "易方达中证光伏产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "易方达基金管理有限公司",
             "holding_weight_pct": 2.37,
-            "holding_value_yuan": 16496244.0,
-            "shares": 156600.0,
-            "change_type": "增持",
             "correlation": 0.767,
             "path_rmse": 10.819,
             "common_return_days": 60,
@@ -1443,20 +648,12 @@
             "stock_return_pct": -33.35,
             "etf_return_pct": -23.02,
             "same_direction_pct": 76.7,
-            "similarity_status": "ok",
             "similarity_rank": 11
           },
           {
             "code": "516180",
-            "secucode": "516180.SH",
             "name": "平安中证光伏产业ETF",
-            "full_name": "平安中证光伏产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "平安基金管理有限公司",
             "holding_weight_pct": 2.38,
-            "holding_value_yuan": 4803504.0,
-            "shares": 45600.0,
-            "change_type": "增持",
             "correlation": 0.7646,
             "path_rmse": 10.588,
             "common_return_days": 60,
@@ -1465,20 +662,12 @@
             "stock_return_pct": -33.35,
             "etf_return_pct": -23.61,
             "same_direction_pct": 75.0,
-            "similarity_status": "ok",
             "similarity_rank": 12
           },
           {
             "code": "159618",
-            "secucode": "159618.SZ",
             "name": "华安中证光伏产业ETF",
-            "full_name": "华安中证光伏产业交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "华安基金管理有限公司",
             "holding_weight_pct": 2.36,
-            "holding_value_yuan": 1603906.84,
-            "shares": 15226.0,
-            "change_type": "增持",
             "correlation": 0.7479,
             "path_rmse": 10.378,
             "common_return_days": 60,
@@ -1487,20 +676,12 @@
             "stock_return_pct": -33.35,
             "etf_return_pct": -24.32,
             "same_direction_pct": 76.7,
-            "similarity_status": "ok",
             "similarity_rank": 13
           },
           {
             "code": "560980",
-            "secucode": "560980.SH",
             "name": "广发中证光伏龙头30ETF",
-            "full_name": "广发中证光伏龙头30交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "广发基金管理有限公司",
             "holding_weight_pct": 4.0,
-            "holding_value_yuan": 19484213.1,
-            "shares": 184965.0,
-            "change_type": "减持",
             "correlation": 0.7267,
             "path_rmse": 9.889,
             "common_return_days": 60,
@@ -1509,20 +690,12 @@
             "stock_return_pct": -33.35,
             "etf_return_pct": -25.17,
             "same_direction_pct": 75.0,
-            "similarity_status": "ok",
             "similarity_rank": 14
           },
           {
             "code": "159966",
-            "secucode": "159966.SZ",
             "name": "华夏创业板低波价值ETF",
-            "full_name": "华夏创业板低波价值交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "华夏基金管理有限公司",
             "holding_weight_pct": 2.04,
-            "holding_value_yuan": 7205256.0,
-            "shares": 68400.0,
-            "change_type": "减持",
             "correlation": 0.5799,
             "path_rmse": 18.406,
             "common_return_days": 60,
@@ -1531,20 +704,12 @@
             "stock_return_pct": -33.35,
             "etf_return_pct": -14.98,
             "same_direction_pct": 70.0,
-            "similarity_status": "ok",
             "similarity_rank": 15
           },
           {
             "code": "159915",
-            "secucode": "159915.SZ",
             "name": "易方达创业板ETF",
-            "full_name": "中国工商银行股份有限公司-易方达创业板交易型开放式指数证券投资基金",
-            "fund_type": "被动指数型基金",
-            "manager": "易方达基金管理有限公司",
             "holding_weight_pct": 0.55,
-            "holding_value_yuan": 279368527.1,
-            "shares": 2652065.0,
-            "change_type": "减持",
             "correlation": 0.5464,
             "path_rmse": 21.948,
             "common_return_days": 60,
@@ -1553,12 +718,12 @@
             "stock_return_pct": -33.35,
             "etf_return_pct": -13.74,
             "same_direction_pct": 73.3,
-            "similarity_status": "ok",
             "similarity_rank": 16
           }
         ],
         "similarity_failure_count": 0,
-        "uncomputed_due_to_cap": 0
+        "uncomputed_due_to_cap": 0,
+        "reused_verified_snapshot": "2026-08-20T07:29:52+08:00"
       }
     }
   ],
@@ -1948,31 +1113,13 @@
     {
       "warning_id": "delta-fed-minutes-runtime",
       "level": "med",
-      "text": "T后影子shadow增量：T后公布的7月FOMC纪要显示通胀与加息路径分歧，需观察美债与美元实际反应。",
+      "text": "T后影子shadow增量：7月FOMC纪要显示9比3维持3.50%—3.75%，3名官员倾向加息25个基点；多名官员认为若通胀不回落可能需要收紧，但同日美股约涨0.2%、10年期美债收益率由4.71%回落至盘中约4.64%，条件性鹰派压力被市场反应部分抵消。",
       "shadow": true,
       "post_t": true
     }
   ],
   "adjudicated": true,
-  "adjudicated_at": "2026-08-20T07:29:48+08:00",
-  "etf_holdings_meta": {
-    "version": "bottom-etf-holdings/v1",
-    "generated_at": "2026-08-20T07:29:48+08:00",
-    "used_in_recommendation": false,
-    "similarity_metric": "截至T最近60个共同交易日的前复权日对数收益 Pearson 相关系数（降序）",
-    "similarity_tie_break": "归一化收盘路径RMSE（升序）",
-    "similarity_max_etfs_by_holding_weight": 80,
-    "html_top": 5,
-    "disclosure_note": "基金定期披露≠实时仓位；一/三季报通常非全部持仓，披露中报告可能不完整",
-    "online_refresh": true,
-    "recovery_policy": "每次裁定在线刷新；持仓四端点自动切换；行情腾讯三端点失败后切东方财富；不使用过期缓存兜底",
-    "report_date": "2026-03-31",
-    "report_name": "2026年一季报",
-    "complete": true,
-    "newer_incomplete_report_date": "2026-06-30",
-    "newer_incomplete_report_name": "2026年中报",
-    "status": "ok"
-  },
+  "adjudicated_at": "2026-08-20T08:01:34+08:00",
   "codex_audit": {
     "version": "codex-trading-audit/v1",
     "skill": "bottom-fishing",
@@ -3384,9 +2531,21 @@
           "publisher": "Associated Press",
           "source_kind": "independent_media",
           "origin_id": "ap-us-close",
-          "published_at": "2026-08-19",
-          "published_at_beijing": "2026-08-19 11:05:00+08:00",
-          "phase": "as_of_t"
+          "published_at": "2026-08-20",
+          "published_at_beijing": "2026-08-20 04:00:00+08:00",
+          "phase": "post_t_safety",
+          "timestamp_basis": "AP滚动稿的最终收盘值按美股收盘可观测时点登记；页面未公开精确更新时间。"
+        },
+        {
+          "source_ref": "ts-us-treasury-0819",
+          "access_url": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?field_tdr_date_value=2026&type=daily_treasury_yield_curve",
+          "publisher": "U.S. Department of the Treasury",
+          "source_kind": "official_direct",
+          "origin_id": "us-treasury-daily-yield-curve-20260819",
+          "published_at": "2026-08-20",
+          "published_at_beijing": "2026-08-20 03:30:00+08:00",
+          "phase": "post_t_safety",
+          "timestamp_basis": "美国财政部说明日值采用约15:30美东二级市场报价，对应北京时间次日03:30。"
         },
         {
           "source_ref": "ts-pce-schedule",
@@ -3811,21 +2970,18 @@
           "query_id": "tq-cross-asof-c",
           "domain": "cross_asset_stress",
           "phase": "as_of_t",
-          "query_text": "2026-08-19 latest completed US session Treasury yields equities AP",
+          "query_text": "截至2026-08-19 A股收盘可用的美国股债跨资产信号",
           "date_from": "2026-05-01",
           "date_to": "2026-08-19",
           "executed_at_beijing": "2026-08-20 07:20:00+08:00",
-          "outcome": "selected",
+          "outcome": "no_relevant_hit",
           "reviewed_urls": [
             "https://apnews.com/article/stocks-futures-bonds-oil-inflation-trump-ai-9e355be634e4a21059fc1d1f20a1239e"
           ],
           "selected_warning_ids": [],
           "selected_delta_ids": [],
-          "selected_signal_ids": [
-            "sig-us-close",
-            "sig-us10y"
-          ],
-          "notes": "采用最新完成的美国市场与长债收益率信号。"
+          "selected_signal_ids": [],
+          "notes": "8月19日美国完整交易时段在A股T日收盘后结束，不把收盘结果倒灌为as_of_t信号。"
         },
         {
           "query_id": "tq-holiday-a",
@@ -3872,14 +3028,18 @@
           "outcome": "selected",
           "reviewed_urls": [
             "https://www.federalreserve.gov/monetarypolicy/files/fomcminutes20260729.pdf",
-            "https://apnews.com/article/federal-reserve-rates-inflation-warsh-0030d04832b89b564b743b34ab2cd8de"
+            "https://apnews.com/article/federal-reserve-rates-inflation-warsh-0030d04832b89b564b743b34ab2cd8de",
+            "https://apnews.com/article/stocks-futures-bonds-oil-inflation-trump-ai-9e355be634e4a21059fc1d1f20a1239e",
+            "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?field_tdr_date_value=2026&type=daily_treasury_yield_curve"
           ],
           "selected_warning_ids": [],
           "selected_delta_ids": [
             "delta-fed-minutes-runtime"
           ],
-          "selected_signal_ids": [],
-          "notes": "T后实际纪要独立登记，不倒灌T日裁定。"
+          "selected_signal_ids": [
+            "sig-fed-minutes-actual"
+          ],
+          "notes": "T后实际纪要独立登记，并作为运行时点政策信号进入板块映射；不倒灌T日裁定。"
         },
         {
           "query_id": "tq-sched-post-b",
@@ -3970,18 +3130,22 @@
           "query_id": "tq-cross-post-a",
           "domain": "cross_asset_stress",
           "phase": "post_t_safety",
-          "query_text": "August 17 2026 US close Treasury yield Brent",
+          "query_text": "2026-08-19 US close official Treasury yield Fed minutes market reaction",
           "date_from": "2026-08-20",
           "date_to": "2026-08-20",
           "executed_at_beijing": "2026-08-20 07:20:00+08:00",
-          "outcome": "no_relevant_hit",
+          "outcome": "selected",
           "reviewed_urls": [
-            "https://apnews.com/article/stocks-futures-bonds-oil-inflation-trump-ai-9e355be634e4a21059fc1d1f20a1239e"
+            "https://apnews.com/article/stocks-futures-bonds-oil-inflation-trump-ai-9e355be634e4a21059fc1d1f20a1239e",
+            "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?field_tdr_date_value=2026&type=daily_treasury_yield_curve"
           ],
           "selected_warning_ids": [],
           "selected_delta_ids": [],
-          "selected_signal_ids": [],
-          "notes": "完成截至运行时点的增量检索，除单独登记项目外未见可核验重大新增。"
+          "selected_signal_ids": [
+            "sig-us-close",
+            "sig-us10y"
+          ],
+          "notes": "采用截至运行时点已完成的8月19日美国收盘与财政部官方长债日值；明确归入T后安全增量，不倒灌A股T日裁定。"
         },
         {
           "query_id": "tq-cross-post-b",
@@ -4566,22 +3730,24 @@
           "level": "med",
           "risk_family": "macro_calendar",
           "published_at": "2026-08-20",
-          "why": "T后公布的7月FOMC纪要显示通胀与加息路径分歧，需观察美债与美元实际反应。",
+          "why": "T后公布的7月FOMC纪要显示9比3维持3.50%—3.75%，3名官员倾向加息25个基点；多名官员认为若通胀不回落可能需要收紧。随后完成的8月19日美股收盘中三大指数均约涨0.2%，财政部官方10年期美债日值由4.71%降至4.65%；该反应主要受财政部扩大长债回购与企业盈利支撑，不能简单解释为市场把纪要读成鸽派。",
           "codes": [],
           "source_refs": [
             "ts-fed-minutes-actual",
-            "ts-ap-fed-minutes-runtime"
+            "ts-ap-fed-minutes-runtime",
+            "ts-ap-us-close",
+            "ts-us-treasury-0819"
           ],
           "query_ids": [
             "tq-sched-post-a"
           ],
           "evaluation": {
-            "fact_basis": "T后美联储纪要实际内容已按官方优先与独立来源完成检索，并记录命中和未命中边界。",
-            "consensus": "可靠来源形成方向性基准。",
+            "fact_basis": "官方纪要确认9比3维持3.50%—3.75%，3名官员倾向加息25个基点；独立来源确认多名官员认为若通胀不回落可能需要收紧。",
+            "consensus": "事前仅有定性分歧预期；实际内容呈条件性鹰派，但不是立即加息承诺。",
             "consensus_source_refs": [
               "ts-fed-minutes-actual"
             ],
-            "base_case": "基准情形是T后美联储纪要实际内容通过风险偏好、折现率、需求或成本路径影响A股板块分化。",
+            "base_case": "条件性鹰派纪要提高长久期成长的折现率风险，但8月19日美股收盘与美债官方日值的实际反应偏温和；由于长债回落主要受财政部回购推动，A股高技术成长净影响为有支撑但上行受限。",
             "confidence": "medium",
             "upside_scenario": "若风险缓和且国内量价确认，A股风险偏好可能改善。",
             "downside_scenario": "若风险升级并传导至利率、汇率、需求或成本，A股相关风格可能承压。",
@@ -4657,6 +3823,33 @@
           "summary": "高技术制造形成结构性支撑。"
         },
         {
+          "signal_id": "sig-fed-minutes-actual",
+          "coverage_category": "macro_surprises",
+          "family": "macro_surprise",
+          "phase": "post_t_safety",
+          "observed_at_beijing": "2026-08-20 02:00:00+08:00",
+          "market_session_date": "2026-08-19",
+          "instrument": "美联储2026年7月会议纪要",
+          "direction": "negative",
+          "value_text": "委员会以9比3维持联邦基金利率目标区间3.50%—3.75%，3名官员倾向加息25个基点；多名官员认为若通胀不回落可能需要收紧政策",
+          "benchmark": "事前仅有通胀持续性与政策路径分歧的定性预期",
+          "surprise": "实际内容偏条件性鹰派并重新打开加息风险，但未承诺立即加息",
+          "shock_type": "policy",
+          "horizons": [
+            "opening_auction",
+            "next_1_5_sessions"
+          ],
+          "source_refs": [
+            "ts-fed-minutes-actual",
+            "ts-ap-fed-minutes-runtime"
+          ],
+          "query_ids": [
+            "tq-sched-post-a"
+          ],
+          "freshness": "fresh",
+          "summary": "条件性鹰派纪要对A股长久期成长构成估值压力；随后完成的美股收盘小涨和10年期美债官方日值回落是反向缓冲，但主要驱动包含财政部回购。"
+        },
+        {
           "signal_id": "sig-amat-fundamental",
           "coverage_category": "global_peer_events",
           "family": "global_peer_event",
@@ -4713,14 +3906,14 @@
           "signal_id": "sig-us-close",
           "coverage_category": "us_equity_sectors",
           "family": "overseas_equity_sector",
-          "phase": "as_of_t",
-          "observed_at_beijing": "2026-08-19 11:05:00+08:00",
-          "market_session_date": "2026-08-18",
+          "phase": "post_t_safety",
+          "observed_at_beijing": "2026-08-20 04:00:00+08:00",
+          "market_session_date": "2026-08-19",
           "instrument": "美国主要股指",
           "direction": "positive",
-          "value_text": "标普500、道指和纳指均上涨约0.2%",
-          "benchmark": "前一交易日风险偏好偏弱",
-          "surprise": "宽基小幅修复但科技个股分化",
+          "value_text": "8月19日标普500涨0.2%至7707.98，道指涨0.2%至53463.05，纳指涨0.2%至26331.09",
+          "benchmark": "此前标普连续三个交易日下跌，前一交易日纳指下跌1.3%",
+          "surprise": "纪要发布后的完整交易日宽基小幅修复，但大型科技股仍分化",
           "shock_type": "risk_aversion",
           "horizons": [
             "opening_auction"
@@ -4729,36 +3922,37 @@
             "ts-ap-us-close"
           ],
           "query_ids": [
-            "tq-cross-asof-c"
+            "tq-cross-post-a"
           ],
           "freshness": "fresh",
-          "summary": "海外风险偏好边际修复，但不足以消除行业内部压力"
+          "summary": "截至报告检索截止时点，8月19日美国三大股指收盘均约涨0.2%，海外风险偏好边际修复，但不足以消除科技内部压力。"
         },
         {
           "signal_id": "sig-us10y",
           "coverage_category": "rates_fx_volatility",
           "family": "rates_fx_volatility",
-          "phase": "as_of_t",
-          "observed_at_beijing": "2026-08-19 11:05:00+08:00",
-          "market_session_date": "2026-08-18",
+          "phase": "post_t_safety",
+          "observed_at_beijing": "2026-08-20 03:30:00+08:00",
+          "market_session_date": "2026-08-19",
           "instrument": "美国10年期国债收益率",
           "direction": "positive",
-          "value_text": "美国10年期国债收益率回落至4.64%",
-          "benchmark": "前值4.71%",
-          "surprise": "长端收益率因财政部回购消息回落",
+          "value_text": "美国财政部8月19日10年期国债官方日值为4.65%",
+          "benchmark": "8月18日官方日值4.71%，日降6个基点；盘中媒体报价一度约4.64%",
+          "surprise": "长端收益率主要因财政部扩大长债回购而回落，不能当作纯粹的FOMC鸽派反应",
           "shock_type": "discount_rate",
           "horizons": [
             "opening_auction",
             "intraday_followthrough"
           ],
           "source_refs": [
-            "ts-ap-us-close"
+            "ts-ap-us-close",
+            "ts-us-treasury-0819"
           ],
           "query_ids": [
-            "tq-cross-asof-c"
+            "tq-cross-post-a"
           ],
           "freshness": "fresh",
-          "summary": "折现率压力短线缓和，但长债绝对水平仍高"
+          "summary": "截至报告检索截止时点，10年期美债官方日值为4.65%、较前日低6个基点；折现率压力短线缓和，但绝对水平仍高且主要由财政部回购驱动。"
         },
         {
           "signal_id": "sig-lithium-peer",
@@ -4891,7 +4085,8 @@
         "macro_surprises": {
           "status": "hit",
           "signal_ids": [
-            "sig-cn-demand"
+            "sig-cn-demand",
+            "sig-fed-minutes-actual"
           ],
           "query_ids": [
             "tq-nbs-actual",
@@ -5260,6 +4455,100 @@
           ]
         }
       ],
+      "scheduled_event_reconciliations": [
+        {
+          "event_id": "event-fed-minutes",
+          "status": "released",
+          "checked_at_beijing": "2026-08-20 07:20:00+08:00",
+          "actual_released_at_beijing": "2026-08-20 02:00:00+08:00",
+          "actual_summary": "官方纪要显示委员会以9比3维持联邦基金利率目标区间3.50%—3.75%，3名官员倾向加息25个基点；多名官员认为若通胀不回落可能需要收紧政策。多数官员仍预计随着关税和此前能源冲击消退，通胀会逐步回落，但不少官员认为通胀持续性风险仍高。",
+          "actual_metrics": [],
+          "surprise_assessment": "相对事前仅有的定性分歧预期，实际内容呈条件性鹰派并重新打开加息风险；不是立即加息承诺。纪要后完成的8月19日美股收盘中三大指数均约涨0.2%，10年期美债官方日值由4.71%降至4.65%，但长债回落主要由财政部扩大回购推动，不能解释为纯鸽派反应。",
+          "delta_ids": [
+            "delta-fed-minutes-runtime"
+          ],
+          "signal_ids": [
+            "sig-fed-minutes-actual",
+            "sig-us-close",
+            "sig-us10y"
+          ],
+          "source_refs": [
+            "ts-fed-minutes-actual",
+            "ts-ap-fed-minutes-runtime",
+            "ts-ap-us-close",
+            "ts-us-treasury-0819"
+          ],
+          "query_ids": [
+            "tq-sched-post-a",
+            "tq-cross-post-a"
+          ],
+          "sector_call_ids": [
+            "call-hightech",
+            "call-growth"
+          ],
+          "inference_boundary": "本项仅作shadow影子运行时点评估，与T日股票裁定隔离；T后实际不倒灌T日评分、排序或基础裁定。"
+        },
+        {
+          "event_id": "event-cn-lpr",
+          "status": "pending",
+          "checked_at_beijing": "2026-08-20 07:20:00+08:00",
+          "actual_released_at_beijing": null,
+          "actual_summary": "截至检索完成时点尚未到官方发布时间，保留事前预期并等待正式报价。",
+          "actual_metrics": [],
+          "surprise_assessment": "尚未发布，实际值相对事前预期不适用。",
+          "delta_ids": [],
+          "signal_ids": [],
+          "source_refs": [],
+          "query_ids": [],
+          "sector_call_ids": [],
+          "inference_boundary": "本项仅作shadow影子运行时点评估，与T日股票裁定隔离；T后实际不倒灌T日评分、排序或基础裁定。"
+        },
+        {
+          "event_id": "event-us-gdp",
+          "status": "pending",
+          "checked_at_beijing": "2026-08-20 07:20:00+08:00",
+          "actual_released_at_beijing": null,
+          "actual_summary": "截至检索完成时点尚未到官方发布时间，保留事前预期并等待正式发布。",
+          "actual_metrics": [],
+          "surprise_assessment": "尚未发布，实际值相对事前预期不适用。",
+          "delta_ids": [],
+          "signal_ids": [],
+          "source_refs": [],
+          "query_ids": [],
+          "sector_call_ids": [],
+          "inference_boundary": "本项仅作shadow影子运行时点评估，与T日股票裁定隔离；T后实际不倒灌T日评分、排序或基础裁定。"
+        },
+        {
+          "event_id": "event-jackson-hole",
+          "status": "pending",
+          "checked_at_beijing": "2026-08-20 07:20:00+08:00",
+          "actual_released_at_beijing": null,
+          "actual_summary": "截至检索完成时点会议窗口尚未开始，保留事前预期并等待官方日程和讲话。",
+          "actual_metrics": [],
+          "surprise_assessment": "尚未发布，实际内容相对事前预期不适用。",
+          "delta_ids": [],
+          "signal_ids": [],
+          "source_refs": [],
+          "query_ids": [],
+          "sector_call_ids": [],
+          "inference_boundary": "本项仅作shadow影子运行时点评估，与T日股票裁定隔离；T后实际不倒灌T日评分、排序或基础裁定。"
+        },
+        {
+          "event_id": "event-us-pce",
+          "status": "pending",
+          "checked_at_beijing": "2026-08-20 07:20:00+08:00",
+          "actual_released_at_beijing": null,
+          "actual_summary": "截至检索完成时点尚未到官方发布时间，保留事前预期并等待正式发布。",
+          "actual_metrics": [],
+          "surprise_assessment": "尚未发布，实际值相对事前预期不适用。",
+          "delta_ids": [],
+          "signal_ids": [],
+          "source_refs": [],
+          "query_ids": [],
+          "sector_call_ids": [],
+          "inference_boundary": "本项仅作shadow影子运行时点评估，与T日股票裁定隔离；T后实际不倒灌T日评分、排序或基础裁定。"
+        }
+      ],
       "runtime_evaluation": {
         "scheduled_macro_policy": {
           "status": "hit",
@@ -5297,7 +4586,8 @@
           ],
           "signal_ids": [
             "sig-cn-demand",
-            "sig-cn-hightech"
+            "sig-cn-hightech",
+            "sig-fed-minutes-actual"
           ],
           "source_refs": [
             "ts-fed-calendar",
@@ -5312,6 +4602,8 @@
             "ts-kip-pce",
             "ts-fed-minutes-actual",
             "ts-ap-fed-minutes-runtime",
+            "ts-ap-us-close",
+            "ts-us-treasury-0819",
             "ts-nbs-july"
           ],
           "evaluation": {
@@ -5432,7 +4724,7 @@
         "cross_asset_stress": {
           "status": "hit",
           "evaluated_at_beijing": "2026-08-20 07:20:00+08:00",
-          "latest_source_published_at": "2026-08-19",
+          "latest_source_published_at": "2026-08-20",
           "query_ids": [
             "tq-amat-asof",
             "tq-cross-asof-b",
@@ -5453,7 +4745,8 @@
           "source_refs": [
             "ts-amat-q3",
             "ts-igo-q4",
-            "ts-ap-us-close"
+            "ts-ap-us-close",
+            "ts-us-treasury-0819"
           ],
           "evaluation": {
             "fact_basis": "cross_asset_stress已按官方优先与独立来源完成检索，并记录命中和未命中边界。",
@@ -5546,18 +4839,29 @@
           "ts-ap-hormuz-current",
           "ts-amat-q3",
           "ts-igo-q4",
-          "ts-ap-us-close"
+          "ts-ap-us-close",
+          "ts-us-treasury-0819"
         ],
         "domain_impacts": {
           "scheduled_macro_policy": {
             "direction": "mixed",
-            "mechanism": "国内需求偏弱而高技术制造偏强，A股顺周期与成长制造预计分化。",
+            "mechanism": "国内需求偏弱而高技术制造偏强；已发布的FOMC纪要呈条件性鹰派，对A股长久期成长形成估值约束，但8月19日美股收盘小涨、10年期美债官方日值回落提供缓冲，且后者主要受财政部回购推动。",
             "sector_disposition": "linked",
             "sector_call_ids": [
               "call-consumer",
               "call-hightech"
             ],
-            "sector_reason": "国内实际数据与未来排期共同约束板块方向。"
+            "sector_reason": "国内实际数据、未来排期与FOMC实际纪要已共同进入板块方向判断。",
+            "considered_warning_ids": [
+              "tw-fed-minutes",
+              "tw-lpr",
+              "tw-us-gdp",
+              "tw-jackson-hole",
+              "tw-us-pce"
+            ],
+            "considered_delta_ids": [
+              "delta-fed-minutes-runtime"
+            ]
           },
           "domestic_regulatory_liquidity": {
             "direction": "mixed",
@@ -5566,7 +4870,9 @@
             "sector_call_ids": [
               "call-solar"
             ],
-            "sector_reason": "行业政策信号已下沉至光伏设备。"
+            "sector_reason": "行业政策信号已下沉至光伏设备。",
+            "considered_warning_ids": [],
+            "considered_delta_ids": []
           },
           "external_geopolitics_trade": {
             "direction": "negative",
@@ -5576,7 +4882,11 @@
               "call-oil",
               "call-cost"
             ],
-            "sector_reason": "同一供应冲击对上游与成本链方向相反。"
+            "sector_reason": "同一供应冲击对上游与成本链方向相反。",
+            "considered_warning_ids": [
+              "tw-hormuz"
+            ],
+            "considered_delta_ids": []
           },
           "cross_asset_stress": {
             "direction": "mixed",
@@ -5587,19 +4897,23 @@
               "call-growth",
               "call-lithium"
             ],
-            "sector_reason": "折现率和同业经营信号已下沉至成长、高技术与能源金属。"
+            "sector_reason": "折现率和同业经营信号已下沉至成长、高技术与能源金属。",
+            "considered_warning_ids": [],
+            "considered_delta_ids": []
           },
           "holiday_information_gap": {
             "direction": "neutral",
             "mechanism": "未见主要交易所长假信息累积，A股无需额外计提休市缺口。",
             "sector_disposition": "not_applicable",
             "sector_call_ids": [],
-            "sector_reason": "交易日历未触发板块映射。"
+            "sector_reason": "交易日历未触发板块映射。",
+            "considered_warning_ids": [],
+            "considered_delta_ids": []
           }
         },
         "opening_auction": {
           "bias": "mixed",
-          "path": "A股竞价更可能分化，成长与能源金属有修复支撑，光伏设备和成本敏感链偏谨慎。",
+          "path": "A股竞价更可能分化，成长与能源金属有修复支撑，但FOMC条件性鹰派内容限制高估值成长上行，光伏设备和成本敏感链偏谨慎。",
           "confidence": "medium"
         },
         "intraday_followthrough": {
@@ -5618,11 +4932,11 @@
           "confidence": "low"
         },
         "index_style_implications": [
-          "成长风格受利率回落边际支撑但仍受高估值约束",
+          "成长风格受利率回落边际支撑，但FOMC纪要的条件性鹰派内容强化高估值约束",
           "顺周期受内需偏弱压制，资源品因供应风险相对占优"
         ],
         "sector_beneficiaries": [
-          "高技术制造、半导体设备与工业自动化（国内高技术投资保持结构韧性；海外同业业绩与折现率边际改善）",
+          "高技术制造、半导体设备与工业自动化（国内高技术投资保持结构韧性；海外同业业绩与折现率边际改善；FOMC实际纪要呈条件性鹰派，构成反向估值约束）",
           "油气开采与油服（海峡通航风险未解除；能源供应溢价仍有支撑）",
           "高估值成长（海外宽基小幅修复；美国长端收益率边际回落）",
           "能源金属（海外联营经营改善；锂资源龙头盈利修复存在交叉支持）"
@@ -5707,7 +5021,8 @@
             "horizon": "opening_auction",
             "reasons": [
               "国内高技术投资保持结构韧性",
-              "海外同业业绩与折现率边际改善"
+              "海外同业业绩与折现率边际改善",
+              "FOMC实际纪要呈条件性鹰派，构成反向估值约束"
             ],
             "driver_signal_ids": [
               "sig-cn-hightech",
@@ -5715,18 +5030,21 @@
               "sig-us-close",
               "sig-us10y"
             ],
-            "opposing_signal_ids": [],
+            "opposing_signal_ids": [
+              "sig-fed-minutes-actual"
+            ],
             "considered_signal_ids": [
               "sig-cn-hightech",
               "sig-amat-fundamental",
               "sig-us-close",
-              "sig-us10y"
+              "sig-us10y",
+              "sig-fed-minutes-actual"
             ],
             "considered_domain_ids": [
               "scheduled_macro_policy",
               "cross_asset_stress"
             ],
-            "dominant_driver": "国内高技术投资保持结构韧性",
+            "dominant_driver": "国内高技术投资与海外同业业绩仍是主要支撑，FOMC条件性鹰派实际内容限制估值扩张",
             "confidence": "medium",
             "invalidators": [
               "开盘后行业量价显著反向",
@@ -5735,7 +5053,10 @@
             "source_refs": [
               "ts-nbs-july",
               "ts-amat-q3",
-              "ts-ap-us-close"
+              "ts-ap-us-close",
+              "ts-us-treasury-0819",
+              "ts-fed-minutes-actual",
+              "ts-ap-fed-minutes-runtime"
             ],
             "candidate_codes": [],
             "shadow": true
@@ -5859,7 +5180,8 @@
               "相关官方信息出现方向性修订"
             ],
             "source_refs": [
-              "ts-ap-us-close"
+              "ts-ap-us-close",
+              "ts-us-treasury-0819"
             ],
             "candidate_codes": [],
             "shadow": true
@@ -5973,6 +5295,15 @@
             "reason": "该新鲜信号直接进入所列板块映射。"
           },
           {
+            "signal_id": "sig-fed-minutes-actual",
+            "disposition": "direct_opposing",
+            "sector_call_ids": [
+              "call-hightech"
+            ],
+            "mediated_by_signal_ids": [],
+            "reason": "FOMC条件性鹰派实际内容作为高技术与长久期成长估值的反向约束进入板块映射。"
+          },
+          {
             "signal_id": "sig-amat-fundamental",
             "disposition": "direct_driver",
             "sector_call_ids": [
@@ -6030,10 +5361,109 @@
             "reason": "该新鲜信号直接进入所列板块映射。"
           }
         ],
+        "risk_item_disposition_ledger": [
+          {
+            "item_id": "tw-fed-minutes",
+            "item_kind": "warning",
+            "domain_ids": [
+              "scheduled_macro_policy"
+            ],
+            "disposition": "linked",
+            "sector_call_ids": [
+              "call-hightech"
+            ],
+            "reason": "事前政策分歧风险与发布后的条件性鹰派实际内容共同约束高技术成长估值。"
+          },
+          {
+            "item_id": "tw-lpr",
+            "item_kind": "warning",
+            "domain_ids": [
+              "scheduled_macro_policy"
+            ],
+            "disposition": "neutral",
+            "sector_call_ids": [],
+            "reason": "检索时点尚未到LPR发布时间，仅保留为开盘后核对条件，不提前制造方向性板块结论。"
+          },
+          {
+            "item_id": "tw-us-gdp",
+            "item_kind": "warning",
+            "domain_ids": [
+              "scheduled_macro_policy"
+            ],
+            "disposition": "neutral",
+            "sector_call_ids": [],
+            "reason": "事件尚未发布且没有可复核的数值修订共识，本次窗口不提前映射为板块方向。"
+          },
+          {
+            "item_id": "tw-jackson-hole",
+            "item_kind": "warning",
+            "domain_ids": [
+              "scheduled_macro_policy"
+            ],
+            "disposition": "neutral",
+            "sector_call_ids": [],
+            "reason": "会议窗口尚未开始，政策沟通方向不确定，当前只保留观察条件而不提前下沉板块。"
+          },
+          {
+            "item_id": "tw-hormuz",
+            "item_kind": "warning",
+            "domain_ids": [
+              "external_geopolitics_trade"
+            ],
+            "disposition": "linked",
+            "sector_call_ids": [
+              "call-oil",
+              "call-cost"
+            ],
+            "reason": "海峡通航风险已分别映射为油气上游受益和航空、化工、物流成本链承压。"
+          },
+          {
+            "item_id": "tw-us-pce",
+            "item_kind": "warning",
+            "domain_ids": [
+              "scheduled_macro_policy"
+            ],
+            "disposition": "neutral",
+            "sector_call_ids": [],
+            "reason": "PCE尚未发布且缺少口径完整的数值共识，本次只保留未来折现率观察条件。"
+          },
+          {
+            "item_id": "delta-fed-minutes-runtime",
+            "item_kind": "post_t_delta",
+            "domain_ids": [
+              "scheduled_macro_policy"
+            ],
+            "disposition": "linked",
+            "sector_call_ids": [
+              "call-hightech"
+            ],
+            "reason": "纪要实际内容呈条件性鹰派，已作为高技术与长久期成长板块调用的反向信号。"
+          }
+        ],
         "unmapped_signal_ids": [],
+        "unmapped_risk_item_ids": [],
         "unmapped_domain_ids": []
       },
       "clear_reason": ""
     }
+  },
+  "etf_holdings_meta": {
+    "version": "bottom-etf-holdings/v1",
+    "generated_at": "2026-08-20T07:29:48+08:00",
+    "used_in_recommendation": false,
+    "similarity_metric": "截至T最近60个共同交易日的前复权日对数收益 Pearson 相关系数（降序）",
+    "similarity_tie_break": "归一化收盘路径RMSE（升序）",
+    "similarity_max_etfs_by_holding_weight": 80,
+    "html_top": 5,
+    "disclosure_note": "基金定期披露≠实时仓位；一/三季报通常非全部持仓，披露中报告可能不完整",
+    "online_refresh": true,
+    "recovery_policy": "复用同一T、同一运行已于07:29完成的在线验证快照；本次仅重做裁定映射与HTML，不冒充08:01重新联网",
+    "report_date": "2026-03-31",
+    "report_name": "2026年一季报",
+    "complete": true,
+    "newer_incomplete_report_date": "2026-06-30",
+    "newer_incomplete_report_name": "2026年中报",
+    "status": "ok",
+    "reused_verified_snapshot_at": "2026-08-20T07:29:48+08:00"
   }
 }

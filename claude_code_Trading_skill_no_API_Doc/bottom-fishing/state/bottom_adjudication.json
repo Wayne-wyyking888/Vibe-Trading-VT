@@ -46,7 +46,7 @@
     {
       "warning_id": "delta-fed-minutes-runtime",
       "level": "med",
-      "text": "T后影子shadow增量：T后公布的7月FOMC纪要显示通胀与加息路径分歧，需观察美债与美元实际反应。",
+      "text": "T后影子shadow增量：7月FOMC纪要显示9比3维持3.50%—3.75%，3名官员倾向加息25个基点；多名官员认为若通胀不回落可能需要收紧。随后完成的8月19日美股收盘中三大指数均约涨0.2%，财政部官方10年期美债日值由4.71%降至4.65%，说明条件性鹰派压力被财政部回购与盈利消息部分抵消。",
       "shadow": true,
       "post_t": true
     }
@@ -1484,9 +1484,21 @@
           "publisher": "Associated Press",
           "source_kind": "independent_media",
           "origin_id": "ap-us-close",
-          "published_at": "2026-08-19",
-          "published_at_beijing": "2026-08-19 11:05:00+08:00",
-          "phase": "as_of_t"
+          "published_at": "2026-08-20",
+          "published_at_beijing": "2026-08-20 04:00:00+08:00",
+          "phase": "post_t_safety",
+          "timestamp_basis": "AP滚动稿的最终收盘值按美股收盘可观测时点登记；页面未公开精确更新时间。"
+        },
+        {
+          "source_ref": "ts-us-treasury-0819",
+          "access_url": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?field_tdr_date_value=2026&type=daily_treasury_yield_curve",
+          "publisher": "U.S. Department of the Treasury",
+          "source_kind": "official_direct",
+          "origin_id": "us-treasury-daily-yield-curve-20260819",
+          "published_at": "2026-08-20",
+          "published_at_beijing": "2026-08-20 03:30:00+08:00",
+          "phase": "post_t_safety",
+          "timestamp_basis": "美国财政部说明日值采用约15:30美东二级市场报价，对应北京时间次日03:30。"
         },
         {
           "source_ref": "ts-pce-schedule",
@@ -1911,21 +1923,18 @@
           "query_id": "tq-cross-asof-c",
           "domain": "cross_asset_stress",
           "phase": "as_of_t",
-          "query_text": "2026-08-19 latest completed US session Treasury yields equities AP",
+          "query_text": "截至2026-08-19 A股收盘可用的美国股债跨资产信号",
           "date_from": "2026-05-01",
           "date_to": "2026-08-19",
           "executed_at_beijing": "2026-08-20 07:20:00+08:00",
-          "outcome": "selected",
+          "outcome": "no_relevant_hit",
           "reviewed_urls": [
             "https://apnews.com/article/stocks-futures-bonds-oil-inflation-trump-ai-9e355be634e4a21059fc1d1f20a1239e"
           ],
           "selected_warning_ids": [],
           "selected_delta_ids": [],
-          "selected_signal_ids": [
-            "sig-us-close",
-            "sig-us10y"
-          ],
-          "notes": "采用最新完成的美国市场与长债收益率信号。"
+          "selected_signal_ids": [],
+          "notes": "8月19日美国完整交易时段在A股T日收盘后结束，不把收盘结果倒灌为as_of_t信号。"
         },
         {
           "query_id": "tq-holiday-a",
@@ -1972,14 +1981,18 @@
           "outcome": "selected",
           "reviewed_urls": [
             "https://www.federalreserve.gov/monetarypolicy/files/fomcminutes20260729.pdf",
-            "https://apnews.com/article/federal-reserve-rates-inflation-warsh-0030d04832b89b564b743b34ab2cd8de"
+            "https://apnews.com/article/federal-reserve-rates-inflation-warsh-0030d04832b89b564b743b34ab2cd8de",
+            "https://apnews.com/article/stocks-futures-bonds-oil-inflation-trump-ai-9e355be634e4a21059fc1d1f20a1239e",
+            "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?field_tdr_date_value=2026&type=daily_treasury_yield_curve"
           ],
           "selected_warning_ids": [],
           "selected_delta_ids": [
             "delta-fed-minutes-runtime"
           ],
-          "selected_signal_ids": [],
-          "notes": "T后实际纪要独立登记，不倒灌T日裁定。"
+          "selected_signal_ids": [
+            "sig-fed-minutes-actual"
+          ],
+          "notes": "T后实际纪要独立登记，并作为运行时点政策信号进入板块映射；不倒灌T日裁定。"
         },
         {
           "query_id": "tq-sched-post-b",
@@ -2070,18 +2083,22 @@
           "query_id": "tq-cross-post-a",
           "domain": "cross_asset_stress",
           "phase": "post_t_safety",
-          "query_text": "August 17 2026 US close Treasury yield Brent",
+          "query_text": "2026-08-19 US close official Treasury yield Fed minutes market reaction",
           "date_from": "2026-08-20",
           "date_to": "2026-08-20",
           "executed_at_beijing": "2026-08-20 07:20:00+08:00",
-          "outcome": "no_relevant_hit",
+          "outcome": "selected",
           "reviewed_urls": [
-            "https://apnews.com/article/stocks-futures-bonds-oil-inflation-trump-ai-9e355be634e4a21059fc1d1f20a1239e"
+            "https://apnews.com/article/stocks-futures-bonds-oil-inflation-trump-ai-9e355be634e4a21059fc1d1f20a1239e",
+            "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?field_tdr_date_value=2026&type=daily_treasury_yield_curve"
           ],
           "selected_warning_ids": [],
           "selected_delta_ids": [],
-          "selected_signal_ids": [],
-          "notes": "完成截至运行时点的增量检索，除单独登记项目外未见可核验重大新增。"
+          "selected_signal_ids": [
+            "sig-us-close",
+            "sig-us10y"
+          ],
+          "notes": "采用截至运行时点已完成的8月19日美国收盘与财政部官方长债日值；明确归入T后安全增量，不倒灌A股T日裁定。"
         },
         {
           "query_id": "tq-cross-post-b",
@@ -2666,22 +2683,24 @@
           "level": "med",
           "risk_family": "macro_calendar",
           "published_at": "2026-08-20",
-          "why": "T后公布的7月FOMC纪要显示通胀与加息路径分歧，需观察美债与美元实际反应。",
+          "why": "T后公布的7月FOMC纪要显示9比3维持3.50%—3.75%，3名官员倾向加息25个基点；多名官员认为若通胀不回落可能需要收紧。随后完成的8月19日美股收盘中三大指数均约涨0.2%，财政部官方10年期美债日值由4.71%降至4.65%；该反应主要受财政部扩大长债回购与企业盈利支撑，不能简单解释为市场把纪要读成鸽派。",
           "codes": [],
           "source_refs": [
             "ts-fed-minutes-actual",
-            "ts-ap-fed-minutes-runtime"
+            "ts-ap-fed-minutes-runtime",
+            "ts-ap-us-close",
+            "ts-us-treasury-0819"
           ],
           "query_ids": [
             "tq-sched-post-a"
           ],
           "evaluation": {
-            "fact_basis": "T后美联储纪要实际内容已按官方优先与独立来源完成检索，并记录命中和未命中边界。",
-            "consensus": "可靠来源形成方向性基准。",
+            "fact_basis": "官方纪要确认9比3维持3.50%—3.75%，3名官员倾向加息25个基点；独立来源确认多名官员认为若通胀不回落可能需要收紧。",
+            "consensus": "事前仅有定性分歧预期；实际内容呈条件性鹰派，但不是立即加息承诺。",
             "consensus_source_refs": [
               "ts-fed-minutes-actual"
             ],
-            "base_case": "基准情形是T后美联储纪要实际内容通过风险偏好、折现率、需求或成本路径影响A股板块分化。",
+            "base_case": "条件性鹰派纪要提高长久期成长的折现率风险，但8月19日美股收盘与美债官方日值的实际反应偏温和；由于长债回落主要受财政部回购推动，A股高技术成长净影响为有支撑但上行受限。",
             "confidence": "medium",
             "upside_scenario": "若风险缓和且国内量价确认，A股风险偏好可能改善。",
             "downside_scenario": "若风险升级并传导至利率、汇率、需求或成本，A股相关风格可能承压。",
@@ -2757,6 +2776,33 @@
           "summary": "高技术制造形成结构性支撑。"
         },
         {
+          "signal_id": "sig-fed-minutes-actual",
+          "coverage_category": "macro_surprises",
+          "family": "macro_surprise",
+          "phase": "post_t_safety",
+          "observed_at_beijing": "2026-08-20 02:00:00+08:00",
+          "market_session_date": "2026-08-19",
+          "instrument": "美联储2026年7月会议纪要",
+          "direction": "negative",
+          "value_text": "委员会以9比3维持联邦基金利率目标区间3.50%—3.75%，3名官员倾向加息25个基点；多名官员认为若通胀不回落可能需要收紧政策",
+          "benchmark": "事前仅有通胀持续性与政策路径分歧的定性预期",
+          "surprise": "实际内容偏条件性鹰派并重新打开加息风险，但未承诺立即加息",
+          "shock_type": "policy",
+          "horizons": [
+            "opening_auction",
+            "next_1_5_sessions"
+          ],
+          "source_refs": [
+            "ts-fed-minutes-actual",
+            "ts-ap-fed-minutes-runtime"
+          ],
+          "query_ids": [
+            "tq-sched-post-a"
+          ],
+          "freshness": "fresh",
+          "summary": "条件性鹰派纪要对A股长久期成长构成估值压力；随后完成的美股收盘小涨和10年期美债官方日值回落是反向缓冲，但主要驱动包含财政部回购。"
+        },
+        {
           "signal_id": "sig-amat-fundamental",
           "coverage_category": "global_peer_events",
           "family": "global_peer_event",
@@ -2813,14 +2859,14 @@
           "signal_id": "sig-us-close",
           "coverage_category": "us_equity_sectors",
           "family": "overseas_equity_sector",
-          "phase": "as_of_t",
-          "observed_at_beijing": "2026-08-19 11:05:00+08:00",
-          "market_session_date": "2026-08-18",
+          "phase": "post_t_safety",
+          "observed_at_beijing": "2026-08-20 04:00:00+08:00",
+          "market_session_date": "2026-08-19",
           "instrument": "美国主要股指",
           "direction": "positive",
-          "value_text": "标普500、道指和纳指均上涨约0.2%",
-          "benchmark": "前一交易日风险偏好偏弱",
-          "surprise": "宽基小幅修复但科技个股分化",
+          "value_text": "8月19日标普500涨0.2%至7707.98，道指涨0.2%至53463.05，纳指涨0.2%至26331.09",
+          "benchmark": "此前标普连续三个交易日下跌，前一交易日纳指下跌1.3%",
+          "surprise": "纪要发布后的完整交易日宽基小幅修复，但大型科技股仍分化",
           "shock_type": "risk_aversion",
           "horizons": [
             "opening_auction"
@@ -2829,36 +2875,37 @@
             "ts-ap-us-close"
           ],
           "query_ids": [
-            "tq-cross-asof-c"
+            "tq-cross-post-a"
           ],
           "freshness": "fresh",
-          "summary": "海外风险偏好边际修复，但不足以消除行业内部压力"
+          "summary": "截至报告检索截止时点，8月19日美国三大股指收盘均约涨0.2%，海外风险偏好边际修复，但不足以消除科技内部压力。"
         },
         {
           "signal_id": "sig-us10y",
           "coverage_category": "rates_fx_volatility",
           "family": "rates_fx_volatility",
-          "phase": "as_of_t",
-          "observed_at_beijing": "2026-08-19 11:05:00+08:00",
-          "market_session_date": "2026-08-18",
+          "phase": "post_t_safety",
+          "observed_at_beijing": "2026-08-20 03:30:00+08:00",
+          "market_session_date": "2026-08-19",
           "instrument": "美国10年期国债收益率",
           "direction": "positive",
-          "value_text": "美国10年期国债收益率回落至4.64%",
-          "benchmark": "前值4.71%",
-          "surprise": "长端收益率因财政部回购消息回落",
+          "value_text": "美国财政部8月19日10年期国债官方日值为4.65%",
+          "benchmark": "8月18日官方日值4.71%，日降6个基点；盘中媒体报价一度约4.64%",
+          "surprise": "长端收益率主要因财政部扩大长债回购而回落，不能当作纯粹的FOMC鸽派反应",
           "shock_type": "discount_rate",
           "horizons": [
             "opening_auction",
             "intraday_followthrough"
           ],
           "source_refs": [
-            "ts-ap-us-close"
+            "ts-ap-us-close",
+            "ts-us-treasury-0819"
           ],
           "query_ids": [
-            "tq-cross-asof-c"
+            "tq-cross-post-a"
           ],
           "freshness": "fresh",
-          "summary": "折现率压力短线缓和，但长债绝对水平仍高"
+          "summary": "截至报告检索截止时点，10年期美债官方日值为4.65%、较前日低6个基点；折现率压力短线缓和，但绝对水平仍高且主要由财政部回购驱动。"
         },
         {
           "signal_id": "sig-lithium-peer",
@@ -2991,7 +3038,8 @@
         "macro_surprises": {
           "status": "hit",
           "signal_ids": [
-            "sig-cn-demand"
+            "sig-cn-demand",
+            "sig-fed-minutes-actual"
           ],
           "query_ids": [
             "tq-nbs-actual",
@@ -3360,6 +3408,100 @@
           ]
         }
       ],
+      "scheduled_event_reconciliations": [
+        {
+          "event_id": "event-fed-minutes",
+          "status": "released",
+          "checked_at_beijing": "2026-08-20 07:20:00+08:00",
+          "actual_released_at_beijing": "2026-08-20 02:00:00+08:00",
+          "actual_summary": "官方纪要显示委员会以9比3维持联邦基金利率目标区间3.50%—3.75%，3名官员倾向加息25个基点；多名官员认为若通胀不回落可能需要收紧政策。多数官员仍预计随着关税和此前能源冲击消退，通胀会逐步回落，但不少官员认为通胀持续性风险仍高。",
+          "actual_metrics": [],
+          "surprise_assessment": "相对事前仅有的定性分歧预期，实际内容呈条件性鹰派并重新打开加息风险；不是立即加息承诺。纪要后完成的8月19日美股收盘中三大指数均约涨0.2%，10年期美债官方日值由4.71%降至4.65%，但长债回落主要由财政部扩大回购推动，不能解释为纯鸽派反应。",
+          "delta_ids": [
+            "delta-fed-minutes-runtime"
+          ],
+          "signal_ids": [
+            "sig-fed-minutes-actual",
+            "sig-us-close",
+            "sig-us10y"
+          ],
+          "source_refs": [
+            "ts-fed-minutes-actual",
+            "ts-ap-fed-minutes-runtime",
+            "ts-ap-us-close",
+            "ts-us-treasury-0819"
+          ],
+          "query_ids": [
+            "tq-sched-post-a",
+            "tq-cross-post-a"
+          ],
+          "sector_call_ids": [
+            "call-hightech",
+            "call-growth"
+          ],
+          "inference_boundary": "本项仅作shadow影子运行时点评估，与T日股票裁定隔离；T后实际不倒灌T日评分、排序或基础裁定。"
+        },
+        {
+          "event_id": "event-cn-lpr",
+          "status": "pending",
+          "checked_at_beijing": "2026-08-20 07:20:00+08:00",
+          "actual_released_at_beijing": null,
+          "actual_summary": "截至检索完成时点尚未到官方发布时间，保留事前预期并等待正式报价。",
+          "actual_metrics": [],
+          "surprise_assessment": "尚未发布，实际值相对事前预期不适用。",
+          "delta_ids": [],
+          "signal_ids": [],
+          "source_refs": [],
+          "query_ids": [],
+          "sector_call_ids": [],
+          "inference_boundary": "本项仅作shadow影子运行时点评估，与T日股票裁定隔离；T后实际不倒灌T日评分、排序或基础裁定。"
+        },
+        {
+          "event_id": "event-us-gdp",
+          "status": "pending",
+          "checked_at_beijing": "2026-08-20 07:20:00+08:00",
+          "actual_released_at_beijing": null,
+          "actual_summary": "截至检索完成时点尚未到官方发布时间，保留事前预期并等待正式发布。",
+          "actual_metrics": [],
+          "surprise_assessment": "尚未发布，实际值相对事前预期不适用。",
+          "delta_ids": [],
+          "signal_ids": [],
+          "source_refs": [],
+          "query_ids": [],
+          "sector_call_ids": [],
+          "inference_boundary": "本项仅作shadow影子运行时点评估，与T日股票裁定隔离；T后实际不倒灌T日评分、排序或基础裁定。"
+        },
+        {
+          "event_id": "event-jackson-hole",
+          "status": "pending",
+          "checked_at_beijing": "2026-08-20 07:20:00+08:00",
+          "actual_released_at_beijing": null,
+          "actual_summary": "截至检索完成时点会议窗口尚未开始，保留事前预期并等待官方日程和讲话。",
+          "actual_metrics": [],
+          "surprise_assessment": "尚未发布，实际内容相对事前预期不适用。",
+          "delta_ids": [],
+          "signal_ids": [],
+          "source_refs": [],
+          "query_ids": [],
+          "sector_call_ids": [],
+          "inference_boundary": "本项仅作shadow影子运行时点评估，与T日股票裁定隔离；T后实际不倒灌T日评分、排序或基础裁定。"
+        },
+        {
+          "event_id": "event-us-pce",
+          "status": "pending",
+          "checked_at_beijing": "2026-08-20 07:20:00+08:00",
+          "actual_released_at_beijing": null,
+          "actual_summary": "截至检索完成时点尚未到官方发布时间，保留事前预期并等待正式发布。",
+          "actual_metrics": [],
+          "surprise_assessment": "尚未发布，实际值相对事前预期不适用。",
+          "delta_ids": [],
+          "signal_ids": [],
+          "source_refs": [],
+          "query_ids": [],
+          "sector_call_ids": [],
+          "inference_boundary": "本项仅作shadow影子运行时点评估，与T日股票裁定隔离；T后实际不倒灌T日评分、排序或基础裁定。"
+        }
+      ],
       "runtime_evaluation": {
         "scheduled_macro_policy": {
           "status": "hit",
@@ -3397,7 +3539,8 @@
           ],
           "signal_ids": [
             "sig-cn-demand",
-            "sig-cn-hightech"
+            "sig-cn-hightech",
+            "sig-fed-minutes-actual"
           ],
           "source_refs": [
             "ts-fed-calendar",
@@ -3412,6 +3555,8 @@
             "ts-kip-pce",
             "ts-fed-minutes-actual",
             "ts-ap-fed-minutes-runtime",
+            "ts-ap-us-close",
+            "ts-us-treasury-0819",
             "ts-nbs-july"
           ],
           "evaluation": {
@@ -3532,7 +3677,7 @@
         "cross_asset_stress": {
           "status": "hit",
           "evaluated_at_beijing": "2026-08-20 07:20:00+08:00",
-          "latest_source_published_at": "2026-08-19",
+          "latest_source_published_at": "2026-08-20",
           "query_ids": [
             "tq-amat-asof",
             "tq-cross-asof-b",
@@ -3553,7 +3698,8 @@
           "source_refs": [
             "ts-amat-q3",
             "ts-igo-q4",
-            "ts-ap-us-close"
+            "ts-ap-us-close",
+            "ts-us-treasury-0819"
           ],
           "evaluation": {
             "fact_basis": "cross_asset_stress已按官方优先与独立来源完成检索，并记录命中和未命中边界。",
@@ -3646,18 +3792,29 @@
           "ts-ap-hormuz-current",
           "ts-amat-q3",
           "ts-igo-q4",
-          "ts-ap-us-close"
+          "ts-ap-us-close",
+          "ts-us-treasury-0819"
         ],
         "domain_impacts": {
           "scheduled_macro_policy": {
             "direction": "mixed",
-            "mechanism": "国内需求偏弱而高技术制造偏强，A股顺周期与成长制造预计分化。",
+            "mechanism": "国内需求偏弱而高技术制造偏强；已发布的FOMC纪要呈条件性鹰派，对A股长久期成长形成估值约束，但8月19日美股收盘小涨、10年期美债官方日值回落提供缓冲，且后者主要受财政部回购推动。",
             "sector_disposition": "linked",
             "sector_call_ids": [
               "call-consumer",
               "call-hightech"
             ],
-            "sector_reason": "国内实际数据与未来排期共同约束板块方向。"
+            "sector_reason": "国内实际数据、未来排期与FOMC实际纪要已共同进入板块方向判断。",
+            "considered_warning_ids": [
+              "tw-fed-minutes",
+              "tw-lpr",
+              "tw-us-gdp",
+              "tw-jackson-hole",
+              "tw-us-pce"
+            ],
+            "considered_delta_ids": [
+              "delta-fed-minutes-runtime"
+            ]
           },
           "domestic_regulatory_liquidity": {
             "direction": "mixed",
@@ -3666,7 +3823,9 @@
             "sector_call_ids": [
               "call-solar"
             ],
-            "sector_reason": "行业政策信号已下沉至光伏设备。"
+            "sector_reason": "行业政策信号已下沉至光伏设备。",
+            "considered_warning_ids": [],
+            "considered_delta_ids": []
           },
           "external_geopolitics_trade": {
             "direction": "negative",
@@ -3676,7 +3835,11 @@
               "call-oil",
               "call-cost"
             ],
-            "sector_reason": "同一供应冲击对上游与成本链方向相反。"
+            "sector_reason": "同一供应冲击对上游与成本链方向相反。",
+            "considered_warning_ids": [
+              "tw-hormuz"
+            ],
+            "considered_delta_ids": []
           },
           "cross_asset_stress": {
             "direction": "mixed",
@@ -3687,19 +3850,23 @@
               "call-growth",
               "call-lithium"
             ],
-            "sector_reason": "折现率和同业经营信号已下沉至成长、高技术与能源金属。"
+            "sector_reason": "折现率和同业经营信号已下沉至成长、高技术与能源金属。",
+            "considered_warning_ids": [],
+            "considered_delta_ids": []
           },
           "holiday_information_gap": {
             "direction": "neutral",
             "mechanism": "未见主要交易所长假信息累积，A股无需额外计提休市缺口。",
             "sector_disposition": "not_applicable",
             "sector_call_ids": [],
-            "sector_reason": "交易日历未触发板块映射。"
+            "sector_reason": "交易日历未触发板块映射。",
+            "considered_warning_ids": [],
+            "considered_delta_ids": []
           }
         },
         "opening_auction": {
           "bias": "mixed",
-          "path": "A股竞价更可能分化，成长与能源金属有修复支撑，光伏设备和成本敏感链偏谨慎。",
+          "path": "A股竞价更可能分化，成长与能源金属有修复支撑，但FOMC条件性鹰派内容限制高估值成长上行，光伏设备和成本敏感链偏谨慎。",
           "confidence": "medium"
         },
         "intraday_followthrough": {
@@ -3718,11 +3885,11 @@
           "confidence": "low"
         },
         "index_style_implications": [
-          "成长风格受利率回落边际支撑但仍受高估值约束",
+          "成长风格受利率回落边际支撑，但FOMC纪要的条件性鹰派内容强化高估值约束",
           "顺周期受内需偏弱压制，资源品因供应风险相对占优"
         ],
         "sector_beneficiaries": [
-          "高技术制造、半导体设备与工业自动化（国内高技术投资保持结构韧性；海外同业业绩与折现率边际改善）",
+          "高技术制造、半导体设备与工业自动化（国内高技术投资保持结构韧性；海外同业业绩与折现率边际改善；FOMC实际纪要呈条件性鹰派，构成反向估值约束）",
           "油气开采与油服（海峡通航风险未解除；能源供应溢价仍有支撑）",
           "高估值成长（海外宽基小幅修复；美国长端收益率边际回落）",
           "能源金属（海外联营经营改善；锂资源龙头盈利修复存在交叉支持）"
@@ -3807,7 +3974,8 @@
             "horizon": "opening_auction",
             "reasons": [
               "国内高技术投资保持结构韧性",
-              "海外同业业绩与折现率边际改善"
+              "海外同业业绩与折现率边际改善",
+              "FOMC实际纪要呈条件性鹰派，构成反向估值约束"
             ],
             "driver_signal_ids": [
               "sig-cn-hightech",
@@ -3815,18 +3983,21 @@
               "sig-us-close",
               "sig-us10y"
             ],
-            "opposing_signal_ids": [],
+            "opposing_signal_ids": [
+              "sig-fed-minutes-actual"
+            ],
             "considered_signal_ids": [
               "sig-cn-hightech",
               "sig-amat-fundamental",
               "sig-us-close",
-              "sig-us10y"
+              "sig-us10y",
+              "sig-fed-minutes-actual"
             ],
             "considered_domain_ids": [
               "scheduled_macro_policy",
               "cross_asset_stress"
             ],
-            "dominant_driver": "国内高技术投资保持结构韧性",
+            "dominant_driver": "国内高技术投资与海外同业业绩仍是主要支撑，FOMC条件性鹰派实际内容限制估值扩张",
             "confidence": "medium",
             "invalidators": [
               "开盘后行业量价显著反向",
@@ -3835,7 +4006,10 @@
             "source_refs": [
               "ts-nbs-july",
               "ts-amat-q3",
-              "ts-ap-us-close"
+              "ts-ap-us-close",
+              "ts-us-treasury-0819",
+              "ts-fed-minutes-actual",
+              "ts-ap-fed-minutes-runtime"
             ],
             "candidate_codes": [],
             "shadow": true
@@ -3959,7 +4133,8 @@
               "相关官方信息出现方向性修订"
             ],
             "source_refs": [
-              "ts-ap-us-close"
+              "ts-ap-us-close",
+              "ts-us-treasury-0819"
             ],
             "candidate_codes": [],
             "shadow": true
@@ -4073,6 +4248,15 @@
             "reason": "该新鲜信号直接进入所列板块映射。"
           },
           {
+            "signal_id": "sig-fed-minutes-actual",
+            "disposition": "direct_opposing",
+            "sector_call_ids": [
+              "call-hightech"
+            ],
+            "mediated_by_signal_ids": [],
+            "reason": "FOMC条件性鹰派实际内容作为高技术与长久期成长估值的反向约束进入板块映射。"
+          },
+          {
             "signal_id": "sig-amat-fundamental",
             "disposition": "direct_driver",
             "sector_call_ids": [
@@ -4130,7 +4314,87 @@
             "reason": "该新鲜信号直接进入所列板块映射。"
           }
         ],
+        "risk_item_disposition_ledger": [
+          {
+            "item_id": "tw-fed-minutes",
+            "item_kind": "warning",
+            "domain_ids": [
+              "scheduled_macro_policy"
+            ],
+            "disposition": "linked",
+            "sector_call_ids": [
+              "call-hightech"
+            ],
+            "reason": "事前政策分歧风险与发布后的条件性鹰派实际内容共同约束高技术成长估值。"
+          },
+          {
+            "item_id": "tw-lpr",
+            "item_kind": "warning",
+            "domain_ids": [
+              "scheduled_macro_policy"
+            ],
+            "disposition": "neutral",
+            "sector_call_ids": [],
+            "reason": "检索时点尚未到LPR发布时间，仅保留为开盘后核对条件，不提前制造方向性板块结论。"
+          },
+          {
+            "item_id": "tw-us-gdp",
+            "item_kind": "warning",
+            "domain_ids": [
+              "scheduled_macro_policy"
+            ],
+            "disposition": "neutral",
+            "sector_call_ids": [],
+            "reason": "事件尚未发布且没有可复核的数值修订共识，本次窗口不提前映射为板块方向。"
+          },
+          {
+            "item_id": "tw-jackson-hole",
+            "item_kind": "warning",
+            "domain_ids": [
+              "scheduled_macro_policy"
+            ],
+            "disposition": "neutral",
+            "sector_call_ids": [],
+            "reason": "会议窗口尚未开始，政策沟通方向不确定，当前只保留观察条件而不提前下沉板块。"
+          },
+          {
+            "item_id": "tw-hormuz",
+            "item_kind": "warning",
+            "domain_ids": [
+              "external_geopolitics_trade"
+            ],
+            "disposition": "linked",
+            "sector_call_ids": [
+              "call-oil",
+              "call-cost"
+            ],
+            "reason": "海峡通航风险已分别映射为油气上游受益和航空、化工、物流成本链承压。"
+          },
+          {
+            "item_id": "tw-us-pce",
+            "item_kind": "warning",
+            "domain_ids": [
+              "scheduled_macro_policy"
+            ],
+            "disposition": "neutral",
+            "sector_call_ids": [],
+            "reason": "PCE尚未发布且缺少口径完整的数值共识，本次只保留未来折现率观察条件。"
+          },
+          {
+            "item_id": "delta-fed-minutes-runtime",
+            "item_kind": "post_t_delta",
+            "domain_ids": [
+              "scheduled_macro_policy"
+            ],
+            "disposition": "linked",
+            "sector_call_ids": [
+              "call-hightech"
+            ],
+            "reason": "纪要实际内容呈条件性鹰派，已作为高技术与长久期成长板块调用的反向信号。"
+          }
+        ],
         "unmapped_signal_ids": [],
+        "unmapped_risk_item_ids": [],
         "unmapped_domain_ids": []
       },
       "clear_reason": ""

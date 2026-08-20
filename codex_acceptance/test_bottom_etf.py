@@ -161,6 +161,29 @@ class BottomEtfTest(unittest.TestCase):
         self.assertNotIn("展开全部公开披露ETF", rendered)
         self.assertEqual(inject_etf_sections(rendered, self._result()), rendered)
 
+    def test_html_refreshes_existing_block_after_retry(self) -> None:
+        result = self._result()
+        blocked = self._result()
+        blocked["candidates"][0]["etf_holdings"] = {
+            "version": VERSION,
+            "status": "blocked",
+            "used_in_recommendation": False,
+            "error": "temporary endpoint failure",
+            "all_etfs": [],
+            "ranked": [],
+        }
+        raw = (
+            "<style></style><div class=card><span>300750</span>"
+            "<div class=row>F10: test</div><div class=plan>plan</div></div>"
+            "<h3>观察池</h3>"
+        )
+        failed = inject_etf_sections(raw, blocked)
+        self.assertIn("数据获取失败", failed)
+        refreshed = inject_etf_sections(failed, result)
+        self.assertNotIn("数据获取失败", refreshed)
+        self.assertIn("510300", refreshed)
+        self.assertEqual(refreshed.count("codex-bottom-etf:300750:start"), 1)
+
     def test_html_without_f10_still_precedes_plan(self) -> None:
         result = self._result()
         raw = ("<style></style><div class=card><span>300750</span><div class=plan>plan</div></div>"
