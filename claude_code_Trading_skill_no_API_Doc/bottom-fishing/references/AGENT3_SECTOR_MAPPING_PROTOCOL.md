@@ -1,21 +1,22 @@
-# Agent③ 外盘预测输入与A股板块映射协议（v3）
+# Agent③ 全市场主线发现、外盘输入与A股板块映射协议（v4）
 
-本协议定义 `bottom-toxic-risk-warning/v3` 的预测输入层、A股分窗口板块映射和候选股票信息下沉。
+本协议定义 `bottom-toxic-risk-warning/v4` 的全市场主线发现、重大异动归因、预测输入层、A股分窗口板块映射和候选股票信息下沉。
 它只产生运行时点 `shadow` 信息：不得修改量化分数、推荐线、排序、✓/?/✗、仓位或预算熔断。
 Agent③不是收益预测模型；所有方向都是证据约束的条件式映射，必须保留来源、时点、反向因素和失效条件。
 
 ## 目录
 
 1. 目标与时间窗口
-2. 八类预测输入
-3. 信号选择与因果映射
-4. 时间、会话与新鲜度
-5. 结构化市场信号
-6. 板块综合调用
-7. HTML bullet 格式
-8. 候选股票双向下沉
-9. 冲突裁定与置信度
-10. 发布门禁与 shadow 验证
+2. 全市场主线发现与重大事件归因
+3. 八类预测输入
+4. 信号选择与因果映射
+5. 时间、会话与新鲜度
+6. 结构化市场信号
+7. 板块综合调用
+8. HTML bullet 格式
+9. 候选股票双向下沉
+10. 冲突裁定与置信度
+11. 发布门禁与 shadow 验证
 
 ## 1. 目标与时间窗口
 
@@ -28,7 +29,47 @@ Agent③必须把运行时点信息分成三个不同目标，禁止用“下一
 保留 `next_session` 作为三个窗口的白话综合兼容字段，但不得用它替代分窗口判断。外盘行业大涨可以是
 强开盘输入，却不能自动推出A股收盘同幅上涨；若缺少日内确认，必须明确“主要映射开盘、存在回吐风险”。
 
-## 2. 八类预测输入
+## 2. 全市场主线发现与重大事件归因
+
+八类预测输入是下游登记层，不能代替上游发现。Agent③必须同时采用“价格先行”和“事件先行”，避免只检索预设主题：
+
+1. `us_sector_tape`：美股行业相对宽基、行业ETF、同业广度；宽基指数本身不能单独过关；
+2. `global_movers`：全球重大单股、商品、运价、利率与跨资产异动；
+3. `ashare_t_day_sector_tape`：A股T日行业涨跌、相对宽基、涨停/大涨家数和领涨结构；必须至少命中一条T日异动；
+4. `asia_sector_tape`：日韩台及香港同业；未开盘只能写 `not_open`；
+5. `event_first_scan`：临床、监管、财报指引、订单/Capex、产品发布、政策地缘、供给中断、商品和宏观利率等重大事件。
+
+`market_discovery.sector_family_coverage` 还必须精确覆盖：
+`healthcare_biotech`、`technology_media_telecom`、`consumer`、`financial_real_estate`、
+`energy_materials`、`industrials_transport_defense`、`utilities_clean_energy`、`broad_market_style`。
+每一族都写 `hit|no_relevant_hit|blocked|not_open`、查询、异动、事件、评估时点和理由。莫德纳/mRNA只是医疗族的
+回归样例；芯片财报、消费指引、银行地产政策、油价/金属、军工订单、航运中断、新能源政策等必须走同一套门禁。
+每条覆盖查询还必须以 `discovery_lanes/discovery_families` 显式声明自己核验的路径和行业族；行业族写
+`no_relevant_hit` 时至少需要两种不同查询文本，禁止把一条泛化市场搜索复制给八个行业族凑覆盖。
+
+每条 `material_movers[]` 至少保存 `mover_id/lane/market/market_session_date/observed_at_beijing/instrument/`
+`sector_family/sector_name/direction/performance_text/benchmark/breadth_text/catalyst_status/event_ids/`
+`signal_ids/source_refs/query_ids/materiality_reason`。`catalyst_status=attributed|multi_factor` 必须连接事件簇；
+确实无法归因时写 `unresolved` 并进入 `unresolved_material_mover_ids`，不得静默丢弃或编造单因果。
+
+每条 `event_clusters[]` 必须保存事件类型、首次公开北京时间、发现路径、行业族、关联异动/信号、主来源与佐证来源、
+A股主题、传导链、`direct|supply_chain|conceptual` 分层映射、反证、失效条件、置信度和板块调用。查询通过
+`selected_mover_ids/selected_event_ids` 与异动、事件双向闭合；异动与事件也必须双向引用。
+
+### 2.1 新鲜度、A股兑现与旧消息排除
+
+“消息重大”不等于“仍有新增信息量”。每个事件必须登记：
+
+- `freshness=fresh|aging|stale` 与文字理由；
+- `ashare_absorption.status=new_unpriced|partially_priced|priced_on_t|priced_before_t|stale|unclear`；
+- `first_reaction_date/latest_confirmation_date/evidence/source_refs/query_ids/decision`；
+- 机械派生 `tradability_flag=fresh_catalyst|continuation_watch|already_priced|stale_excluded|unresolved`。
+
+硬规则：`priced_before_t` 或 `stale` 不得再生成板块受益调用；其相关信号只能作 `stale_excluded`、中性或反证。
+`priced_on_t` 说明A股当日已经兑现，只允许低/中置信 `continuation_watch`，必须同时显示隔日追高、回吐与失效条件，
+不得把同一旧消息包装成次日“新催化”。`unclear` 必须公开列入未决台账，不能为了给方向而强行归因。
+
+## 3. 八类预测输入
 
 `predictive_input_coverage` 必须精确覆盖以下八类。每类记录
 `hit|no_relevant_hit|blocked|not_open`、查询、评估时点和理由；`hit` 只能承接 `fresh` 信号。
@@ -47,7 +88,7 @@ Agent③必须把运行时点信息分成三个不同目标，禁止用“下一
 `physical_supply_chain` 可作为 `market_signals[].family` 补充存储、面板、化工、光伏、锂电等公开库存、
 价差和产销信号，但必须归入最贴近的 coverage 类，不新增未审计的第九类。
 
-## 3. 信号选择与因果映射
+## 4. 信号选择与因果映射
 
 按以下顺序工作：
 
@@ -66,11 +107,11 @@ Agent③必须把运行时点信息分成三个不同目标，禁止用“下一
 - 使用搜索摘要、社交媒体传闻或陈旧行情作为唯一方向证据；
 - 把观察到的海外涨幅改写成未经校准的A股预计涨幅或上涨概率。
 
-## 4. 时间、会话与新鲜度
+## 5. 时间、会话与新鲜度
 
 - `observed_at_beijing` 是信号实际可得时点，必须不晚于 `retrieved_at_beijing`。
 - `market_session_date` 是原市场交易日，不得用北京时间自然日替代；美国T日收盘可能在北京时间T+1凌晨可得。
-- v3来源同时保存本地 `published_at` 和 `published_at_beijing`；phase 一律按北京时间戳相对T日截止判断，
+- v4来源同时保存本地 `published_at` 和 `published_at_beijing`；phase 一律按北京时间戳相对T日截止判断，
   禁止用美国当地发布日期把北京时间T+1凌晨才可得的收盘信息误归入 as-of-T。
 - 07:xx北京时间运行时，美股/美债必须采用当时最新已完成的美国交易时段；若原市场交易日等于A股T日，
   该收盘或官方日值只能是 `post_t_safety`。验收器据此拒绝“美国T日收盘 + 北京时间T日观测”的伪时点组合。
@@ -82,7 +123,7 @@ Agent③必须把运行时点信息分成三个不同目标，禁止用“下一
 - 9:30才公布的数据属于盘中增量。7:xx报告只能保存一致预期和条件分支，禁止事后补入 actual 冒充盘前命中。
 - 来源受阻写 `blocked`；亚洲市场尚未开盘写 `not_open`。两者都不得伪造方向信号。
 
-## 5. 结构化市场信号
+## 6. 结构化市场信号
 
 每条 `market_signals[]` 使用：
 
@@ -111,7 +152,7 @@ Agent③必须把运行时点信息分成三个不同目标，禁止用“下一
 查询必须以 `selected_signal_ids` 双向引用信号；信号来源必须出现在关联查询的 `reviewed_urls`，并进入
 所属五域 `runtime_evaluation.signal_ids/source_refs`。精确数字只可描述已观测事实；A股方向继续使用定性置信度。
 
-### 5.1 全信号处置台账
+### 6.1 全信号处置台账
 
 八类覆盖只证明“信号被登记”，不证明“板块结论考虑过信号”。因此
 `ashare_runtime_outlook.signal_disposition_ledger` 必须与 `market_signals[]` 一对一：每个 signal 恰有一条处置，
@@ -154,7 +195,7 @@ driver/opposing 实际引用精确一致；`mediated` 的承接 call 必须由�
 `linked` 必须由所属域的真实 call 承接；`neutral|not_applicable` 不得夹带 call。
 `unmapped_risk_item_ids` 必须机械重算为空，不能用泛化 `domain_impacts` 文案代替逐条处置。
 
-## 6. 板块综合调用
+## 7. 板块综合调用
 
 `ashare_runtime_outlook.sector_calls[]` 是板块 bullet 的唯一事实源：
 
@@ -206,7 +247,15 @@ driver/opposing 实际引用精确一致；`mediated` 的承接 call 必须由�
 `industry_matches` 只放引擎候选中可以精确匹配的行业原文。广义“科技”“周期”不得模糊命中候选；若通过客户、
 供应商、竞争者或成本关系映射，显式加入 `candidate_codes`，并在股票 context 中写清关系。
 
-## 7. HTML bullet 格式
+## 8. HTML bullet 格式
+
+顶部“全市场主线发现与事件归因”必须先声明：T 是A股信号交易日，按北京时间解释；`as_of_t/post_t_safety`
+按北京时间可得时点相对 `cutoff_beijing=T 23:59:59+08:00` 判断，而 `market_session_date` 保留原交易所会话日。
+每张重大异动卡必须可见显示 `原市场交易日=market_session_date` 与
+`北京时间观测=observed_at_beijing`；每张事件卡必须可见显示
+`首次公开（北京时间）=first_public_at_beijing` 和 `phase`。“事件新鲜度与A股定价状态”继续显示
+`first_reaction_date/latest_confirmation_date`。不得只在 JSON 保存日期，也不得用A股反应日替代海外交易日或
+事件首次公开时点。
 
 顶部 A股走势映射先把 `scheduled_event_expectations` 与 `scheduled_event_reconciliations` 按 `event_id` 合并到同一卡片，
 同时显示北京时间、事前一致预期/前值、基准/上下行情景、运行时状态、实际结果、相对预期、来源及 A股板块调用；
@@ -228,7 +277,7 @@ driver/opposing 实际引用精确一致；`mediated` 的承接 call 必须由�
 不允许只有板块名，也不允许把全部原因塞入一段无法对应板块的总述。审计附录必须完整展开全信号处置台账，
 顶部卡片只显示上述简短结论。
 
-## 8. 候选股票双向下沉
+## 9. 候选股票双向下沉
 
 每个候选继续在 `by_code` 占一项，并新增 `sector_context[]`：
 
@@ -256,7 +305,7 @@ driver/opposing 实际引用精确一致；`mediated` 的承接 call 必须由�
 正面 context 使用独立紫色/中性信息块，不得伪装成红黄风险 alert；负面板块 context 也不自动改变裁定。
 原 warning/delta 的红黄 alert 继续按毒月风险协议单独工作。
 
-## 9. 冲突裁定与置信度
+## 10. 冲突裁定与置信度
 
 - `driver_signal_ids` 至少一条且必须 `fresh`；`opposing_signal_ids` 可为空。
 - 有反向信号时写 `dominant_driver`，说明时点、直接性、意外程度或国内确认中的哪项占优。
@@ -265,12 +314,18 @@ driver/opposing 实际引用精确一致；`mediated` 的承接 call 必须由�
 - 来源受阻、行业映射宽泛、冲击原因未知或市场尚未开盘时降低置信度或不形成 call。
 - 置信度不是上涨概率，不得换算成百分比。
 
-## 10. 发布门禁与 shadow 验证
+## 11. 发布门禁与 shadow 验证
 
 `validate-bottom-search` 和最终 `validate --require-bottom-search` 必须拒绝：
 
-- v2或缺少八类预测输入覆盖；
+- 非v4、缺少五路市场发现或缺少八个行业族逐项覆盖；
+- 美股只登记宽基、漏掉A股T日行业异动、重大异动未归因且未显式列入 unresolved；
+- 重大事件缺新鲜度/A股定价状态，或 `priced_before_t/stale` 仍生成受益调用；
+- `priced_on_t` 被写成全新催化、标高置信，或没有追高/回吐/失效提示；
+- 缺少八类预测输入覆盖；
 - 观测时点晚于检索时点、T/T后混账或陈旧信号充当主驱动；
+- HTML 未声明 T 的A股/北京时间口径，异动卡缺原市场交易日/北京时间观测，或事件卡缺 phase、首次公开北京时间、
+  已有的A股首次/最近反应日期；
 - signal/query/source/runtime 引用不双向；
 - `signal_disposition_ledger` 未精确覆盖全部信号、存在伪中介或 `unmapped_signal_ids` 非空；
 - `risk_item_disposition_ledger` 未精确覆盖全部 warning/T后 delta，或 `unmapped_risk_item_ids` 非空；

@@ -130,7 +130,7 @@ bottom-fishing 启用 `bottom_search` 后按其 F10 ledger 执行：T 前实质�
 `no_relevant_hit/blocked`，允许该票没有 fact，严禁为满足旧的 facts 覆盖规则虚构“无证据事实”。
 
 同时必须写入 Agent③ 的
-`codex_audit.toxic_risk_warning`，版本固定为 `bottom-toxic-risk-warning/v3`。完整五域覆盖、
+`codex_audit.toxic_risk_warning`，版本固定为 `bottom-toxic-risk-warning/v4`。完整五域覆盖、
 截至实际运行时点的最新搜索、T/T后隔离、逐项证据约束推断、来源门槛、候选暴露和 HTML alert 联动见
 `claude_code_Trading_skill_no_API_Doc/bottom-fishing/references/TOXIC_RISK_WARNING_PROTOCOL.md`。
 该对象固定 `mode=shadow`，只增加风险提示，不改变分数、推荐线、✓/?/✗、仓位或预算熔断。
@@ -149,6 +149,15 @@ bottom-fishing 启用 `bottom_search` 后按其 F10 ledger 执行：T 前实质�
 外盘信号按北京时间实际可得时点分 phase：07:xx 报告必须采用当时最新已完成的美国股债时段，美国本地 T 日
 收盘只能登记为 `post_t_safety`，不得错记北京时间来倒灌 as-of-T。财政部官方美债日值优先于盘中媒体报价；
 二者并存时分别标注，并区分财政部回购、FOMC沟通等并存驱动。
+v4 还必须写 `market_discovery`：精确覆盖美股行业、全球重大异动、A股T日行业、亚洲同业、事件优先五条路径，
+以及医疗生科、TMT、消费、金融地产、能源材料、工业军工运输、公用事业新能源、宽基风格八个行业族。
+每个重大异动必须进入 `material_movers` 并连接 `event_clusters` 或显式列为未归因；美股宽基不能替代行业扫描，
+A股T日行业异动不能缺失。每个重大事件必须保存新鲜度、A股首次/最近反应日期与
+`new_unpriced|partially_priced|priced_on_t|priced_before_t|stale|unclear` 定价状态。
+发现查询必须通过 `discovery_lanes/discovery_families` 声明归属；行业族 `no_relevant_hit` 至少两种不同查询文本，
+不得复用一条泛化查询伪造全行业覆盖。
+`priced_before_t/stale` 不得再生成受益板块调用；`priced_on_t` 只能作为低/中置信延续观察，并在HTML顶部显示
+追高、回吐和失效边界。完整结构和映射规则见 `AGENT3_SECTOR_MAPPING_PROTOCOL.md`。
 五域完成后还必须写 `ashare_runtime_outlook`：逐域解释如何反映到A股，并明确下一交易日、未来1—5日、
 指数/风格、相对受益与承压板块、开盘触发和一句白话走势结论。该综合只允许定性置信度，禁止未经校准的
 涨跌概率、涨跌幅或指数目标点位；全部 `market_signals` 必须一对一进入信号处置台账，直接/反向/中介/中性/

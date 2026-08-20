@@ -34,6 +34,7 @@ python .\analyze_toxic_windows.py
 
 本目录不修改 skill workflow、生产规则、权重、报告或影子日志。
 
-2026-07-23 后续状态：研究结论已在目录外以 Agent③ shadow warning 接入 skill；只增加可见风险提示和审计门禁，
-仍不改变量化引擎、分数、裁定、仓位或熔断。生产契约见
-`../../../references/TOXIC_RISK_WARNING_PROTOCOL.md`。
+后续状态：研究结论于 2026-07-23 在目录外以 Agent③ shadow warning 接入 skill；2026-08-20 的 v4 在此基础上
+增加五路全市场发现、八行业族覆盖、重大异动归因、事件新鲜度/A股兑现审计、八类预测输入和分窗口A股映射。
+这些是生产审计能力扩展，不改变本研究结果，也不改变量化引擎、分数、裁定、仓位或熔断。现行生产契约见
+`../../../references/TOXIC_RISK_WARNING_PROTOCOL.md` 与 `../../../references/AGENT3_SECTOR_MAPPING_PROTOCOL.md`。

@@ -1,12 +1,12 @@
-# Agent③ 毒月 Web 风险预警协议（bottom-toxic-risk-warning/v3）
+# Agent③ 毒月 Web 风险预警协议（bottom-toxic-risk-warning/v4）
 
 本协议把毒月研究接入日常扫描，但只产生 `shadow warning`：不修改量化分数、推荐线、排序、仓位、
 ✓/?/✗ 裁定或预算熔断。Agent③同时维护两本账：截至 T 的无前视风险 nowcast，以及截至本次实际检索
 完成时点的最新五域评估。后一本账必须纳入 T 后公开信息并给出证据约束下的推断，但不得倒灌 T 日裁定。
 不承诺预测尚未公开的黑天鹅或“下一个毒月”。
 
-运行 v3 时还必须完整阅读同目录 `AGENT3_SECTOR_MAPPING_PROTOCOL.md`。本文件负责五域风险、T/T后隔离和
-warning；该文件负责外盘/宏观预测输入、分窗口A股板块调用与候选股票双向下沉。两份协议共同构成发布契约。
+运行 v4 时还必须完整阅读同目录 `AGENT3_SECTOR_MAPPING_PROTOCOL.md`。本文件负责五域风险、T/T后隔离和
+warning；该文件负责全市场主线发现、重大异动归因、事件新鲜度/A股兑现状态、外盘/宏观预测输入、分窗口A股板块调用与候选股票双向下沉。两份协议共同构成发布契约。
 
 ## 目录
 
@@ -22,7 +22,9 @@ warning；该文件负责外盘/宏观预测输入、分窗口A股板块调用�
 
 ## 1. 角色边界
 
-Agent③ 在每次 bottom 扫描中独立执行市场级 Web 检索：
+Agent③ 在每次 bottom 扫描中独立执行市场级 Web 检索。五域风险检索之外，必须先执行
+`market_discovery` 的五路价格/事件发现与八个行业族覆盖；医药、芯片、消费、金融地产、能源材料、工业军工运输、
+公用事业新能源等任何行业的重大消息使用同一套发现和归因协议，不得把某一行业样例变成事件白名单：
 
 - 识别未来已排期的波动窗口；
 - 识别 T 日已公开且仍在演化的系统性/行业压力；
@@ -146,7 +148,7 @@ Agent③必须主动检索 T+1 起未来10个自然日的重大统计、央行�
 
 ## 5. 五域合并后的A股走势映射
 
-完成五个 `runtime_evaluation` 和八类 `predictive_input_coverage` 后，必须再写一个顶层
+完成五个 `runtime_evaluation`、五路/八行业族 `market_discovery` 和八类 `predictive_input_coverage` 后，必须再写一个顶层
 `ashare_runtime_outlook`。它不是重复宏观事件预测，
 而是回答：“这些已知信息综合反映到A股，大概是什么走势和结构？”
 
@@ -216,7 +218,7 @@ other_market
 行业预警只有在候选行业、产品、成本或海外收入暴露能够明确对应时才下沉。市场恐慌不能机械复制成
 所有候选的同一条个股红色警示。
 
-v3 的 `by_code` 另须包含 `sector_context[]`。当 `sector_calls[].industry_matches` 精确命中候选行业，或
+v4 的 `by_code` 另须包含 `sector_context[]`。当 `sector_calls[].industry_matches` 精确命中候选行业，或
 `candidate_codes` 通过客户、供应商、竞争者、成本或海外收入关系显式纳入候选时，必须把同一 `call_id`
 唯一双向下沉到股票卡片。股票 context 必须显示方向、产业关系、窗口、置信度、股票级原因、来源和失效条件；
 正面或一般板块映射使用独立中性信息块，不得伪装成 warning alert。完整契约见
@@ -246,6 +248,8 @@ HTML 顶部“市况”正下方必须先显示“Agent③ A股走势映射（�
 开盘触发和推断边界。底部继续单列
 “A股走势综合审计（五域合并）”和“运行时点五域综合评估（最新公开信息；不倒灌 T 日裁定）”，
 显示逐域A股机制、检索完成时点、最新采用来源日期、共识、基准情景、条件情景和失效条件。
+全市场发现卡还必须明确 T 是A股信号交易日、按北京时间解释，T/T后以 `cutoff_beijing` 为界；异动卡显示
+原市场交易日和北京时间观测，事件卡显示首次公开北京时间与 phase，A股定价行另显示首次反应和最近确认日期。
 
 ## 8. 结构化 JSON 契约
 
@@ -254,7 +258,7 @@ HTML 顶部“市况”正下方必须先显示“Agent③ A股走势映射（�
 ```json
 {
   "toxic_risk_warning": {
-    "version": "bottom-toxic-risk-warning/v3",
+    "version": "bottom-toxic-risk-warning/v4",
     "T": "YYYY-MM-DD",
     "cutoff_beijing": "YYYY-MM-DD 23:59:59+08:00",
     "retrieved_at_beijing": "YYYY-MM-DD HH:MM:SS+08:00",
@@ -309,6 +313,28 @@ HTML 顶部“市况”正下方必须先显示“Agent③ A股走势映射（�
         "reason": "覆盖结论"
       }
     },
+    "market_discovery": {
+      "version": "agent3-market-discovery/v1",
+      "evaluated_at_beijing": "YYYY-MM-DD HH:MM:SS+08:00",
+      "lanes": {
+        "us_sector_tape|global_movers|ashare_t_day_sector_tape|asia_sector_tape|event_first_scan": {
+          "status": "hit|no_relevant_hit|blocked|not_open",
+          "query_ids": [], "mover_ids": [], "event_ids": [],
+          "as_of_beijing": "YYYY-MM-DD HH:MM:SS+08:00", "reason": "覆盖结论"
+        }
+      },
+      "sector_family_coverage": {
+        "八个固定行业族逐项": {
+          "status": "hit|no_relevant_hit|blocked|not_open",
+          "query_ids": [], "mover_ids": [], "event_ids": [],
+          "as_of_beijing": "YYYY-MM-DD HH:MM:SS+08:00", "reason": "覆盖结论"
+        }
+      },
+      "material_movers": ["完整对象见 AGENT3_SECTOR_MAPPING_PROTOCOL.md"],
+      "event_clusters": ["含freshness、ashare_absorption与tradability_flag的完整对象见映射协议"],
+      "unresolved_material_mover_ids": [],
+      "unmapped_material_event_ids": []
+    },
     "queries": [
       {
         "query_id": "toxic-query-001",
@@ -323,6 +349,8 @@ HTML 顶部“市况”正下方必须先显示“Agent③ A股走势映射（�
         "selected_warning_ids": [],
         "selected_delta_ids": [],
         "selected_signal_ids": ["market-signal-001"],
+        "selected_mover_ids": [],
+        "selected_event_ids": [],
         "notes": "采用、未命中或受阻说明"
       }
     ],
@@ -598,12 +626,13 @@ python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" vali
 ```
 
 该命令同时验证 Agent② `bottom_search` 和 Agent③ `toxic_risk_warning`。Agent③缺五域运行时点评估、
-缺八类预测输入覆盖、重大排期事件漏一对一预期台账、三路预期检索未闭合、把机构预测冒充一致预期、
+缺五路市场发现、缺八个行业族逐项覆盖、只用宽基代替行业异动、漏掉A股T日行业异动、重大异动未归因且未显式未决、
+事件缺新鲜度/A股定价状态、HTML缺T的A股/北京时间口径、异动/事件/反应日期不可见、T前已兑现或stale事件仍生成受益调用、缺八类预测输入覆盖、重大排期事件漏一对一预期台账、三路预期检索未闭合、把机构预测冒充一致预期、
 CPI/PPI 漏事件专属四指标的逐项搜索台账、混用指标口径、指标缺前值/来源/口径定义、缺事件推断、
 只写“方向不确定”、末端扫描未覆盖至实际运行日、无来源精确概率、
 缺分窗口A股走势综合、存在未处置信号、板块 bullet 无括号原因、板块与候选股票未双向下沉、没有逐域说明如何反映到A股、
 已到排期时点仍未对账实际结果、存在未处置 warning/T后 delta、编造A股精确涨跌概率/幅度/点位或发生 T 后倒灌时均失败。
-最终发布只接受 v3；历史 v2 仅保留非严格读取兼容。
+最终发布只接受 v4；历史 v2/v3 仅保留非严格读取兼容。
 任一失败都不得运行 `--adjudicate`。最终 `augment-report` 会生成 Agent③ 独立审计表，
 `validate --require-bottom-search` 还会检查A股白话综合确实位于顶部市况下、重大排期事件的北京时间、
 全部指标预期/前值/情景/来源、运行时点共识/基准情景、

@@ -1,8 +1,10 @@
 # 毒月 Web 事前预警研究设计
 
-> 状态更新（2026-07-23）：本设计已以 Agent③ `bottom-toxic-risk-warning/v1` 接入日常 skill，
-> 但固定为 `mode=shadow`。生产契约、五域 coverage、alert 联动和发布门禁以
-> `references/TOXIC_RISK_WARNING_PROTOCOL.md` 为准；本文件继续保留研究假设与升级前验证标准。
+> 状态更新：本设计于 2026-07-23 最初以 Agent③ `bottom-toxic-risk-warning/v1` 接入日常 skill；
+> 2026-08-20 已由 `bottom-toxic-risk-warning/v4` 取代，仍固定为 `mode=shadow`。现行生产契约还包含五路
+> 全市场发现、八行业族覆盖、重大异动归因、事件新鲜度/A股兑现审计、八类预测输入和分窗口A股映射，以
+> `references/TOXIC_RISK_WARNING_PROTOCOL.md` 与 `references/AGENT3_SECTOR_MAPPING_PROTOCOL.md` 为准；
+> 本文件只保留原始研究假设与升级前验证标准，不代表当前完整字段契约。
 
 ## 结论先行
 

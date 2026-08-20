@@ -1,8 +1,9 @@
 # 抄底网页证据协议（bottom-search-audit/v1）
 
 本协议只约束 Agent② 对过线票的消息面搜索、时点隔离与裁定证据，不修改量化分数、ATR gate、冷却或执行价位。
-Agent③ 的市场级毒月 Web 风险 nowcast 使用独立的
-`TOXIC_RISK_WARNING_PROTOCOL.md`；两套审计共享 T 日前视纪律，但不得相互代替覆盖。
+Agent③ 的全市场主线发现、重大异动归因、五域风险 nowcast、事件新鲜度/A股兑现审计与分窗口板块映射使用独立的
+`TOXIC_RISK_WARNING_PROTOCOL.md` 和 `AGENT3_SECTOR_MAPPING_PROTOCOL.md`；两套审计共享 T 日前视纪律，
+但不得相互代替覆盖。
 
 ## 目录
 
@@ -265,7 +266,11 @@ python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" vali
 
 ## 11. Agent③ 联动
 
-完成本协议的候选级搜索后，必须再按 `TOXIC_RISK_WARNING_PROTOCOL.md` 完成五个市场风险域。
+完成本协议的候选级搜索后，必须再按 `TOXIC_RISK_WARNING_PROTOCOL.md` 与
+`AGENT3_SECTOR_MAPPING_PROTOCOL.md` 完成五路全市场发现、八行业族逐项覆盖、重大异动/事件归因、
+事件新鲜度与A股兑现状态、八类预测输入、五个市场风险域和A股分窗口映射。
 `validate-bottom-search` 会同时要求 `codex_audit.bottom_search` 和
-`codex_audit.toxic_risk_warning`。市场级 `warning_id` 若映射到某候选，必须写入该票
-`rulings[code].alerts`；但 Agent③ 只增加 shadow warning，不改变 Agent② 的 ✓/?/✗。
+`codex_audit.toxic_risk_warning`。`priced_before_t/stale` 事件不得生成受益调用；`priced_on_t` 只能成为带追高、
+回吐和失效提示的延续观察。市场级 `warning_id` 若映射到某候选，必须写入该票 `rulings[code].alerts`；
+板块调用精确命中候选行业时还必须双向写入 `rulings[code].sector_context`。Agent③ 只增加 shadow warning/context，
+不改变 Agent② 的 ✓/?/✗。

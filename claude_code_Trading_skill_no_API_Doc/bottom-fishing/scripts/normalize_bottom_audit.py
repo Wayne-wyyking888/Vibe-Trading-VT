@@ -66,6 +66,48 @@ def normalize(document: dict[str, Any]) -> list[str]:
                      f"toxic_risk_warning.predictive_input_coverage.{category}.as_of_beijing",
                      changes)
 
+    discovery = toxic.get("market_discovery")
+    if isinstance(discovery, dict):
+        _set(discovery, "evaluated_at_beijing", retrieved,
+             "toxic_risk_warning.market_discovery.evaluated_at_beijing", changes)
+        for group_name in ("lanes", "sector_family_coverage"):
+            group = discovery.get(group_name)
+            if not isinstance(group, dict):
+                continue
+            for item_id, item in group.items():
+                if isinstance(item, dict):
+                    _set(item, "as_of_beijing", retrieved,
+                         f"toxic_risk_warning.market_discovery.{group_name}."
+                         f"{item_id}.as_of_beijing", changes)
+        movers = [item for item in discovery.get("material_movers") or []
+                  if isinstance(item, dict)]
+        events = [item for item in discovery.get("event_clusters") or []
+                  if isinstance(item, dict)]
+        _set(discovery, "unresolved_material_mover_ids", _unique([
+            item.get("mover_id") for item in movers
+            if item.get("catalyst_status") == "unresolved"
+        ]), "toxic_risk_warning.market_discovery.unresolved_material_mover_ids", changes)
+        _set(discovery, "unmapped_material_event_ids", _unique([
+            item.get("event_id") for item in events
+            if item.get("disposition") == "unresolved"
+        ]), "toxic_risk_warning.market_discovery.unmapped_material_event_ids", changes)
+        tradability_by_absorption = {
+            "new_unpriced": "fresh_catalyst",
+            "partially_priced": "continuation_watch",
+            "priced_on_t": "continuation_watch",
+            "priced_before_t": "already_priced",
+            "stale": "stale_excluded",
+            "unclear": "unresolved",
+        }
+        for event in events:
+            absorption = event.get("ashare_absorption")
+            status = str((absorption or {}).get("status", ""))
+            if status in tradability_by_absorption:
+                event_id = str(event.get("event_id", ""))
+                _set(event, "tradability_flag", tradability_by_absorption[status],
+                     f"toxic_risk_warning.market_discovery.event_clusters."
+                     f"{event_id}.tradability_flag", changes)
+
     sources = {
         str(item.get("source_ref", "")): item
         for item in toxic.get("sources") or []

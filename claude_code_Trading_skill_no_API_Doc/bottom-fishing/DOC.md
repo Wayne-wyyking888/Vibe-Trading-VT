@@ -16,7 +16,8 @@ bottom-fishing/
 ├─ SKILL.md              # Codex skill 定义（安装到工作区 .agents/skills/bottom-fishing/）
 ├─ references/
 │  ├─ WEB_EVIDENCE_PROTOCOL.md # 六维检索/官方源血缘/F10逐条对账/T后安全增量
-│  ├─ TOXIC_RISK_WARNING_PROTOCOL.md # Agent③五域市场风险nowcast/HTML shadow warning
+│  ├─ TOXIC_RISK_WARNING_PROTOCOL.md # Agent③五域风险/T与T后隔离/HTML shadow warning
+│  ├─ AGENT3_SECTOR_MAPPING_PROTOCOL.md # 五路发现/八行业族/事件兑现审计/A股分窗口映射
 │  └─ RESEARCH_LEDGER.md       # 规则→脚本→数据→偏差→采纳/否决 provenance
 ├─ scripts/research/
 │  ├─ legacy_cc/          # 从 Claude Code scratchpad 原样抢救的历史实验
@@ -47,7 +48,8 @@ python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\run_engine.py" bott
 ## 数据流水线
 东财快照(经weekly引擎get_spot,带缓存/新浪兜底) → 剔ST/科创/北交 → 腾讯qfq日K(140根/只) →
 底部区(回撤≥20%+60位≤25) → 修复确认打分 → 双路径推荐线 → F10种子(东财datacenter,仅过线票) →
-Agent②个股六维裁定 + Agent③市场五域风险nowcast → 裁定/预警HTML → 执行方案(权威交易日历给真实买入/离场日期)
+Agent②个股六维裁定 + Agent③五路全市场发现/八行业族覆盖/五域风险/重大事件归因与兑现审计
+→ 八类预测输入与A股分窗口映射 → 裁定/预警HTML → 执行方案(权威交易日历给真实买入/离场日期)
 → stdout+JSON+HTML+影子日志 → Agent②/③完成后，仅在裁定版附加候选股 ETF 持仓/走势相似度只读区块。
 指数: 创业板(防守日/def_days/大盘RSV, 后两者为影子字段不进规则)。
 
@@ -83,16 +85,20 @@ UTC+8 的 `generated_at` / `adjudicated_at`。业务截止日 T 只写入正文�
   `forecast.type`不看新鲜度, 必核 `notice_date`/`fresh` 并与 `kcfj_yoy`/最新季报交叉验证, 陈旧或矛盾=误报勿否决;
 ②**旧闻污染**——网页检索会把多年前旧文与当期新闻混排且摘要常不带年份, 每条红旗核到"年"再采信, 核不出不采信
   (旧闻致**错误否决**, 比误给✓更隐蔽)。详见 README §Agent②取证护栏。
-- **Agent③=毒月 Web 预警官（每次扫描必跑，零候选也不跳过）**：
-  固定搜索排期宏观政策、国内监管与流动性、海外地缘与贸易、跨资产压力、长假信息缺口五域。
-  T日已公开且仍活跃的风险可形成报告级 warning；只有行业/产品/成本/海外收入暴露能够明确对应时才下沉到个股。
-  排期事件只给 med 黄色提示；high 要求官方源和至少两个独立 origin。每次运行都把五域检索到实际完成时点，
-  每条事件及五域综合必须写事实、共识、基准/上下行情景、传导链、观察变量和失效条件。T 后新突发只进安全增量，
-  但必须进入运行时点评估并在 HTML 标“T后”；不倒灌T日裁定。当前固定 `mode=shadow`，不改分、不禁买、
-  不影响 Agent② 裁定。五域完成后必须再合成为A股下一交易日和未来1—5日的大概走势、风格、相对受益/
-  承压板块与触发条件；白话卡片放在最终HTML顶部“市况”正下方。
-  结构化数据写入 `codex_audit.toxic_risk_warning`，详见
-  `references/TOXIC_RISK_WARNING_PROTOCOL.md`。
+- **Agent③=全市场主线发现与风险映射官（v4；每次扫描必跑，零候选也不跳过）**：
+  五域风险只是最低覆盖。上游先完成 `us_sector_tape/global_movers/ashare_t_day_sector_tape/asia_sector_tape/
+  event_first_scan` 五路发现，并逐项覆盖医疗生科、TMT、消费、金融地产、能源材料、工业军工运输、公用事业新能源、
+  宽基风格八个行业族；重大异动必须有事件归因或显式 `unresolved`，A股 T 日行业异动不得缺席。
+  每个重大事件都要审计新鲜度、A股首次/最近反应日和兑现状态：`priced_before_t/stale` 只留审计且不得产生受益调用；
+  `priced_on_t` 只能作为低/中置信延续观察，并提示追高、回吐和失效风险。随后覆盖八类外盘/宏观/政策预测输入与
+  排期事件预期—实际对账，再分别给出竞价/开盘、日内延续或回吐及未来1—5日的A股条件式板块映射。
+  T 固定指A股信号交易日并按北京时间解释，T/T后以 `T 23:59:59+08:00` 为界；HTML 异动卡分别显示原市场交易日
+  和北京时间观测，事件卡显示首次公开北京时间与阶段，A股定价行另显示首次/最近反应日，三类日期不得互相替代。
+  五域仍固定搜索排期宏观政策、国内监管与流动性、海外地缘与贸易、跨资产压力、长假信息缺口；T 后新突发只进
+  安全增量和运行时点评估，HTML 标“T后”，不得倒灌 T 日裁定。全部信号、风险项和五域必须逐项处置，未解释项为0；
+  只有行业/产品/成本/海外收入暴露明确对应时才下沉到候选股。当前固定 `mode=shadow`，不改分、不禁买、不影响
+  Agent② 裁定。结构化契约为 `bottom-toxic-risk-warning/v4`，详见
+  `references/TOXIC_RISK_WARNING_PROTOCOL.md` 与 `references/AGENT3_SECTOR_MAPPING_PROTOCOL.md`。
 - Agent④=复核官: 价格新鲜度/来源可追溯/口径一致。
 
 裁定文件写完后，以下命令同时验 Agent② 和 Agent③，失败时不得生成裁定版：
@@ -111,7 +117,7 @@ python "C:\Trading_analysis\Vibe-Trading-VT\codex_acceptance\acceptance.py" vali
 | 执行三刀 | T+1开盘进场(高开>3%放弃) / -8%条件单成交即挂 / 买入日收≤-5%次日开盘出 |
 | 目标 | +5%落袋半仓 / +10%清(EV最优) / 最晚T+20收盘离场 |
 | 毒月熔断 | 月度亏损-3%停做 ∥ 近20笔雷率≥30%停(--review自动检测) |
-| Agent③预警 | 五域搜索至实际运行时点并映射A股T+1/未来1—5日；顶部shadow卡片，不改变分数/裁定/仓位 |
+| Agent③预警 | 五路发现+八行业族+五域+八类输入；陈旧/已兑现 flag，分窗口映射A股；顶部shadow卡片，不改变分数/裁定/仓位 |
 | ETF信息块 | 最近完整披露期持仓 + 截至T的60日收益相关排序；F10下只读展示，不进入三个Agent或交易规则 |
 | 口径引用 | 胜率必须带"走样本75.2~77.8%·月度45~92%大摆·2024式熊市全年EV为负"全套披露 |
 | 影子期 | 累计30笔了结前: 纸面跟踪或仓位减半 |

@@ -1,6 +1,6 @@
 ---
 name: bottom-fishing
-description: A股底部区与超跌修复扫描（0 API、Codex 原生）。用于抄底、超跌、底部扫描、低吸扫描、bottom-fishing、毒月风险预警、错杀裁定、抄底复盘等请求；运行不可变 Python 引擎，执行双路径推荐线、ATR gate、5交易日冷却、官方源优先的多轮网页检索、F10逐条对账、Agent③五域最新风险检索、重大排期事件完整预期与发布后对账、外盘/宏观预测输入与分窗口A股板块映射、候选股票信息下沉、T日证据与运行时点增量隔离、结构化搜索覆盖审计、✓/?/✗分层、shadow warning、影子日志、adjudicate/review，并在一次性自修复与独立验收通过后输出原生 HTML。
+description: A股底部区与超跌修复扫描（0 API、Codex 原生）。用于抄底、超跌、底部扫描、低吸扫描、bottom-fishing、毒月风险预警、错杀裁定、抄底复盘等请求；运行不可变 Python 引擎，执行双路径推荐线、ATR gate、5交易日冷却、官方源优先的多轮网页检索、F10逐条对账、Agent③五域最新风险检索、全市场行业异动发现与重大事件归因、事件新鲜度/A股兑现状态审计、重大排期事件完整预期与发布后对账、外盘/宏观预测输入与分窗口A股板块映射、候选股票信息下沉、T日证据与运行时点增量隔离、结构化搜索覆盖审计、✓/?/✗分层、shadow warning、影子日志、adjudicate/review，并在一次性自修复与独立验收通过后输出原生 HTML。
 ---
 
 # A股抄底扫描（0 API · Codex 原生 · 影子复验期）
@@ -123,6 +123,16 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
    - **全域最新检索**：FOMC、PMI 只是例子，不是事件白名单。每次运行都要把五域从 T+1 搜到实际完成时点，
      每域至少使用两种不同查询文本，纳入当时最新公开的重大变化；不得只复述上次报告已有事件，
      或以“未确定”替代检索和判断。
+   - **全市场主线发现（v4硬门禁）**：莫德纳、芯片财报、油价、军工订单等都只是样例，不得按行业白名单工作。
+     先做 `美股行业相对宽基/全球重大单股与商品/A股T日行业涨跌和广度/亚洲同业/事件优先` 五路发现，再逐项覆盖
+     `医疗生科/TMT/消费/金融地产/能源材料/工业军工运输/公用事业新能源/宽基风格` 八个行业族。每个达到重大性
+     阈值的异动必须进入 `material_movers`，并归入 `event_clusters` 或明确标 `unresolved`；宽基指数不能替代行业扫描，
+     A股T日行业异动不能缺席。每个重大事件还必须审计 `freshness`、A股首次/最近反应日、
+     `new_unpriced|partially_priced|priced_on_t|priced_before_t|stale|unclear` 定价状态与 `tradability_flag`。
+     `priced_before_t/stale` 不得再生成受益板块调用；`priced_on_t` 只能作低/中置信延续观察并显示追高、回吐和失效条件。
+     HTML 每张异动卡必须直接显示 `原市场交易日` 与 `北京时间观测`，每张事件卡必须显示
+     `首次公开（北京时间）` 和 `phase`；顶部还要明确 T 是A股信号交易日、T/T后按北京时间相对
+     `cutoff_beijing=T 23:59:59+08:00` 判断。A股首次/最近反应日继续单列，禁止把这三类日期混成一个时间。
    - **八类预测输入**：逐类覆盖美股行业、全球同业事件、亚洲早盘同业、中国相关离岸资产、利率汇率波动、
      商品运价、宏观预期差、国内政策产业信息；记录原市场交易日、北京时间可得时点、相对基准、冲击类型、
      新鲜度和来源。市场未开写 `not_open`，来源受阻写 `blocked`，两者都不得伪造方向。
@@ -177,9 +187,9 @@ Codex 新对话中输入 `/skills` 后选择 `bottom-fishing`，或直接输入 
      HTML 明示“T后”和运行时点评估，不得倒灌成事前命中；若增量是已排期事件的实际发布，还必须通过同一
      `event_id` 回连顶部发布后对账卡，并在风险项处置台账中进入板块调用、neutral 或不适用。
    - **结构化落盘**：写入 `codex_audit.toxic_risk_warning`，固定
-      `version=bottom-toxic-risk-warning/v3`、`mode=shadow`、五域 coverage、sources、queries、warnings、
+      `version=bottom-toxic-risk-warning/v4`、`mode=shadow`、五域 coverage、sources、queries、warnings、
       `scheduled_event_expectations`、`scheduled_event_reconciliations`、`market_signals`、八类 `predictive_input_coverage`、含 `sector_context` 的 by_code、post-T 增量、五域
-      `runtime_evaluation`、含分窗口 `sector_calls` 的 `ashare_runtime_outlook` 和 clear_reason。
+      `runtime_evaluation`、五路/八行业族 `market_discovery`、含分窗口 `sector_calls` 的 `ashare_runtime_outlook` 和 clear_reason。
      每条 warning/delta 同步到顶层 `alerts`；
      映射候选的再同步到 `rulings[code].alerts`，都带 `warning_id/level/text/shadow/post_t`。
    Agent③尚未完成无前视 shadow 样本验证，**不得改分、禁买、降级、调仓位或替代两个预算熔断**。

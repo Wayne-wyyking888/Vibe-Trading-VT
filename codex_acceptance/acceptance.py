@@ -498,7 +498,9 @@ ASHARE_UNCALIBRATED_PRECISION_RE = re.compile(
 )
 TOXIC_WARNING_V2 = "bottom-toxic-risk-warning/v2"
 TOXIC_WARNING_V3 = "bottom-toxic-risk-warning/v3"
-TOXIC_WARNING_VERSIONS = {TOXIC_WARNING_V2, TOXIC_WARNING_V3}
+TOXIC_WARNING_V4 = "bottom-toxic-risk-warning/v4"
+TOXIC_WARNING_VERSIONS = {TOXIC_WARNING_V2, TOXIC_WARNING_V3, TOXIC_WARNING_V4}
+TOXIC_WARNING_MODERN_VERSIONS = {TOXIC_WARNING_V3, TOXIC_WARNING_V4}
 SCHEDULED_EVENT_CLASSES = {
     "inflation_cpi", "inflation_ppi", "labor_report", "central_bank_decision",
     "central_bank_communication", "pmi", "gdp", "retail_sales", "lpr",
@@ -557,6 +559,42 @@ MARKET_SIGNAL_HORIZONS = {"opening_auction", "intraday_followthrough", "next_1_5
 MARKET_SIGNAL_SHOCK_TYPES = {
     "demand", "supply", "discount_rate", "policy", "risk_aversion", "mixed",
     "not_applicable", "unknown",
+}
+MARKET_DISCOVERY_VERSION = "agent3-market-discovery/v1"
+MARKET_DISCOVERY_LANES = (
+    "us_sector_tape",
+    "global_movers",
+    "ashare_t_day_sector_tape",
+    "asia_sector_tape",
+    "event_first_scan",
+)
+MARKET_SECTOR_FAMILIES = (
+    "healthcare_biotech",
+    "technology_media_telecom",
+    "consumer",
+    "financial_real_estate",
+    "energy_materials",
+    "industrials_transport_defense",
+    "utilities_clean_energy",
+    "broad_market_style",
+)
+MARKET_DISCOVERY_STATUSES = {"hit", "no_relevant_hit", "blocked", "not_open"}
+MATERIAL_MOVER_CATALYST_STATUSES = {
+    "attributed", "multi_factor", "unresolved", "not_applicable",
+}
+MATERIAL_EVENT_TYPES = {
+    "clinical_trial", "regulatory_approval", "earnings_guidance", "order_capex",
+    "product_launch", "policy_geopolitics", "supply_disruption", "commodity_price",
+    "macro_rates", "market_structure", "other",
+}
+MATERIAL_EVENT_DISPOSITIONS = {"linked", "neutral", "unresolved"}
+MATERIAL_EVENT_MAPPING_TIERS = {"direct", "supply_chain", "conceptual"}
+MATERIAL_EVENT_FRESHNESS = {"fresh", "aging", "stale"}
+ASHARE_ABSORPTION_STATUSES = {
+    "new_unpriced", "partially_priced", "priced_on_t", "priced_before_t", "stale", "unclear",
+}
+MATERIAL_EVENT_TRADABILITY_FLAGS = {
+    "fresh_catalyst", "continuation_watch", "already_priced", "stale_excluded", "unresolved",
 }
 SECTOR_CALL_DIRECTIONS = {"beneficiary", "pressure"}
 SIGNAL_DISPOSITIONS = {
@@ -1288,16 +1326,399 @@ def _validate_market_signal_layer(out: Result, warning: dict[str, Any],
         }
         out.check(set(signal_ids) == expected_ids, f"{tag}.signal_ids 未完整承接本类信号")
         if status == "hit":
-            out.check(bool(signal_ids) and all(
+            out.check(bool(signal_ids) and any(
                 (signal_by_id.get(signal_id) or {}).get("freshness") == "fresh"
                 for signal_id in signal_ids
-            ), f"{tag} hit 必须至少含一条 fresh 信号")
+            ), f"{tag} hit 必须至少含一条 fresh 信号；stale 只能同类留档并排除")
         else:
             out.check(not signal_ids, f"{tag} 非 hit 状态不得夹带信号")
         covered_signal_ids.update(signal_ids)
     out.check(covered_signal_ids == set(signal_by_id),
               "Agent③ market_signals 必须全部且仅进入 predictive_input_coverage")
     return signal_by_id
+
+
+def _validate_market_discovery(out: Result, warning: dict[str, Any],
+                               source_by_ref: dict[str, dict[str, Any]],
+                               query_by_id: dict[str, dict[str, Any]],
+                               signal_by_id: dict[str, dict[str, Any]],
+                               t_date: dt.date | None,
+                               retrieved_dt: dt.datetime | None,
+                               ) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]],
+                                          set[str]]:
+    """Validate v4 price-first discovery, event attribution, and A-share absorption."""
+    discovery = warning.get("market_discovery")
+    tag = "toxic_risk_warning.market_discovery"
+    out.check(isinstance(discovery, dict), f"{tag} 必须是对象")
+    if not isinstance(discovery, dict):
+        return {}, {}, set()
+    required = {
+        "version", "evaluated_at_beijing", "lanes", "sector_family_coverage",
+        "material_movers", "event_clusters", "unresolved_material_mover_ids",
+        "unmapped_material_event_ids",
+    }
+    out.check(required <= set(discovery), f"{tag} 缺必需字段")
+    out.check(discovery.get("version") == MARKET_DISCOVERY_VERSION,
+              f"{tag}.version 必须是 {MARKET_DISCOVERY_VERSION}")
+    out.check(_beijing_datetime(discovery.get("evaluated_at_beijing")) == retrieved_dt,
+              f"{tag}.evaluated_at_beijing 必须等于实际检索完成时点")
+
+    movers = discovery.get("material_movers") or []
+    out.check(isinstance(movers, list) and bool(movers),
+              f"{tag}.material_movers 必须至少登记一条重大异动")
+    mover_by_id: dict[str, dict[str, Any]] = {}
+    discovery_source_refs: set[str] = set()
+    mover_required = {
+        "mover_id", "lane", "market", "market_session_date", "observed_at_beijing",
+        "instrument", "sector_family", "sector_name", "direction", "performance_text",
+        "benchmark", "breadth_text", "catalyst_status", "event_ids", "signal_ids",
+        "source_refs", "query_ids", "materiality_reason",
+    }
+    for idx, mover in enumerate(movers if isinstance(movers, list) else []):
+        mover_tag = f"{tag}.material_movers[{idx}]"
+        out.check(isinstance(mover, dict), f"{mover_tag} 必须是对象")
+        if not isinstance(mover, dict):
+            continue
+        out.check(mover_required <= set(mover), f"{mover_tag} 缺必需字段")
+        mover_id = str(mover.get("mover_id", "")).strip()
+        out.check(bool(mover_id) and mover_id not in mover_by_id,
+                  f"{mover_tag}.mover_id 缺失或重复")
+        if mover_id and mover_id not in mover_by_id:
+            mover_by_id[mover_id] = mover
+        lane = str(mover.get("lane", ""))
+        out.check(lane in MARKET_DISCOVERY_LANES, f"{mover_tag}.lane 无效")
+        out.check(bool(str(mover.get("market", "")).strip()), f"{mover_tag}.market 为空")
+        session_date = _date(mover.get("market_session_date"))
+        observed = _beijing_datetime(mover.get("observed_at_beijing"))
+        out.check(session_date is not None and observed is not None and
+                  retrieved_dt is not None and observed <= retrieved_dt and
+                  session_date <= observed.date(),
+                  f"{mover_tag} 交易日或北京时间可得时点无效")
+        out.check(str(mover.get("sector_family", "")) in MARKET_SECTOR_FAMILIES,
+                  f"{mover_tag}.sector_family 无效")
+        out.check(str(mover.get("direction", "")) in MARKET_SIGNAL_DIRECTIONS,
+                  f"{mover_tag}.direction 无效")
+        for field in ("instrument", "sector_name", "performance_text", "benchmark",
+                      "breadth_text", "materiality_reason"):
+            out.check(bool(str(mover.get(field, "")).strip()), f"{mover_tag}.{field} 为空")
+        catalyst_status = str(mover.get("catalyst_status", ""))
+        out.check(catalyst_status in MATERIAL_MOVER_CATALYST_STATUSES,
+                  f"{mover_tag}.catalyst_status 无效")
+        event_ids = _string_list(mover.get("event_ids"))
+        if catalyst_status in {"attributed", "multi_factor"}:
+            out.check(bool(event_ids), f"{mover_tag} 已归因异动必须引用事件簇")
+        elif catalyst_status in {"unresolved", "not_applicable"}:
+            out.check(not event_ids, f"{mover_tag} 未归因/不适用异动不得夹带事件簇")
+        signal_ids = _string_list(mover.get("signal_ids"))
+        out.check(bool(signal_ids) and set(signal_ids) <= set(signal_by_id),
+                  f"{mover_tag}.signal_ids 必须引用已登记市场信号")
+        refs = _string_list(mover.get("source_refs"))
+        query_ids = _string_list(mover.get("query_ids"))
+        out.check(bool(refs) and set(refs) <= set(source_by_ref),
+                  f"{mover_tag}.source_refs 无效")
+        out.check(bool(query_ids) and set(query_ids) <= set(query_by_id),
+                  f"{mover_tag}.query_ids 无效")
+        discovery_source_refs.update(refs)
+        for query_id in query_ids:
+            query = query_by_id.get(query_id) or {}
+            out.check(mover_id in _string_list(query.get("selected_mover_ids")),
+                      f"{mover_tag}.query_ids 未双向选中 mover_id: {query_id}")
+        for ref in refs:
+            source_url = str((source_by_ref.get(ref) or {}).get("access_url", ""))
+            out.check(any(source_url in _string_list((query_by_id.get(query_id) or {}).get(
+                "reviewed_urls")) for query_id in query_ids),
+                f"{mover_tag} 来源未出现在关联查询 reviewed_urls: {ref}")
+
+    events = discovery.get("event_clusters") or []
+    out.check(isinstance(events, list) and bool(events),
+              f"{tag}.event_clusters 必须至少登记一个重大事件簇")
+    event_by_id: dict[str, dict[str, Any]] = {}
+    event_required = {
+        "event_id", "event_name", "event_type", "phase", "first_public_at_beijing",
+        "summary", "discovery_lanes", "sector_families", "mover_ids", "signal_ids",
+        "primary_source_refs", "corroborating_source_refs", "query_ids", "ashare_theme",
+        "transmission_chain", "mapping_tiers", "horizons", "confidence",
+        "counter_evidence", "invalidators", "disposition", "sector_call_ids",
+        "freshness", "freshness_reason", "ashare_absorption", "tradability_flag",
+    }
+    for idx, event in enumerate(events if isinstance(events, list) else []):
+        event_tag = f"{tag}.event_clusters[{idx}]"
+        out.check(isinstance(event, dict), f"{event_tag} 必须是对象")
+        if not isinstance(event, dict):
+            continue
+        out.check(event_required <= set(event), f"{event_tag} 缺必需字段")
+        event_id = str(event.get("event_id", "")).strip()
+        out.check(bool(event_id) and event_id not in event_by_id,
+                  f"{event_tag}.event_id 缺失或重复")
+        if event_id and event_id not in event_by_id:
+            event_by_id[event_id] = event
+        out.check(bool(str(event.get("event_name", "")).strip()), f"{event_tag}.event_name 为空")
+        out.check(str(event.get("event_type", "")) in MATERIAL_EVENT_TYPES,
+                  f"{event_tag}.event_type 无效")
+        phase = str(event.get("phase", ""))
+        out.check(phase in {"as_of_t", "post_t_safety"}, f"{event_tag}.phase 无效")
+        first_public = _beijing_datetime(event.get("first_public_at_beijing"))
+        out.check(first_public is not None and retrieved_dt is not None and first_public <= retrieved_dt,
+                  f"{event_tag}.first_public_at_beijing 无效或晚于检索时点")
+        if first_public is not None and t_date is not None:
+            if phase == "as_of_t":
+                out.check(first_public.date() <= t_date,
+                          f"{event_tag} as_of_t 事件首次公开不得晚于T")
+            else:
+                out.check(first_public.date() > t_date,
+                          f"{event_tag} post_t_safety 事件首次公开必须晚于T")
+        out.check(bool(str(event.get("summary", "")).strip()), f"{event_tag}.summary 为空")
+        lanes = _string_list(event.get("discovery_lanes"))
+        families = _string_list(event.get("sector_families"))
+        out.check(bool(lanes) and set(lanes) <= set(MARKET_DISCOVERY_LANES),
+                  f"{event_tag}.discovery_lanes 无效")
+        out.check(bool(families) and set(families) <= set(MARKET_SECTOR_FAMILIES),
+                  f"{event_tag}.sector_families 无效")
+        mover_ids = _string_list(event.get("mover_ids"))
+        signal_ids = _string_list(event.get("signal_ids"))
+        out.check(bool(mover_ids), f"{event_tag}.mover_ids 不能为空")
+        out.check(bool(signal_ids) and set(signal_ids) <= set(signal_by_id),
+                  f"{event_tag}.signal_ids 必须引用已登记市场信号")
+        primary_refs = _string_list(event.get("primary_source_refs"))
+        corroborating_refs = _string_list(event.get("corroborating_source_refs"))
+        refs = list(dict.fromkeys(primary_refs + corroborating_refs))
+        out.check(bool(primary_refs) and set(refs) <= set(source_by_ref),
+                  f"{event_tag} 必须含有效主来源")
+        query_ids = _string_list(event.get("query_ids"))
+        out.check(bool(query_ids) and set(query_ids) <= set(query_by_id),
+                  f"{event_tag}.query_ids 无效")
+        discovery_source_refs.update(refs)
+        for ref in refs:
+            source = source_by_ref.get(ref) or {}
+            out.check(source.get("phase") == phase,
+                      f"{event_tag} 来源 phase 与事件不一致: {ref}")
+            source_url = str(source.get("access_url", ""))
+            out.check(any(source_url in _string_list((query_by_id.get(query_id) or {}).get(
+                "reviewed_urls")) for query_id in query_ids),
+                f"{event_tag} 来源未出现在关联查询 reviewed_urls: {ref}")
+        for query_id in query_ids:
+            out.check(event_id in _string_list((query_by_id.get(query_id) or {}).get(
+                "selected_event_ids")),
+                f"{event_tag}.query_ids 未双向选中 event_id: {query_id}")
+        chain = _string_list(event.get("transmission_chain"))
+        out.check(len(chain) >= 2, f"{event_tag}.transmission_chain 至少两步")
+        out.check(bool(_string_list(event.get("counter_evidence"))) and
+                  bool(_string_list(event.get("invalidators"))),
+                  f"{event_tag} 必须登记反证与失效条件")
+        out.check(set(_string_list(event.get("horizons"))) <= MARKET_SIGNAL_HORIZONS and
+                  bool(_string_list(event.get("horizons"))),
+                  f"{event_tag}.horizons 无效")
+        out.check(str(event.get("confidence", "")) in {"low", "medium", "high"},
+                  f"{event_tag}.confidence 无效")
+        disposition = str(event.get("disposition", ""))
+        call_ids = _string_list(event.get("sector_call_ids"))
+        out.check(disposition in MATERIAL_EVENT_DISPOSITIONS,
+                  f"{event_tag}.disposition 无效")
+        mappings = event.get("mapping_tiers") or []
+        out.check(isinstance(mappings, list), f"{event_tag}.mapping_tiers 必须是数组")
+        mapping_tiers: set[str] = set()
+        for map_idx, mapping in enumerate(mappings if isinstance(mappings, list) else []):
+            map_tag = f"{event_tag}.mapping_tiers[{map_idx}]"
+            out.check(isinstance(mapping, dict) and
+                      {"tier", "ashare_sectors", "reason"} <= set(mapping),
+                      f"{map_tag} 缺必需字段")
+            if not isinstance(mapping, dict):
+                continue
+            tier = str(mapping.get("tier", ""))
+            mapping_tiers.add(tier)
+            out.check(tier in MATERIAL_EVENT_MAPPING_TIERS, f"{map_tag}.tier 无效")
+            out.check(bool(_string_list(mapping.get("ashare_sectors"))) and
+                      bool(str(mapping.get("reason", "")).strip()),
+                      f"{map_tag} 必须写A股板块及映射依据")
+        if disposition == "linked":
+            out.check(bool(call_ids) and bool(mapping_tiers & {"direct", "supply_chain"}) and
+                      bool(str(event.get("ashare_theme", "")).strip()),
+                      f"{event_tag} linked 必须有板块调用及直接/产业链映射")
+        else:
+            out.check(not call_ids, f"{event_tag} {disposition} 不得夹带板块调用")
+
+        freshness = str(event.get("freshness", ""))
+        tradability = str(event.get("tradability_flag", ""))
+        out.check(freshness in MATERIAL_EVENT_FRESHNESS,
+                  f"{event_tag}.freshness 无效")
+        out.check(bool(str(event.get("freshness_reason", "")).strip()),
+                  f"{event_tag}.freshness_reason 为空")
+        out.check(tradability in MATERIAL_EVENT_TRADABILITY_FLAGS,
+                  f"{event_tag}.tradability_flag 无效")
+        absorption = event.get("ashare_absorption") or {}
+        absorption_required = {
+            "status", "first_reaction_date", "latest_confirmation_date", "evidence",
+            "source_refs", "query_ids", "decision",
+        }
+        out.check(isinstance(absorption, dict) and absorption_required <= set(absorption),
+                  f"{event_tag}.ashare_absorption 缺必需字段")
+        if isinstance(absorption, dict):
+            absorption_status = str(absorption.get("status", ""))
+            out.check(absorption_status in ASHARE_ABSORPTION_STATUSES,
+                      f"{event_tag}.ashare_absorption.status 无效")
+            first_reaction_raw = absorption.get("first_reaction_date")
+            latest_reaction_raw = absorption.get("latest_confirmation_date")
+            first_reaction = _date(first_reaction_raw) if first_reaction_raw not in (None, "") else None
+            latest_reaction = _date(latest_reaction_raw) if latest_reaction_raw not in (None, "") else None
+            if absorption_status in {"partially_priced", "priced_on_t", "priced_before_t", "stale"}:
+                out.check(first_reaction is not None and latest_reaction is not None,
+                          f"{event_tag} 已定价/stale 状态必须登记A股反应日期")
+            if absorption_status == "priced_on_t":
+                out.check(first_reaction == t_date or latest_reaction == t_date,
+                          f"{event_tag} priced_on_t 必须有T日A股反应")
+            if absorption_status in {"priced_before_t", "stale"}:
+                out.check(latest_reaction is not None and t_date is not None and latest_reaction < t_date,
+                          f"{event_tag} T前已兑现/stale 的最近确认日必须早于T")
+            absorption_refs = _string_list(absorption.get("source_refs"))
+            absorption_queries = _string_list(absorption.get("query_ids"))
+            out.check(set(absorption_refs) <= set(source_by_ref) and
+                      set(absorption_queries) <= set(query_by_id),
+                      f"{event_tag}.ashare_absorption 来源或查询无效")
+            if absorption_status not in {"new_unpriced", "unclear"}:
+                out.check(bool(absorption_refs) and bool(absorption_queries),
+                          f"{event_tag} 已定价判断必须有A股证据与查询")
+            out.check(bool(str(absorption.get("evidence", "")).strip()) and
+                      bool(str(absorption.get("decision", "")).strip()),
+                      f"{event_tag}.ashare_absorption 必须写证据和处置")
+            discovery_source_refs.update(absorption_refs)
+            expected_tradability = {
+                "new_unpriced": "fresh_catalyst",
+                "partially_priced": "continuation_watch",
+                "priced_on_t": "continuation_watch",
+                "priced_before_t": "already_priced",
+                "stale": "stale_excluded",
+                "unclear": "unresolved",
+            }.get(absorption_status)
+            out.check(tradability == expected_tradability,
+                      f"{event_tag}.tradability_flag 未按A股定价状态重算")
+            if absorption_status in {"priced_before_t", "stale"}:
+                out.check(disposition != "linked" and not call_ids,
+                          f"{event_tag} T前已兑现/stale 不得再生成板块受益调用")
+        if freshness == "stale":
+            out.check(tradability == "stale_excluded" and disposition != "linked",
+                      f"{event_tag} stale 事件必须排除交易映射")
+
+    for mover_id, mover in mover_by_id.items():
+        event_ids = set(_string_list(mover.get("event_ids")))
+        out.check(event_ids <= set(event_by_id), f"{mover_id}.event_ids 含孤立事件")
+        for event_id in event_ids:
+            out.check(mover_id in _string_list(event_by_id[event_id].get("mover_ids")),
+                      f"{mover_id} 与 {event_id} 未双向关联")
+    for event_id, event in event_by_id.items():
+        mover_ids = set(_string_list(event.get("mover_ids")))
+        out.check(mover_ids <= set(mover_by_id), f"{event_id}.mover_ids 含孤立异动")
+        first_public = _beijing_datetime(event.get("first_public_at_beijing"))
+        for mover_id in mover_ids:
+            out.check(event_id in _string_list(mover_by_id[mover_id].get("event_ids")),
+                      f"{event_id} 与 {mover_id} 未双向关联")
+            mover_observed = _beijing_datetime(mover_by_id[mover_id].get("observed_at_beijing"))
+            out.check(first_public is not None and mover_observed is not None and
+                      first_public <= mover_observed,
+                      f"{event_id} 首次公开时点晚于其所解释的异动 {mover_id}")
+
+    lanes = discovery.get("lanes") or {}
+    out.check(isinstance(lanes, dict) and set(lanes) == set(MARKET_DISCOVERY_LANES),
+              f"{tag}.lanes 必须精确覆盖五条发现路径")
+    for lane in MARKET_DISCOVERY_LANES:
+        item = lanes.get(lane) or {}
+        lane_tag = f"{tag}.lanes.{lane}"
+        out.check(isinstance(item, dict) and
+                  {"status", "query_ids", "mover_ids", "event_ids", "as_of_beijing", "reason"} <= set(item),
+                  f"{lane_tag} 缺必需字段")
+        if not isinstance(item, dict):
+            continue
+        status = str(item.get("status", ""))
+        query_ids = _string_list(item.get("query_ids"))
+        mover_ids = _string_list(item.get("mover_ids"))
+        event_ids = _string_list(item.get("event_ids"))
+        out.check(status in MARKET_DISCOVERY_STATUSES, f"{lane_tag}.status 无效")
+        out.check(bool(query_ids) and set(query_ids) <= set(query_by_id),
+                  f"{lane_tag}.query_ids 无效")
+        out.check(all(lane in _string_list((query_by_id.get(query_id) or {}).get(
+            "discovery_lanes")) for query_id in query_ids),
+            f"{lane_tag}.query_ids 未逐条声明本发现路径")
+        out.check(_beijing_datetime(item.get("as_of_beijing")) == retrieved_dt,
+                  f"{lane_tag}.as_of_beijing 必须等于检索完成时点")
+        out.check(bool(str(item.get("reason", "")).strip()), f"{lane_tag}.reason 为空")
+        expected_movers = {mid for mid, mover in mover_by_id.items() if mover.get("lane") == lane}
+        expected_events = {eid for eid, event in event_by_id.items()
+                           if lane in _string_list(event.get("discovery_lanes"))}
+        out.check(set(mover_ids) == expected_movers and set(event_ids) == expected_events,
+                  f"{lane_tag} 未完整承接本路径异动/事件")
+        if status == "hit":
+            out.check(bool(mover_ids or event_ids), f"{lane_tag} hit 但没有异动或事件")
+        else:
+            out.check(not mover_ids and not event_ids,
+                      f"{lane_tag} 非hit状态不得夹带异动或事件")
+        if status == "not_open":
+            out.check(lane == "asia_sector_tape", f"{lane_tag} 只有亚洲盘扫描可标 not_open")
+
+    family_coverage = discovery.get("sector_family_coverage") or {}
+    out.check(isinstance(family_coverage, dict) and
+              set(family_coverage) == set(MARKET_SECTOR_FAMILIES),
+              f"{tag}.sector_family_coverage 必须精确覆盖八个行业族")
+    for family in MARKET_SECTOR_FAMILIES:
+        item = family_coverage.get(family) or {}
+        family_tag = f"{tag}.sector_family_coverage.{family}"
+        out.check(isinstance(item, dict) and
+                  {"status", "query_ids", "mover_ids", "event_ids", "as_of_beijing", "reason"} <= set(item),
+                  f"{family_tag} 缺必需字段")
+        if not isinstance(item, dict):
+            continue
+        status = str(item.get("status", ""))
+        query_ids = _string_list(item.get("query_ids"))
+        mover_ids = _string_list(item.get("mover_ids"))
+        event_ids = _string_list(item.get("event_ids"))
+        expected_movers = {mid for mid, mover in mover_by_id.items()
+                           if mover.get("sector_family") == family}
+        expected_events = {eid for eid, event in event_by_id.items()
+                           if family in _string_list(event.get("sector_families"))}
+        out.check(status in MARKET_DISCOVERY_STATUSES, f"{family_tag}.status 无效")
+        out.check(bool(query_ids) and set(query_ids) <= set(query_by_id),
+                  f"{family_tag}.query_ids 无效")
+        out.check(all(family in _string_list((query_by_id.get(query_id) or {}).get(
+            "discovery_families")) for query_id in query_ids),
+            f"{family_tag}.query_ids 未逐条声明本行业族")
+        if status == "no_relevant_hit":
+            variants = {
+                str((query_by_id.get(query_id) or {}).get("query_text", "")).strip()
+                for query_id in query_ids
+            }
+            out.check(len(query_ids) >= 2 and len(variants) >= 2,
+                      f"{family_tag} no_relevant_hit 至少需要两种明确归属本行业族的查询")
+        out.check(_beijing_datetime(item.get("as_of_beijing")) == retrieved_dt,
+                  f"{family_tag}.as_of_beijing 必须等于检索完成时点")
+        out.check(bool(str(item.get("reason", "")).strip()), f"{family_tag}.reason 为空")
+        out.check(set(mover_ids) == expected_movers and set(event_ids) == expected_events,
+                  f"{family_tag} 未完整承接本行业族异动/事件")
+        if status == "hit":
+            out.check(bool(mover_ids or event_ids), f"{family_tag} hit 但无异动或事件")
+        else:
+            out.check(not mover_ids and not event_ids,
+                      f"{family_tag} 非hit状态不得夹带异动或事件")
+
+    us_lane = lanes.get("us_sector_tape") or {}
+    us_movers = [mover_by_id.get(mid) or {} for mid in _string_list(us_lane.get("mover_ids"))]
+    out.check(us_lane.get("status") == "hit" and any(
+        mover.get("sector_family") != "broad_market_style" and
+        bool(str(mover.get("benchmark", "")).strip()) for mover in us_movers
+    ), "Agent③ 美股发现层不得由宽基指数单独过关，必须含行业相对异动")
+    ashare_lane = lanes.get("ashare_t_day_sector_tape") or {}
+    ashare_movers = [mover_by_id.get(mid) or {}
+                     for mid in _string_list(ashare_lane.get("mover_ids"))]
+    out.check(ashare_lane.get("status") == "hit" and any(
+        _date(mover.get("market_session_date")) == t_date for mover in ashare_movers
+    ), "Agent③ 必须登记A股T日行业异动，不能只看海外或宽基")
+
+    unresolved_movers = {mid for mid, mover in mover_by_id.items()
+                         if mover.get("catalyst_status") == "unresolved"}
+    out.check(set(_string_list(discovery.get("unresolved_material_mover_ids"))) == unresolved_movers,
+              f"{tag}.unresolved_material_mover_ids 必须精确列出未归因异动")
+    unresolved_events = {eid for eid, event in event_by_id.items()
+                         if event.get("disposition") == "unresolved"}
+    out.check(set(_string_list(discovery.get("unmapped_material_event_ids"))) == unresolved_events,
+              f"{tag}.unmapped_material_event_ids 必须精确列出未映射事件")
+    return mover_by_id, event_by_id, discovery_source_refs
 
 
 def _validate_ashare_runtime_outlook(out: Result, value: Any, retrieved_dt: dt.datetime | None,
@@ -1314,7 +1735,7 @@ def _validate_ashare_runtime_outlook(out: Result, value: Any, retrieved_dt: dt.d
     if not isinstance(value, dict):
         return {}
     out.check(ASHARE_OUTLOOK_FIELDS <= set(value), f"{tag} 缺A股走势综合字段")
-    is_v3 = version == TOXIC_WARNING_V3
+    is_v3 = version in TOXIC_WARNING_MODERN_VERSIONS
     if is_v3:
         out.check(ASHARE_OUTLOOK_V3_FIELDS <= set(value), f"{tag} 缺v3分窗口/板块调用字段")
     forbidden = {"score_delta", "verdict", "position", "position_pct", "trade_action", "action"}
@@ -1796,16 +2217,18 @@ def validate_toxic_risk_warning(result_obj: dict[str, Any], document: dict[str, 
         "post_t_safety_items", "runtime_evaluation", "ashare_runtime_outlook", "clear_reason",
     }
     version = str(warning.get("version", ""))
-    if version == TOXIC_WARNING_V3:
+    if version in TOXIC_WARNING_MODERN_VERSIONS:
         required_fields |= {
             "market_signals", "predictive_input_coverage", "scheduled_event_expectations",
             "scheduled_event_reconciliations",
         }
+    if version == TOXIC_WARNING_V4:
+        required_fields.add("market_discovery")
     out.check(required_fields <= set(warning), "toxic_risk_warning 缺必需字段")
     out.check(version in TOXIC_WARNING_VERSIONS, "toxic_risk_warning.version 错误")
     if required:
-        out.check(version == TOXIC_WARNING_V3,
-                  "最终发布必须使用 bottom-toxic-risk-warning/v3")
+        out.check(version == TOXIC_WARNING_V4,
+                  "最终发布必须使用 bottom-toxic-risk-warning/v4")
     out.check(warning.get("mode") == "shadow", "Agent③ 目前只能使用 shadow 模式")
 
     t = str(result_obj.get("T", ""))
@@ -1860,7 +2283,7 @@ def validate_toxic_risk_warning(result_obj: dict[str, Any], document: dict[str, 
             "source_ref", "access_url", "publisher", "source_kind", "origin_id",
             "published_at", "phase",
         }
-        if version == TOXIC_WARNING_V3:
+        if version in TOXIC_WARNING_MODERN_VERSIONS:
             required_source_fields.add("published_at_beijing")
         out.check(required_source_fields <= set(source), f"{tag} 缺必需字段")
         ref = str(source.get("source_ref", ""))
@@ -1874,7 +2297,7 @@ def validate_toxic_risk_warning(result_obj: dict[str, Any], document: dict[str, 
         phase = str(source.get("phase", ""))
         published = _date(source.get("published_at"))
         out.check(phase in {"as_of_t", "post_t_safety"}, f"{tag}.phase 无效")
-        if version == TOXIC_WARNING_V3:
+        if version in TOXIC_WARNING_MODERN_VERSIONS:
             published_beijing = _beijing_datetime(source.get("published_at_beijing"))
             out.check(published is not None, f"{tag}.published_at 本地发布日期无效")
             out.check(published_beijing is not None and retrieved_dt is not None and
@@ -2023,7 +2446,7 @@ def validate_toxic_risk_warning(result_obj: dict[str, Any], document: dict[str, 
             "executed_at_beijing", "outcome", "reviewed_urls", "selected_warning_ids",
             "selected_delta_ids", "notes",
         }
-        if version == TOXIC_WARNING_V3:
+        if version in TOXIC_WARNING_MODERN_VERSIONS:
             required_query_fields.add("selected_signal_ids")
         out.check(required_query_fields <= set(query), f"{tag} 缺必需字段")
         query_id = str(query.get("query_id", ""))
@@ -2101,7 +2524,7 @@ def validate_toxic_risk_warning(result_obj: dict[str, Any], document: dict[str, 
                           for query_id in _string_list(item.get("query_ids"))),
                       f"{delta_id} 来源未出现在关联查询 reviewed_urls: {source_ref}")
 
-    if version == TOXIC_WARNING_V3:
+    if version in TOXIC_WARNING_MODERN_VERSIONS:
         _validate_scheduled_event_expectations(
             out, warning, warning_by_id, source_by_ref, query_by_id
         )
@@ -2159,10 +2582,15 @@ def validate_toxic_risk_warning(result_obj: dict[str, Any], document: dict[str, 
 
     signal_by_id = (_validate_market_signal_layer(
         out, warning, source_by_ref, query_by_id, t_date, retrieved_dt, retrieved_date
-    ) if version == TOXIC_WARNING_V3 else {})
+    ) if version in TOXIC_WARNING_MODERN_VERSIONS else {})
+    mover_by_id, material_event_by_id, discovery_source_refs = (
+        _validate_market_discovery(
+            out, warning, source_by_ref, query_by_id, signal_by_id, t_date, retrieved_dt
+        ) if version == TOXIC_WARNING_V4 else ({}, {}, set())
+    )
     reconciliation_by_event = (_validate_scheduled_event_reconciliations(
         out, warning, delta_by_id, signal_by_id, source_by_ref, query_by_id, retrieved_dt
-    ) if version == TOXIC_WARNING_V3 else {})
+    ) if version in TOXIC_WARNING_MODERN_VERSIONS else {})
 
     runtime_evaluation = warning.get("runtime_evaluation") or {}
     out.check(isinstance(runtime_evaluation, dict) and
@@ -2180,7 +2608,7 @@ def validate_toxic_risk_warning(result_obj: dict[str, Any], document: dict[str, 
             "status", "evaluated_at_beijing", "latest_source_published_at", "query_ids",
             "warning_ids", "delta_ids", "source_refs", "evaluation",
         }
-        if version == TOXIC_WARNING_V3:
+        if version in TOXIC_WARNING_MODERN_VERSIONS:
             required_runtime_fields.add("signal_ids")
         out.check(isinstance(item, dict) and required_runtime_fields <= set(item),
                   f"{tag} 缺必需字段")
@@ -2236,7 +2664,7 @@ def validate_toxic_risk_warning(result_obj: dict[str, Any], document: dict[str, 
                   f"{tag}.warning_ids 未完整承接本域 T 日 warning")
         out.check(set(delta_ids) == expected_delta_ids,
                   f"{tag}.delta_ids 未完整承接本域 T 后增量")
-        if version == TOXIC_WARNING_V3:
+        if version in TOXIC_WARNING_MODERN_VERSIONS:
             out.check(set(signal_ids) == expected_signal_ids,
                       f"{tag}.signal_ids 未完整承接本域预测输入")
         runtime_warning_ids.update(warning_ids)
@@ -2288,7 +2716,7 @@ def validate_toxic_risk_warning(result_obj: dict[str, Any], document: dict[str, 
               "Agent③ 每条 T 日 warning 都必须进入五域运行时点评估")
     out.check(runtime_delta_ids == set(delta_by_id),
               "Agent③ 每条 T 后增量都必须进入五域运行时点评估")
-    if version == TOXIC_WARNING_V3:
+    if version in TOXIC_WARNING_MODERN_VERSIONS:
         out.check(runtime_signal_ids == set(signal_by_id),
                   "Agent③ 每条预测输入都必须进入五域运行时点评估")
     item_source_refs = {
@@ -2298,14 +2726,33 @@ def validate_toxic_risk_warning(result_obj: dict[str, Any], document: dict[str, 
     signal_source_refs = {
         ref for item in signal_by_id.values() for ref in _string_list(item.get("source_refs"))
     }
-    out.check(item_source_refs | signal_source_refs | runtime_source_refs == set(source_by_ref),
-              "Agent③ sources 必须全部且仅由 warning/delta/signal/五域运行时点评估引用")
+    out.check(item_source_refs | signal_source_refs | runtime_source_refs |
+              discovery_source_refs == set(source_by_ref),
+              "Agent③ sources 必须全部且仅由 warning/delta/signal/市场发现/五域运行时点评估引用")
     call_by_id = _validate_ashare_runtime_outlook(
         out, warning.get("ashare_runtime_outlook"), retrieved_dt, runtime_source_refs,
         version, signal_by_id, candidate_industries, warning_by_id, delta_by_id,
         runtime_evaluation,
     )
-    if version == TOXIC_WARNING_V3:
+    if version == TOXIC_WARNING_V4:
+        for event_id, event in material_event_by_id.items():
+            event_tag = f"toxic_risk_warning.market_discovery.event_clusters[{event_id}]"
+            call_ids = set(_string_list(event.get("sector_call_ids")))
+            out.check(call_ids <= set(call_by_id),
+                      f"{event_tag}.sector_call_ids 含孤立板块调用")
+            for call_id in call_ids:
+                call = call_by_id.get(call_id) or {}
+                out.check(bool(set(_string_list(event.get("signal_ids"))) &
+                               set(_string_list(call.get("considered_signal_ids")))),
+                          f"{event_tag} 未通过共同信号承接 {call_id}")
+                out.check(bool(set(_string_list(event.get("primary_source_refs"))) &
+                               set(_string_list(call.get("source_refs")))),
+                          f"{event_tag} 主来源未进入 {call_id}")
+                if event.get("tradability_flag") == "continuation_watch":
+                    out.check(call.get("confidence") in {"low", "medium"} and
+                              bool(_string_list(call.get("invalidators"))),
+                              f"{event_tag} 已兑现后的延续观察不得标高置信且必须有失效条件")
+    if version in TOXIC_WARNING_MODERN_VERSIONS:
         outlook = warning.get("ashare_runtime_outlook") or {}
         risk_ledger = {
             str(item.get("item_id", "")): item
@@ -2342,7 +2789,7 @@ def validate_toxic_risk_warning(result_obj: dict[str, Any], document: dict[str, 
     for code, item in (by_code.items() if isinstance(by_code, dict) else []):
         tag = f"toxic_risk_warning.by_code.{code}"
         required_by_code_fields = {"exposure", "warning_ids", "post_t_delta_ids", "reason"}
-        if version == TOXIC_WARNING_V3:
+        if version in TOXIC_WARNING_MODERN_VERSIONS:
             required_by_code_fields.add("sector_context")
         out.check(isinstance(item, dict) and required_by_code_fields <= set(item),
                   f"{tag} 缺必需字段")
@@ -2370,7 +2817,7 @@ def validate_toxic_risk_warning(result_obj: dict[str, Any], document: dict[str, 
             out.check(bool(matches) and any(alert.get("level") == linked_levels.get(item_id) and
                                             alert.get("shadow") is True for alert in matches),
                       f"{tag} 未把 {item_id} 同步为个股 shadow alert")
-        if version == TOXIC_WARNING_V3:
+        if version in TOXIC_WARNING_MODERN_VERSIONS:
             contexts = item.get("sector_context") or []
             out.check(isinstance(contexts, list), f"{tag}.sector_context 必须是数组")
             seen_context_ids: set[str] = set()
@@ -2427,7 +2874,7 @@ def validate_toxic_risk_warning(result_obj: dict[str, Any], document: dict[str, 
         for code in _string_list(item.get("codes")):
             out.check(delta_id in _string_list((by_code.get(code) or {}).get("post_t_delta_ids")),
                       f"{delta_id}.codes 未双向回指 by_code.{code}")
-    if version == TOXIC_WARNING_V3:
+    if version in TOXIC_WARNING_MODERN_VERSIONS:
         for call_id, call in call_by_id.items():
             for code in _string_list(call.get("candidate_codes")):
                 contexts = (by_code.get(code) or {}).get("sector_context") or []
@@ -4008,7 +4455,7 @@ def validate_html(skill: str, obj: dict[str, Any], html_path: pathlib.Path, stri
             out.check(isinstance(toxic_warning, dict), "HTML 最终验收要求 Agent③ toxic_risk_warning")
             if isinstance(toxic_warning, dict):
                 toxic_version = str(toxic_warning.get("version", ""))
-                expected_toxic_version = (TOXIC_WARNING_V3
+                expected_toxic_version = (TOXIC_WARNING_V4
                                           if require_bottom_search else toxic_version)
                 out.check("Agent③ 毒月 Web 风险预警" in plain and
                           bool(expected_toxic_version) and expected_toxic_version in plain,
@@ -4031,7 +4478,7 @@ def validate_html(skill: str, obj: dict[str, Any], html_path: pathlib.Path, stri
                     if env_match and first_card:
                         out.check(env_match.end() <= outlook_pos < first_card.start(),
                                   "Agent③ A股走势映射必须放在顶部市况下、候选卡片前")
-                    if toxic_version == TOXIC_WARNING_V3:
+                    if toxic_version in TOXIC_WARNING_MODERN_VERSIONS:
                         out.check("data-agent3-sector-direction='beneficiary'" in raw and
                                   "data-agent3-sector-direction='pressure'" in raw,
                                   "HTML 顶部相对受益/承压必须渲染为独立 bullet 列表")
@@ -4164,6 +4611,83 @@ def validate_html(skill: str, obj: dict[str, Any], html_path: pathlib.Path, stri
                             for reason in call.get("reasons") or []:
                                 out.check(str(reason) in plain,
                                           f"HTML 缺 {call_id} 的可见原因")
+                        if toxic_version == TOXIC_WARNING_V4:
+                            discovery = toxic_warning.get("market_discovery") or {}
+                            discovery_block_start = raw.find(MARKET_DISCOVERY_START)
+                            discovery_block_end = raw.find(
+                                MARKET_DISCOVERY_END,
+                                discovery_block_start + len(MARKET_DISCOVERY_START),
+                            )
+                            discovery_block = (raw[discovery_block_start:discovery_block_end]
+                                               if discovery_block_start >= 0 and
+                                               discovery_block_end > discovery_block_start else "")
+                            discovery_plain = _plain_html(discovery_block)
+                            out.check(raw.count(MARKET_DISCOVERY_START) == 1 and
+                                      raw.count(MARKET_DISCOVERY_END) == 1 and
+                                      "全市场主线发现与事件归因" in discovery_plain and
+                                      "T日A股行业异动" in discovery_plain and
+                                      "海外行业与重大异动" in discovery_plain and
+                                      "事件新鲜度与A股定价状态" in discovery_plain,
+                                      "HTML 顶部缺全市场主线发现、事件归因或定价状态")
+                            out.check(str(toxic_warning.get("T", "")) in discovery_plain and
+                                      str(toxic_warning.get("cutoff_beijing", "")) in discovery_plain and
+                                      "A股信号交易日" in discovery_plain and
+                                      "T后按北京时间可得时点判断" in discovery_plain,
+                                      "HTML 全市场发现卡缺T的A股/北京时间口径或T日截止")
+                            for lane in MARKET_DISCOVERY_LANES:
+                                out.check(lane in plain, f"HTML 缺市场发现路径 {lane}")
+                            for family in MARKET_SECTOR_FAMILIES:
+                                out.check(family in plain, f"HTML 缺全行业覆盖族 {family}")
+                            for mover in discovery.get("material_movers") or []:
+                                mover_id = str(mover.get("mover_id", ""))
+                                mover_marker = f"data-agent3-mover-id='{mover_id}'"
+                                mover_start = discovery_block.find(mover_marker)
+                                mover_end = (discovery_block.find("</div>", mover_start)
+                                             if mover_start >= 0 else -1)
+                                mover_plain = _plain_html(
+                                    discovery_block[mover_start:mover_end]
+                                    if mover_start >= 0 and mover_end > mover_start else ""
+                                )
+                                out.check(mover_start >= 0 and
+                                          str(mover.get("performance_text", "")) in mover_plain and
+                                          str(mover.get("breadth_text", "")) in mover_plain and
+                                          str(mover.get("market_session_date", "")) in mover_plain and
+                                          str(mover.get("observed_at_beijing", "")) in mover_plain,
+                                          f"HTML 缺重大异动 {mover_id} 的表现、广度、原市场交易日或北京时间观测时点")
+                            for event in discovery.get("event_clusters") or []:
+                                event_id = str(event.get("event_id", ""))
+                                absorption = event.get("ashare_absorption") or {}
+                                event_marker = f"data-agent3-material-event-id='{event_id}'"
+                                event_start = discovery_block.find(event_marker)
+                                event_end = (discovery_block.find("</div>", event_start)
+                                             if event_start >= 0 else -1)
+                                event_plain = _plain_html(
+                                    discovery_block[event_start:event_end]
+                                    if event_start >= 0 and event_end > event_start else ""
+                                )
+                                reaction_dates_visible = all(
+                                    not value or str(value) in event_plain
+                                    for value in (
+                                        absorption.get("first_reaction_date"),
+                                        absorption.get("latest_confirmation_date"),
+                                    )
+                                )
+                                out.check(event_start >= 0 and
+                                          str(event.get("freshness", "")) in event_plain and
+                                          str(event.get("tradability_flag", "")) in event_plain and
+                                          str(event.get("phase", "")) in event_plain and
+                                          str(event.get("first_public_at_beijing", "")) in event_plain and
+                                          str(absorption.get("status", "")) in event_plain and
+                                          str(absorption.get("decision", "")) in event_plain and
+                                          reaction_dates_visible,
+                                          f"HTML 缺重大事件 {event_id} 的阶段、首次公开时间、新鲜度、A股反应日期、定价或处置")
+                                for ref in list(dict.fromkeys(
+                                        _string_list(event.get("primary_source_refs")) +
+                                        _string_list(event.get("corroborating_source_refs")) +
+                                        _string_list(absorption.get("source_refs")))):
+                                    url = str((source_lookup.get(ref) or {}).get("access_url", ""))
+                                    out.check(bool(url) and url in link_targets,
+                                              f"HTML 缺重大事件 {event_id} 来源 {ref}")
                         for code, mapping in (toxic_warning.get("by_code") or {}).items():
                             contexts = (mapping or {}).get("sector_context") or []
                             if not contexts:
@@ -4284,6 +4808,8 @@ AUDIT_START = "<!-- codex-audit-v1:start -->"
 AUDIT_END = "<!-- codex-audit-v1:end -->"
 ASHARE_OUTLOOK_START = "<!-- codex-agent3-ashare-outlook:start -->"
 ASHARE_OUTLOOK_END = "<!-- codex-agent3-ashare-outlook:end -->"
+MARKET_DISCOVERY_START = "<!-- codex-agent3-market-discovery:start -->"
+MARKET_DISCOVERY_END = "<!-- codex-agent3-market-discovery:end -->"
 SECTOR_CONTEXT_BLOCK_RE = re.compile(
     r"<!-- codex-agent3-sector-context:[^:]+:start -->.*?"
     r"<!-- codex-agent3-sector-context:[^:]+:end -->",
@@ -4339,6 +4865,8 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
     raw = re.sub(re.escape(AUDIT_START) + r".*?" + re.escape(AUDIT_END), "", raw, flags=re.S)
     raw = re.sub(re.escape(ASHARE_OUTLOOK_START) + r".*?" +
                  re.escape(ASHARE_OUTLOOK_END), "", raw, flags=re.S)
+    raw = re.sub(re.escape(MARKET_DISCOVERY_START) + r".*?" +
+                 re.escape(MARKET_DISCOVERY_END), "", raw, flags=re.S)
     raw = SECTOR_CONTEXT_BLOCK_RE.sub("", raw)
     raw = RULING_EVIDENCE_BLOCK_RE.sub("", raw)
 
@@ -4382,7 +4910,135 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
     ashare_outlook_audit_html = ""
     scheduled_events_top_html = ""
     scheduled_events_audit_html = ""
+    market_discovery_top_html = ""
+    market_discovery_audit_html = ""
     if skill == "bottom-fishing" and isinstance(toxic_warning, dict):
+        discovery = toxic_warning.get("market_discovery")
+        if toxic_warning.get("version") == TOXIC_WARNING_V4 and isinstance(discovery, dict):
+            ashare_movers = [
+                item for item in discovery.get("material_movers") or []
+                if isinstance(item, dict) and item.get("lane") == "ashare_t_day_sector_tape"
+            ]
+            overseas_movers = [
+                item for item in discovery.get("material_movers") or []
+                if isinstance(item, dict) and item.get("lane") != "ashare_t_day_sector_tape"
+            ]
+
+            def discovery_mover_cards(items: list[dict[str, Any]]) -> str:
+                if not items:
+                    return "<p style='margin:5px 0'>无达到重大性阈值的异动。</p>"
+                return "".join(
+                    f"<div data-agent3-mover-id='{esc(item.get('mover_id'))}' "
+                    "style='border:1px solid #bfdbfe;border-radius:6px;background:#fff;"
+                    "padding:7px;margin:5px 0;font-size:11.5px'>"
+                    f"<b>{esc(item.get('market'))}｜{esc(item.get('sector_name'))}｜"
+                    f"{esc(item.get('instrument'))}</b> [{esc(item.get('direction'))}]<br>"
+                    f"<b>原市场交易日：</b>{esc(item.get('market_session_date'))}；"
+                    f"<b>北京时间观测：</b>{esc(item.get('observed_at_beijing'))}<br>"
+                    f"<b>表现：</b>{esc(item.get('performance_text'))}；"
+                    f"<b>基准：</b>{esc(item.get('benchmark'))}<br>"
+                    f"<b>广度：</b>{esc(item.get('breadth_text'))}<br>"
+                    f"<b>归因：</b>{esc(item.get('catalyst_status'))}；"
+                    f"<b>重大性：</b>{esc(item.get('materiality_reason'))}<br>"
+                    f"<b>来源：</b>{toxic_source_links(item.get('source_refs'))}</div>"
+                    for item in items
+                )
+
+            event_cards = []
+            event_rows = []
+            for event in discovery.get("event_clusters") or []:
+                if not isinstance(event, dict):
+                    continue
+                absorption = event.get("ashare_absorption") or {}
+                mapping_text = "；".join(
+                    f"{mapping.get('tier')}→{','.join(str(x) for x in mapping.get('ashare_sectors') or [])}："
+                    f"{mapping.get('reason')}"
+                    for mapping in event.get("mapping_tiers") or [] if isinstance(mapping, dict)
+                ) or "无交易映射"
+                chain_text = " → ".join(str(x) for x in event.get("transmission_chain") or [])
+                sources_html = toxic_source_links(list(dict.fromkeys(
+                    _string_list(event.get("primary_source_refs")) +
+                    _string_list(event.get("corroborating_source_refs")) +
+                    _string_list(absorption.get("source_refs"))
+                )))
+                event_cards.append(
+                    f"<div data-agent3-material-event-id='{esc(event.get('event_id'))}' "
+                    "style='border:1px solid #f59e0b;border-radius:7px;background:#fffbeb;"
+                    "padding:8px;margin:6px 0;font-size:11.5px'>"
+                    f"<b>{esc(event.get('event_name'))}</b>｜{esc(event.get('event_type'))}<br>"
+                    f"<b>首次公开（北京时间）：</b>{esc(event.get('first_public_at_beijing'))}；"
+                    f"<b>阶段：</b>{esc(event.get('phase'))}（按北京时间相对T日截止判断）<br>"
+                    f"<b>事实：</b>{esc(event.get('summary'))}<br>"
+                    f"<b>事件新鲜度：</b>{esc(event.get('freshness'))}；"
+                    f"{esc(event.get('freshness_reason'))}<br>"
+                    f"<b>A股定价状态：</b>{esc(absorption.get('status'))}；"
+                    f"首次反应 {esc(absorption.get('first_reaction_date') or '—')}；"
+                    f"最近确认 {esc(absorption.get('latest_confirmation_date') or '—')}<br>"
+                    f"<b>交易标记：</b>{esc(event.get('tradability_flag'))}；"
+                    f"<b>处置：</b>{esc(absorption.get('decision'))}<br>"
+                    f"<b>传导：</b>{esc(chain_text)}<br><b>映射：</b>{esc(mapping_text)}<br>"
+                    f"<b>反证：</b>{esc('；'.join(str(x) for x in event.get('counter_evidence') or []))}<br>"
+                    f"<b>失效：</b>{esc('；'.join(str(x) for x in event.get('invalidators') or []))}<br>"
+                    f"<b>来源：</b>{sources_html}</div>"
+                )
+                event_rows.append(
+                    f"<tr><td>{esc(event.get('event_id'))}<br>{esc(event.get('event_name'))}<br>"
+                    f"首次公开（北京时间）：{esc(event.get('first_public_at_beijing'))}<br>"
+                    f"阶段：{esc(event.get('phase'))}</td>"
+                    f"<td>{esc(event.get('freshness'))}<br>{esc(event.get('tradability_flag'))}</td>"
+                    f"<td>{esc(absorption.get('status'))}<br>{esc(absorption.get('evidence'))}<br>"
+                    f"{esc(absorption.get('decision'))}</td><td>{esc(mapping_text)}</td>"
+                    f"<td>{esc(chain_text)}</td><td>{sources_html}</td></tr>"
+                )
+            market_discovery_top_html = (
+                MARKET_DISCOVERY_START
+                + "<div style='margin:8px 0;padding:9px;border:1px solid #60a5fa;"
+                  "border-radius:8px;background:#eff6ff;color:#1e3a8a'>"
+                  "<b style='font-size:14px'>全市场主线发现与事件归因</b>"
+                  f"<div style='font-size:11.5px;margin-top:4px'><b>时间口径：</b>"
+                  f"T={esc(toxic_warning.get('T'))}（A股信号交易日，按北京时间解释）；"
+                  f"T日截止={esc(toxic_warning.get('cutoff_beijing'))}。"
+                  "原市场交易日保留交易所会话日；T后按北京时间可得时点判断。</div>"
+                  "<div style='margin-top:7px'><b>T日A股行业异动</b>"
+                + discovery_mover_cards(ashare_movers) + "</div>"
+                  "<div style='margin-top:7px'><b>海外行业与重大异动</b>"
+                + discovery_mover_cards(overseas_movers) + "</div>"
+                  "<div style='margin-top:7px'><b>事件新鲜度与A股定价状态</b>"
+                + ("".join(event_cards) or "<p>无已归因事件簇。</p>") + "</div></div>"
+                + MARKET_DISCOVERY_END
+            )
+            lane_rows = "".join(
+                f"<tr><td>{esc(lane)}</td><td>{esc((item or {}).get('status'))}</td>"
+                f"<td>{esc('；'.join(str(x) for x in (item or {}).get('mover_ids') or []) or '无')}</td>"
+                f"<td>{esc('；'.join(str(x) for x in (item or {}).get('event_ids') or []) or '无')}</td>"
+                f"<td>{esc((item or {}).get('reason'))}</td></tr>"
+                for lane, item in (discovery.get("lanes") or {}).items()
+            )
+            family_rows = "".join(
+                f"<tr><td>{esc(family)}</td><td>{esc((item or {}).get('status'))}</td>"
+                f"<td>{esc('；'.join(str(x) for x in (item or {}).get('mover_ids') or []) or '无')}</td>"
+                f"<td>{esc('；'.join(str(x) for x in (item or {}).get('event_ids') or []) or '无')}</td>"
+                f"<td>{esc((item or {}).get('reason'))}</td></tr>"
+                for family, item in (discovery.get("sector_family_coverage") or {}).items()
+            )
+            market_discovery_audit_html = (
+                "<h4>全市场主线发现覆盖</h4>"
+                "<table><tr><th>发现路径</th><th>状态</th><th>异动</th><th>事件</th><th>结论</th></tr>"
+                + lane_rows + "</table>"
+                "<h4>全行业重大消息覆盖</h4>"
+                "<table><tr><th>行业族</th><th>状态</th><th>异动</th><th>事件</th><th>结论</th></tr>"
+                + family_rows + "</table>"
+                "<h4>重大异动归因台账</h4>"
+                + discovery_mover_cards(list(discovery.get("material_movers") or []))
+                + "<h4>跨市场事件簇、A股映射与定价状态</h4>"
+                  "<p><b>未归因重大异动：</b>"
+                + esc(len(_string_list(discovery.get("unresolved_material_mover_ids"))))
+                + "　<b>未映射重大事件：</b>"
+                + esc(len(_string_list(discovery.get("unmapped_material_event_ids"))))
+                + "</p><table><tr><th>事件</th><th>新鲜度/交易标记</th><th>A股定价/处置</th>"
+                  "<th>分层映射</th><th>传导链</th><th>来源</th></tr>"
+                + "".join(event_rows) + "</table>"
+            )
         warning_lookup = {
             str(item.get("warning_id", "")): item
             for item in toxic_warning.get("warnings") or []
@@ -4505,7 +5161,7 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
             next_days = outlook.get("next_1_5_sessions") or {}
             opening = outlook.get("opening_auction") or {}
             intraday = outlook.get("intraday_followthrough") or {}
-            is_v3 = toxic_warning.get("version") == TOXIC_WARNING_V3
+            is_v3 = toxic_warning.get("version") in TOXIC_WARNING_MODERN_VERSIONS
 
             def joined(name: str) -> str:
                 return "；".join(str(x) for x in outlook.get(name) or []) or "无"
@@ -4577,6 +5233,7 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
                   "Agent③ A股走势映射（运行时点 shadow）</div>"
                 + f"<div style='font-size:14px;margin-bottom:7px'><b>一句话：</b>"
                   f"{esc(outlook.get('plain_language_verdict'))}</div>"
+                + market_discovery_top_html
                 + scheduled_events_top_html
                 + "<table style='width:100%;border-collapse:collapse;font-size:12.5px;background:#fff'>"
                   "<tr><th style='border:1px solid #c4b5fd;padding:6px'>窗口</th>"
@@ -4862,6 +5519,7 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
             "不得继续引用；按真实连续5个市场交易日，严格10个毒月为57.2%，"
             "含2024-07边界月为55.3%。</p>"
             f"<p><b>clear边界：</b>{esc(toxic_warning.get('clear_reason') or '不适用')}</p>"
+            + market_discovery_audit_html
             + scheduled_events_audit_html
             + ashare_outlook_audit_html
             + "<table><tr><th>风险域</th><th>状态</th><th>查询</th><th>覆盖结论</th></tr>"
@@ -4882,7 +5540,7 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
                "<table><tr><th>风险项</th><th>类型</th><th>五域</th><th>处置</th>"
                "<th>承接板块调用</th><th>理由</th></tr>"
                + "".join(risk_disposition_rows) + "</table>"
-               if toxic_warning.get("version") == TOXIC_WARNING_V3 else "")
+               if toxic_warning.get("version") in TOXIC_WARNING_MODERN_VERSIONS else "")
             + "<h4>运行时点五域综合评估（最新公开信息；不倒灌 T 日裁定）</h4>"
             "<table><tr><th>风险域</th><th>状态</th><th>评估时点/最新来源</th><th>证据约束推断</th></tr>"
             + "".join(runtime_rows) + "</table>"
@@ -4930,7 +5588,7 @@ def augment_report(path: pathlib.Path, obj: dict[str, Any], skill: str) -> Resul
         + AUDIT_END
     )
     if (skill == "bottom-fishing" and isinstance(toxic_warning, dict) and
-            toxic_warning.get("version") == TOXIC_WARNING_V3):
+            toxic_warning.get("version") in TOXIC_WARNING_MODERN_VERSIONS):
         call_by_id = {
             str(call.get("call_id", "")): call
             for call in ((toxic_warning.get("ashare_runtime_outlook") or {}).get("sector_calls") or [])
@@ -5241,6 +5899,17 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
         "published_at_beijing": f"{signal_beijing_date} 08:30:00+08:00",
         "phase": signal_phase,
     })
+    ashare_signal_url = "https://example.com/ashare-sector-tape"
+    sources.append({
+        "source_ref": "toxic-source-ashare-signal",
+        "access_url": ashare_signal_url,
+        "publisher": "境内交易所",
+        "source_kind": "official_direct",
+        "origin_id": "toxic-origin-ashare-signal",
+        "published_at": t,
+        "published_at_beijing": f"{t} 09:30:00+08:00",
+        "phase": "as_of_t",
+    })
     warnings = ([{
         "warning_id": warning_id,
         "level": "med",
@@ -5434,11 +6103,35 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
         "selected_warning_ids": [],
         "selected_delta_ids": [],
         "selected_signal_ids": ["market-signal-001"],
+        "selected_mover_ids": ["mover-us-sector-001", "mover-global-001"],
+        "selected_event_ids": [],
         "notes": "采用最新完成交易时段的行业相对信号",
+    })
+    ashare_signal_query_id = "toxic-q-ashare-t-sector-signal"
+    queries.append({
+        "query_id": ashare_signal_query_id,
+        "domain": "domestic_regulatory_liquidity",
+        "phase": "as_of_t",
+        "query_text": "A股T日行业涨跌幅 成交广度 重大事件归因",
+        "date_from": t,
+        "date_to": t,
+        "executed_at_beijing": executed,
+        "outcome": "selected",
+        "reviewed_urls": [ashare_signal_url],
+        "selected_warning_ids": [],
+        "selected_delta_ids": [],
+        "selected_signal_ids": ["market-signal-ashare-001"],
+        "selected_mover_ids": ["mover-ashare-t-001"],
+        "selected_event_ids": ["material-event-001"],
+        "notes": "采用A股T日行业异动并核对首次反应与定价状态",
     })
     source_lookup = {str(item["source_ref"]): item for item in sources}
     warning_lookup = {str(item["warning_id"]): item for item in warnings}
     delta_lookup = {str(item["delta_id"]): item for item in post_items}
+    fixture_signal_sources = {
+        "market-signal-001": ["toxic-source-market-signal"],
+        "market-signal-ashare-001": ["toxic-source-ashare-signal"],
+    }
     runtime_evaluation: dict[str, dict[str, Any]] = {}
     for domain in TOXIC_WARNING_DOMAINS:
         domain_queries = [item for item in queries if item.get("domain") == domain]
@@ -5456,9 +6149,9 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
         refs = list(dict.fromkeys(
             ref
             for item_id in warning_ids + delta_ids + signal_ids
-            for ref in ((warning_lookup.get(item_id) or delta_lookup.get(item_id) or {}).get(
-                "source_refs", []) if item_id != "market-signal-001" else
-                ["toxic-source-market-signal"])
+            for ref in (fixture_signal_sources.get(item_id) or
+                        (warning_lookup.get(item_id) or delta_lookup.get(item_id) or {}).get(
+                            "source_refs", []))
         ))
         if domain == "scheduled_macro_policy" and "toxic-source-scheduled" not in refs:
             refs.append("toxic-source-scheduled")
@@ -5500,6 +6193,24 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
         "query_ids": [signal_query_id],
         "freshness": "fresh",
         "summary": "海外行业相对强势可作为A股同链条开盘映射输入",
+    }, {
+        "signal_id": "market-signal-ashare-001",
+        "coverage_category": "domestic_policy_industry",
+        "family": "domestic_policy_industry",
+        "phase": "as_of_t",
+        "observed_at_beijing": f"{t} 09:30:00+08:00",
+        "market_session_date": t,
+        "instrument": "测试A股行业指数",
+        "direction": "positive",
+        "value_text": "测试A股行业T日相对宽基明显走强并出现板块广度",
+        "benchmark": "测试A股宽基指数",
+        "surprise": "行业相对收益和上涨家数显著高于宽基",
+        "shock_type": "policy",
+        "horizons": ["intraday_followthrough", "next_1_5_sessions"],
+        "source_refs": ["toxic-source-ashare-signal"],
+        "query_ids": [ashare_signal_query_id],
+        "freshness": "fresh",
+        "summary": "A股T日行业异动确认海外事件已在境内市场兑现，次日仅作延续观察",
     }]
     if signal_is_post:
         category_query_map = {
@@ -5537,7 +6248,14 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
             for category, query_id in category_query_map.items()
         },
     }
-    sector_reason = "海外同链条相对当地宽基走强；主要映射开盘，盘中需防回吐"
+    predictive_input_coverage["domestic_policy_industry"] = {
+        "status": "hit", "signal_ids": ["market-signal-ashare-001"],
+        "query_ids": list(dict.fromkeys([
+            ashare_signal_query_id, category_query_map["domestic_policy_industry"],
+        ])), "as_of_beijing": executed,
+        "reason": "已取得A股T日行业相对异动、板块广度与事件定价状态",
+    }
+    sector_reason = "海外同链条走强且A股T日已有板块广度；次日只作延续观察，需防兑现回吐"
     sector_calls = [{
         "call_id": "sector-call-001",
         "direction": "beneficiary",
@@ -5546,15 +6264,16 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
         "industry_matches": ["测试行业"],
         "horizon": "opening_auction",
         "reasons": [sector_reason],
-        "driver_signal_ids": ["market-signal-001"],
+        "driver_signal_ids": ["market-signal-001", "market-signal-ashare-001"],
         "opposing_signal_ids": [],
-        "considered_signal_ids": ["market-signal-001"],
-        "considered_domain_ids": (["scheduled_macro_policy", "cross_asset_stress"]
-                                  if has_post_delta else ["cross_asset_stress"]),
-        "dominant_driver": "最新完成海外交易时段的同行业相对强势",
+        "considered_signal_ids": ["market-signal-001", "market-signal-ashare-001"],
+        "considered_domain_ids": (["scheduled_macro_policy", "domestic_regulatory_liquidity",
+                                   "cross_asset_stress"] if has_post_delta else
+                                  ["domestic_regulatory_liquidity", "cross_asset_stress"]),
+        "dominant_driver": "海外同行业相对强势与A股T日板块反应共同确认，但已经部分兑现",
         "confidence": "medium",
         "invalidators": ["A股竞价未跟随且开盘后行业相对收益迅速转负"],
-        "source_refs": ["toxic-source-market-signal"],
+        "source_refs": ["toxic-source-market-signal", "toxic-source-ashare-signal"],
         "candidate_codes": list(codes),
         "shadow": True,
     }]
@@ -5573,11 +6292,11 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
             "considered_delta_ids": [scheduled_delta_id] if has_post_delta else [],
         },
         "domestic_regulatory_liquidity": {
-            "direction": "neutral",
-            "mechanism": "A股暂未出现国内监管或流动性失序信号，系统性下跌缺少本域催化。",
-            "sector_disposition": "neutral",
-            "sector_call_ids": [],
-            "sector_reason": "本域没有新鲜方向信号，不生成板块调用。",
+            "direction": "positive",
+            "mechanism": "A股T日行业异动与板块广度确认相关事件已经被境内市场定价，次日只观察延续。",
+            "sector_disposition": "linked",
+            "sector_call_ids": ["sector-call-001"],
+            "sector_reason": "A股T日行业信号直接承接测试行业延续观察，并显式标注兑现风险。",
             "considered_warning_ids": [],
             "considered_delta_ids": [],
         },
@@ -5646,6 +6365,12 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
             "sector_call_ids": ["sector-call-001"],
             "mediated_by_signal_ids": [],
             "reason": "最新海外同行业相对强势直接进入测试行业开盘受益调用。",
+        }, {
+            "signal_id": "market-signal-ashare-001",
+            "disposition": "direct_driver",
+            "sector_call_ids": ["sector-call-001"],
+            "mediated_by_signal_ids": [],
+            "reason": "A股T日行业异动确认事件已被定价，进入次日延续观察并约束追高风险。",
         }],
         "risk_item_disposition_ledger": ([
             {"item_id": warning_id, "item_kind": "warning",
@@ -5676,8 +6401,142 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
                                    "A股更像区间震荡，五域信息暂不支持明确偏强或偏弱。"),
         "inference_boundary": "仅作shadow影子走势推断，不改分数、裁定、仓位或熔断；与T日裁定隔离，不倒灌。",
     }
+    market_discovery = {
+        "version": MARKET_DISCOVERY_VERSION,
+        "evaluated_at_beijing": executed,
+        "lanes": {
+            "us_sector_tape": {
+                "status": "hit", "query_ids": [signal_query_id],
+                "mover_ids": ["mover-us-sector-001"], "event_ids": ["material-event-001"],
+                "as_of_beijing": executed, "reason": "已比较美股行业与宽基相对收益。",
+            },
+            "global_movers": {
+                "status": "hit", "query_ids": [signal_query_id],
+                "mover_ids": ["mover-global-001"], "event_ids": ["material-event-001"],
+                "as_of_beijing": executed, "reason": "已扫描全球重大单股与同业异动。",
+            },
+            "ashare_t_day_sector_tape": {
+                "status": "hit", "query_ids": [ashare_signal_query_id],
+                "mover_ids": ["mover-ashare-t-001"], "event_ids": ["material-event-001"],
+                "as_of_beijing": executed, "reason": "已扫描A股T日行业涨跌、广度及领涨结构。",
+            },
+            "asia_sector_tape": {
+                "status": "not_open", "query_ids": [category_query_map["asia_equity_peers"]],
+                "mover_ids": [], "event_ids": [], "as_of_beijing": executed,
+                "reason": "评估时点亚洲当日市场尚未形成可用开盘快照。",
+            },
+            "event_first_scan": {
+                "status": "hit", "query_ids": [ashare_signal_query_id],
+                "mover_ids": [], "event_ids": ["material-event-001"],
+                "as_of_beijing": executed, "reason": "重大事件检索已与价格异动归因台账汇合。",
+            },
+        },
+        "sector_family_coverage": {
+            family: {
+                "status": "hit" if family == "healthcare_biotech" else "no_relevant_hit",
+                "query_ids": ([ashare_signal_query_id, signal_query_id]
+                              if family == "healthcare_biotech" else
+                              list(dict.fromkeys([
+                                  category_query_map.get("global_peer_events") or signal_query_id,
+                                  category_query_map.get("china_linked_assets") or signal_query_id,
+                              ]))),
+                "mover_ids": (["mover-us-sector-001", "mover-global-001", "mover-ashare-t-001"]
+                              if family == "healthcare_biotech" else []),
+                "event_ids": ["material-event-001"] if family == "healthcare_biotech" else [],
+                "as_of_beijing": executed,
+                "reason": ("测试医疗生科行业族出现达到阈值的重大异动与事件。"
+                           if family == "healthcare_biotech" else
+                           "该行业族已完成价格优先与事件优先扫描，未发现达到重大性阈值的新增异动。"),
+            }
+            for family in MARKET_SECTOR_FAMILIES
+        },
+        "material_movers": [{
+            "mover_id": "mover-us-sector-001", "lane": "us_sector_tape", "market": "US",
+            "market_session_date": t,
+            "observed_at_beijing": f"{signal_beijing_date} 09:00:00+08:00",
+            "instrument": "测试海外行业指数", "sector_family": "healthcare_biotech",
+            "sector_name": "测试生物科技", "direction": "positive",
+            "performance_text": "行业相对当地宽基显著走强",
+            "benchmark": "测试海外宽基指数", "breadth_text": "同业多数上涨，非单一股票脉冲",
+            "catalyst_status": "attributed", "event_ids": ["material-event-001"],
+            "signal_ids": ["market-signal-001"], "source_refs": ["toxic-source-market-signal"],
+            "query_ids": [signal_query_id], "materiality_reason": "行业相对收益与广度达到重大异动阈值。",
+        }, {
+            "mover_id": "mover-global-001", "lane": "global_movers", "market": "US",
+            "market_session_date": t,
+            "observed_at_beijing": f"{signal_beijing_date} 09:00:00+08:00",
+            "instrument": "测试全球同业龙头", "sector_family": "healthcare_biotech",
+            "sector_name": "测试生物科技", "direction": "positive",
+            "performance_text": "龙头单日异动并带动同业和行业ETF",
+            "benchmark": "测试海外宽基指数", "breadth_text": "龙头、同业及行业ETF同步走强",
+            "catalyst_status": "attributed", "event_ids": ["material-event-001"],
+            "signal_ids": ["market-signal-001"], "source_refs": ["toxic-source-market-signal"],
+            "query_ids": [signal_query_id], "materiality_reason": "单股、同业与ETF共振，排除宽基噪声。",
+        }, {
+            "mover_id": "mover-ashare-t-001", "lane": "ashare_t_day_sector_tape", "market": "CN",
+            "market_session_date": t, "observed_at_beijing": f"{t} 09:30:00+08:00",
+            "instrument": "测试A股行业指数", "sector_family": "healthcare_biotech",
+            "sector_name": "测试生物科技", "direction": "positive",
+            "performance_text": "A股T日行业相对宽基显著走强",
+            "benchmark": "测试A股宽基指数", "breadth_text": "板块上涨家数和领涨股数量同步扩散",
+            "catalyst_status": "attributed", "event_ids": ["material-event-001"],
+            "signal_ids": ["market-signal-ashare-001"],
+            "source_refs": ["toxic-source-ashare-signal"], "query_ids": [ashare_signal_query_id],
+            "materiality_reason": "T日行业相对收益、广度和领涨结构共同达到阈值。",
+        }],
+        "event_clusters": [{
+            "event_id": "material-event-001", "event_name": "测试跨市场行业重大事件",
+            "event_type": "clinical_trial", "phase": "as_of_t",
+            "first_public_at_beijing": f"{t} 08:00:00+08:00",
+            "summary": "测试事件先引发海外同行业异动，并在A股T日出现行业广度确认。",
+            "discovery_lanes": ["us_sector_tape", "global_movers",
+                                "ashare_t_day_sector_tape", "event_first_scan"],
+            "sector_families": ["healthcare_biotech"],
+            "mover_ids": ["mover-us-sector-001", "mover-global-001", "mover-ashare-t-001"],
+            "signal_ids": ["market-signal-001", "market-signal-ashare-001"],
+            "primary_source_refs": ["toxic-source-ashare-signal"],
+            "corroborating_source_refs": [], "query_ids": [ashare_signal_query_id],
+            "ashare_theme": "测试生物科技", "transmission_chain": [
+                "重大事件改变行业技术或盈利预期", "海外龙头与行业ETF形成价格确认",
+                "A股同链条出现T日行业广度", "次日只观察延续与回吐风险",
+            ],
+            "mapping_tiers": [{
+                "tier": "direct", "ashare_sectors": ["测试生物科技"],
+                "reason": "A股同行业T日已出现相对收益和板块广度确认。",
+            }],
+            "horizons": ["intraday_followthrough", "next_1_5_sessions"],
+            "confidence": "medium", "counter_evidence": ["A股T日涨幅可能已透支短期预期"],
+            "invalidators": ["次日竞价无承接且行业相对收益转负"],
+            "disposition": "linked", "sector_call_ids": ["sector-call-001"],
+            "freshness": "fresh", "freshness_reason": "事件与跨市场价格反应均在当前观察窗内。",
+            "ashare_absorption": {
+                "status": "priced_on_t", "first_reaction_date": t,
+                "latest_confirmation_date": t,
+                "evidence": "A股T日行业相对涨幅与板块广度已确认事件被市场定价。",
+                "source_refs": ["toxic-source-ashare-signal"],
+                "query_ids": [ashare_signal_query_id],
+                "decision": "不得当成全新催化；仅保留次日延续观察并提示追高回吐风险。",
+            },
+            "tradability_flag": "continuation_watch",
+        }],
+        "unresolved_material_mover_ids": [],
+        "unmapped_material_event_ids": [],
+    }
+    fixture_query_by_id = {str(item.get("query_id", "")): item for item in queries}
+    for lane, item in market_discovery["lanes"].items():
+        for query_id in item["query_ids"]:
+            query = fixture_query_by_id[query_id]
+            query["discovery_lanes"] = list(dict.fromkeys(
+                list(query.get("discovery_lanes") or []) + [lane]
+            ))
+    for family, item in market_discovery["sector_family_coverage"].items():
+        for query_id in item["query_ids"]:
+            query = fixture_query_by_id[query_id]
+            query["discovery_families"] = list(dict.fromkeys(
+                list(query.get("discovery_families") or []) + [family]
+            ))
     toxic = {
-        "version": TOXIC_WARNING_V3,
+        "version": TOXIC_WARNING_V4,
         "T": t,
         "cutoff_beijing": f"{t} 23:59:59+08:00",
         "retrieved_at_beijing": executed,
@@ -5797,6 +6656,7 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
         }] if active else []),
         "market_signals": market_signals,
         "predictive_input_coverage": predictive_input_coverage,
+        "market_discovery": market_discovery,
         "by_code": {
             code: {"exposure": "watch" if active else "none",
                    "warning_ids": [warning_id] if active else [],
@@ -5808,7 +6668,7 @@ def _test_toxic_warning(t: str, retrieved: str, codes: list[str],
                        "direction": "beneficiary",
                        "relevance": "direct",
                        "reason": "候选所属行业与板块调用直接匹配，承接海外同行业开盘映射。",
-                       "source_refs": ["toxic-source-market-signal"],
+                       "source_refs": ["toxic-source-market-signal", "toxic-source-ashare-signal"],
                        "invalidators": ["候选开盘相对所属行业明显走弱"],
                    }]}
             for code in codes
@@ -6115,6 +6975,41 @@ def strict_self_test() -> Result:
         out.merge(validate_html("bottom-fishing", combined_search, warning_html_path, strict=True,
                                 require_bottom_search=True))
 
+        rendered_warning_html = warning_html_path.read_text(encoding="utf-8")
+        first_mover = combined_search["codex_audit"]["toxic_risk_warning"]["market_discovery"][
+            "material_movers"
+        ][0]
+        missing_mover_time_path = pathlib.Path(tmp) / "bottom_missing_mover_time.html"
+        missing_mover_time_path.write_text(
+            rendered_warning_html.replace(
+                f"<b>北京时间观测：</b>{html.escape(str(first_mover['observed_at_beijing']))}",
+                "<b>北京时间观测：</b>",
+                1,
+            ),
+            encoding="utf-8",
+        )
+        out.check(not validate_html(
+            "bottom-fishing", combined_search, missing_mover_time_path, strict=True,
+            require_bottom_search=True,
+        ).passed, "严格负例失效: HTML 异动卡缺北京时间观测仍被放行")
+
+        first_event = combined_search["codex_audit"]["toxic_risk_warning"]["market_discovery"][
+            "event_clusters"
+        ][0]
+        missing_event_time_path = pathlib.Path(tmp) / "bottom_missing_event_time.html"
+        missing_event_time_path.write_text(
+            rendered_warning_html.replace(
+                f"<b>首次公开（北京时间）：</b>{html.escape(str(first_event['first_public_at_beijing']))}",
+                "<b>首次公开（北京时间）：</b>",
+                1,
+            ),
+            encoding="utf-8",
+        )
+        out.check(not validate_html(
+            "bottom-fishing", combined_search, missing_event_time_path, strict=True,
+            require_bottom_search=True,
+        ).passed, "严格负例失效: HTML 事件卡缺首次公开北京时间仍被放行")
+
     bad_search = copy.deepcopy(search_audit_doc)
     del bad_search["codex_audit"]["toxic_risk_warning"]
     out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
@@ -6307,6 +7202,66 @@ def strict_self_test() -> Result:
     coverage_item["query_ids"] = ["toxic-q-scheduled-macro-policy-1"]
     out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
               "严格负例失效: Agent③ 预测输入类别未扫到实际运行日未被拦截")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    del bad_search["codex_audit"]["toxic_risk_warning"]["market_discovery"]
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: Agent③ 缺全市场主线发现层仍被放行")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    discovery = bad_search["codex_audit"]["toxic_risk_warning"]["market_discovery"]
+    us_mover = next(item for item in discovery["material_movers"]
+                    if item["mover_id"] == "mover-us-sector-001")
+    us_mover["sector_family"] = "broad_market_style"
+    discovery["sector_family_coverage"]["healthcare_biotech"]["mover_ids"].remove(
+        "mover-us-sector-001")
+    broad_coverage = discovery["sector_family_coverage"]["broad_market_style"]
+    broad_coverage.update({
+        "status": "hit", "mover_ids": ["mover-us-sector-001"],
+        "reason": "负例把美股行业异动伪装成只剩宽基。",
+    })
+    checked = validate_bottom_search(search_result, bad_search, required=True)
+    out.check(not checked.passed and any("宽基指数单独过关" in message
+                                         for message in checked.errors),
+              "严格负例失效: 美股发现层仅宽基指数仍被放行")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    ashare_lane = bad_search["codex_audit"]["toxic_risk_warning"]["market_discovery"][
+        "lanes"]["ashare_t_day_sector_tape"]
+    ashare_lane.update({"status": "no_relevant_hit", "mover_ids": [], "event_ids": []})
+    checked = validate_bottom_search(search_result, bad_search, required=True)
+    out.check(not checked.passed and any("A股T日行业异动" in message
+                                         for message in checked.errors),
+              "严格负例失效: Agent③ 漏A股T日行业异动仍被放行")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    discovery = bad_search["codex_audit"]["toxic_risk_warning"]["market_discovery"]
+    discovery["material_movers"][0]["event_ids"] = []
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: 已归因重大异动脱离事件簇仍被放行")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    event = bad_search["codex_audit"]["toxic_risk_warning"]["market_discovery"][
+        "event_clusters"][0]
+    event.pop("ashare_absorption")
+    out.check(not validate_bottom_search(search_result, bad_search, required=True).passed,
+              "严格负例失效: 重大事件缺A股定价状态仍被放行")
+
+    bad_search = copy.deepcopy(search_audit_doc)
+    event = bad_search["codex_audit"]["toxic_risk_warning"]["market_discovery"][
+        "event_clusters"][0]
+    old_date = str(_date(search_result["T"]) - dt.timedelta(days=1))
+    event["freshness"] = "stale"
+    event["freshness_reason"] = "负例：事件和A股反应均已过时。"
+    event["ashare_absorption"].update({
+        "status": "stale", "first_reaction_date": old_date,
+        "latest_confirmation_date": old_date,
+        "decision": "旧消息必须排除，不得继续生成受益调用。",
+    })
+    event["tradability_flag"] = "stale_excluded"
+    checked = validate_bottom_search(search_result, bad_search, required=True)
+    out.check(not checked.passed and any("stale" in message for message in checked.errors),
+              "严格负例失效: stale/T前已兑现事件仍生成板块调用")
 
     bad_search = copy.deepcopy(search_audit_doc)
     call = bad_search["codex_audit"]["toxic_risk_warning"]["ashare_runtime_outlook"][
