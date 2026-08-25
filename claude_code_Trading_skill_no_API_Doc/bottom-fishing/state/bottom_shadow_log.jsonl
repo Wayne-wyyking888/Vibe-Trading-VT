@@ -110,3 +110,5 @@
 {"T": "2026-08-19", "code": "300724", "name": "捷佳伟创", "close": 59.41, "score": 20.7, "atr": 3.83, "def_days": 1, "idx_rsv": 41.3, "volx": 1.96, "dd250": -60.7, "cooldown": false, "outcome": null, "judge": "✗"}
 {"T": "2026-08-19", "code": "000066", "name": "中国长城", "close": 14.28, "score": 20.7, "atr": 4.06, "def_days": 1, "idx_rsv": 41.3, "volx": 0.98, "dd250": -44.5, "cooldown": true, "outcome": null}
 {"T": "2026-08-20", "code": "000066", "name": "中国长城", "close": 14.15, "score": 20.7, "atr": 3.84, "def_days": 2, "idx_rsv": 46.0, "volx": 0.56, "dd250": -45.0, "cooldown": true, "outcome": null}
+{"T": "2026-08-24", "code": "600888", "name": "新疆众和", "close": 10.53, "score": 25.7, "atr": 3.9, "def_days": 4, "idx_rsv": 15.9, "volx": 1.48, "dd250": -39.1, "cooldown": false, "outcome": null, "judge": "✓"}
+{"T": "2026-08-24", "code": "600909", "name": "华安证券", "close": 8.19, "score": 20.5, "atr": 3.45, "def_days": 4, "idx_rsv": 15.9, "volx": 0.82, "dd250": -36.2, "cooldown": false, "outcome": null, "judge": "✓"}

@@ -590,6 +590,7 @@ def _etf_section(code: str, payload: dict[str, Any], html_top: int) -> str:
         else ""
     )
     source_url = html.escape(str(payload.get("source_url") or ""), quote=True)
+    source_link = f"<a href='{source_url}'>持仓来源</a>" if source_url else "持仓来源不可链接"
     all_etfs = list(payload.get("all_etfs") or [])
     ranked = list(payload.get("ranked") or [])
     if not all_etfs:
@@ -597,7 +598,7 @@ def _etf_section(code: str, payload: dict[str, Any], html_top: int) -> str:
             f"{start}<div class=etf-box data-bottom-etf-code='{code}'>"
             "<b>ETF持仓与走势相似度</b>"
             f"<div class=etf-note>{report_name}（{report_date}）未识别到场内ETF公开持仓；"
-            "这不等于实时零持仓。基金定期披露，不参与股票推荐。</div></div>"
+            f"这不等于实时零持仓。{source_link}；基金定期披露，不参与股票推荐。</div></div>"
             f"{end}"
         )
 
@@ -622,7 +623,6 @@ def _etf_section(code: str, payload: dict[str, Any], html_top: int) -> str:
         f"按该股占ETF净值比例先取{payload.get('similarity_universe_count', 0)}只计算；"
         f"成功{payload.get('similarity_success_count', 0)}只"
     )
-    source_link = f"<a href='{source_url}'>持仓来源</a>" if source_url else "持仓来源不可链接"
     return (
         f"{start}<div class=etf-box data-bottom-etf-code='{code}'>"
         "<div class=etf-title>ETF持仓与走势相似度 <span>仅信息展示·不改推荐</span></div>"
