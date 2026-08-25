@@ -1,54 +1,7 @@
 {
   "version": "codex-price-verification/v1",
   "skill": "bottom-fishing",
-  "as_of": "2026-08-24",
-  "retrieved_at_beijing": "2026-08-25T07:50:20+08:00",
-  "price_verification_by_code": {
-    "600888": {
-      "as_of": "2026-08-24",
-      "sources": {
-        "东方财富": {
-          "date": null,
-          "price": null
-        },
-        "腾讯": {
-          "date": "2026-08-24",
-          "price": 10.53
-        },
-        "新浪": {
-          "date": "2026-08-24",
-          "price": 10.53
-        }
-      },
-      "usable_sources": {
-        "腾讯": 10.53,
-        "新浪": 10.53
-      },
-      "max_dev_pct": 0.0,
-      "status": "verified"
-    },
-    "600909": {
-      "as_of": "2026-08-24",
-      "sources": {
-        "东方财富": {
-          "date": null,
-          "price": null
-        },
-        "腾讯": {
-          "date": "2026-08-24",
-          "price": 8.19
-        },
-        "新浪": {
-          "date": "2026-08-24",
-          "price": 8.19
-        }
-      },
-      "usable_sources": {
-        "腾讯": 8.19,
-        "新浪": 8.19
-      },
-      "max_dev_pct": 0.0,
-      "status": "verified"
-    }
-  }
+  "as_of": "2026-08-25",
+  "retrieved_at_beijing": "2026-08-26T05:27:54+08:00",
+  "price_verification_by_code": {}
 }
