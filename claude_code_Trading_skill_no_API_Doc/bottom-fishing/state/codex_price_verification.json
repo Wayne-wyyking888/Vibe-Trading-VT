@@ -1,24 +1,113 @@
 {
   "version": "codex-price-verification/v1",
   "skill": "bottom-fishing",
-  "as_of": "2026-08-26",
-  "retrieved_at_beijing": "2026-08-27T06:35:24+08:00",
+  "as_of": "2026-08-27",
+  "retrieved_at_beijing": "2026-08-28T05:38:12+08:00",
   "price_verification_by_code": {
-    "300124": {
-      "as_of": "2026-08-26",
+    "600160": {
+      "as_of": "2026-08-27",
       "sources": {
         "东方财富": {
-          "date": "2026-08-26",
-          "price": 61.9
+          "date": null,
+          "price": null
         },
         "腾讯": {
-          "date": "2026-08-26",
-          "price": 61.9
+          "date": null,
+          "price": null
+        },
+        "新浪": {
+          "date": "2026-08-27",
+          "price": 39.54
+        },
+        "雅虎": {
+          "date": "2026-08-27",
+          "price": 39.54
         }
       },
       "usable_sources": {
-        "东方财富": 61.9,
-        "腾讯": 61.9
+        "新浪": 39.54,
+        "雅虎": 39.54
+      },
+      "max_dev_pct": 0.0,
+      "status": "verified"
+    },
+    "002049": {
+      "as_of": "2026-08-27",
+      "sources": {
+        "东方财富": {
+          "date": null,
+          "price": null
+        },
+        "腾讯": {
+          "date": null,
+          "price": null
+        },
+        "新浪": {
+          "date": "2026-08-27",
+          "price": 63.25
+        },
+        "雅虎": {
+          "date": "2026-08-27",
+          "price": 63.25
+        }
+      },
+      "usable_sources": {
+        "新浪": 63.25,
+        "雅虎": 63.25
+      },
+      "max_dev_pct": 0.0,
+      "status": "verified"
+    },
+    "300450": {
+      "as_of": "2026-08-27",
+      "sources": {
+        "东方财富": {
+          "date": null,
+          "price": null
+        },
+        "腾讯": {
+          "date": null,
+          "price": null
+        },
+        "新浪": {
+          "date": "2026-08-27",
+          "price": 33.77
+        },
+        "雅虎": {
+          "date": "2026-08-27",
+          "price": 33.77
+        }
+      },
+      "usable_sources": {
+        "新浪": 33.77,
+        "雅虎": 33.77
+      },
+      "max_dev_pct": 0.0,
+      "status": "verified"
+    },
+    "603019": {
+      "as_of": "2026-08-27",
+      "sources": {
+        "东方财富": {
+          "date": null,
+          "price": null
+        },
+        "腾讯": {
+          "date": null,
+          "price": null
+        },
+        "新浪": {
+          "date": "2026-08-27",
+          "price": 86.54
+        },
+        "雅虎": {
+          "date": "2026-08-27",
+          "price": 86.54
+        }
+      },
+      "usable_sources": {
+        "新浪": 86.54,
+        "雅虎": 86.54
       },
       "max_dev_pct": 0.0,
       "status": "verified"

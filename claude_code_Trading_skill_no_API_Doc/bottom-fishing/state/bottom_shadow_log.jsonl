@@ -115,3 +115,11 @@
 {"T": "2026-08-25", "code": "002466", "name": "天齐锂业", "close": 47.01, "score": 20.7, "atr": 3.64, "def_days": 5, "idx_rsv": 9.7, "volx": 1.14, "dd250": -43.0, "cooldown": true, "outcome": null}
 {"T": "2026-08-26", "code": "300124", "name": "汇川技术", "close": 61.9, "score": 22.0, "atr": 2.83, "def_days": 6, "idx_rsv": 14.2, "volx": 0.97, "dd250": -31.6, "cooldown": false, "outcome": null, "judge": "✓"}
 {"T": "2026-08-26", "code": "002600", "name": "领益智造", "close": 12.25, "score": 19.9, "atr": 3.15, "def_days": 6, "idx_rsv": 14.2, "volx": 0.66, "dd250": -34.9, "cooldown": false, "outcome": null, "judge": "✗"}
+{"T": "2026-08-27", "code": "600160", "name": "巨化股份", "close": 39.54, "score": 25.1, "atr": 3.64, "def_days": 7, "idx_rsv": 29.3, "volx": 1.1, "dd250": -31.8, "cooldown": false, "outcome": null, "judge": "✓"}
+{"T": "2026-08-27", "code": "002049", "name": "紫光国微", "close": 63.25, "score": 24.4, "atr": 2.9, "def_days": 7, "idx_rsv": 29.3, "volx": 0.75, "dd250": -33.1, "cooldown": false, "outcome": null, "judge": "✓"}
+{"T": "2026-08-27", "code": "300450", "name": "先导智能", "close": 33.77, "score": 24.4, "atr": 3.48, "def_days": 7, "idx_rsv": 29.3, "volx": 0.84, "dd250": -51.4, "cooldown": false, "outcome": null, "judge": "✓"}
+{"T": "2026-08-27", "code": "601689", "name": "拓普集团", "close": 47.43, "score": 24.4, "atr": 3.45, "def_days": 7, "idx_rsv": 29.3, "volx": 0.72, "dd250": -45.1, "cooldown": false, "outcome": null, "judge": "✗"}
+{"T": "2026-08-27", "code": "603019", "name": "中科曙光", "close": 86.54, "score": 22.0, "atr": 3.33, "def_days": 7, "idx_rsv": 29.3, "volx": 0.91, "dd250": -32.2, "cooldown": false, "outcome": null, "judge": "✓"}
+{"T": "2026-08-27", "code": "002179", "name": "中航光电", "close": 35.5, "score": 22.0, "atr": 3.29, "def_days": 7, "idx_rsv": 29.3, "volx": 1.81, "dd250": -24.8, "cooldown": false, "outcome": null, "judge": "✗"}
+{"T": "2026-08-27", "code": "002600", "name": "领益智造", "close": 12.5, "score": 25.7, "atr": 3.07, "def_days": 7, "idx_rsv": 29.3, "volx": 0.94, "dd250": -33.5, "cooldown": true, "outcome": null}
+{"T": "2026-08-27", "code": "000066", "name": "中国长城", "close": 14.36, "score": 24.4, "atr": 3.42, "def_days": 7, "idx_rsv": 29.3, "volx": 0.59, "dd250": -44.2, "cooldown": true, "outcome": null}
