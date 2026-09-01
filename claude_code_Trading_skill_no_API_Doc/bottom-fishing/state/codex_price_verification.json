@@ -1,31 +1,7 @@
 {
   "version": "codex-price-verification/v1",
   "skill": "bottom-fishing",
-  "as_of": "2026-08-31",
-  "retrieved_at_beijing": "2026-09-01T07:00:22+08:00",
-  "price_verification_by_code": {
-    "002050": {
-      "as_of": "2026-08-31",
-      "sources": {
-        "东方财富": {
-          "date": null,
-          "price": null
-        },
-        "腾讯": {
-          "date": "2026-08-31",
-          "price": 36.3
-        },
-        "新浪": {
-          "date": "2026-08-31",
-          "price": 36.3
-        }
-      },
-      "usable_sources": {
-        "腾讯": 36.3,
-        "新浪": 36.3
-      },
-      "max_dev_pct": 0.0,
-      "status": "verified"
-    }
-  }
+  "as_of": "2026-09-01",
+  "retrieved_at_beijing": "2026-09-02T06:07:40+08:00",
+  "price_verification_by_code": {}
 }

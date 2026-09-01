@@ -144,3 +144,11 @@
 {"T": "2026-08-31", "code": "300450", "name": "先导智能", "close": 33.62, "score": 24.4, "atr": 3.69, "def_days": 9, "idx_rsv": 20.5, "volx": 1.49, "dd250": -51.6, "cooldown": true, "outcome": null}
 {"T": "2026-08-31", "code": "000066", "name": "中国长城", "close": 14.59, "score": 22.0, "atr": 3.48, "def_days": 9, "idx_rsv": 20.5, "volx": 0.77, "dd250": -43.3, "cooldown": true, "outcome": null}
 {"T": "2026-08-31", "code": "601689", "name": "拓普集团", "close": 46.83, "score": 20.7, "atr": 3.16, "def_days": 9, "idx_rsv": 20.5, "volx": 0.78, "dd250": -45.8, "cooldown": true, "outcome": null}
+{"T": "2026-09-01", "code": "601127", "name": "赛力斯", "close": 50.55, "score": 26.5, "atr": 2.43, "def_days": 10, "idx_rsv": 8.8, "volx": 0.86, "dd250": -70.9, "cooldown": false, "outcome": null, "judge": "✗"}
+{"T": "2026-09-01", "code": "000681", "name": "视觉中国", "close": 17.62, "score": 25.7, "atr": 3.92, "def_days": 10, "idx_rsv": 8.8, "volx": 1.86, "dd250": -49.8, "cooldown": false, "outcome": null, "judge": "?"}
+{"T": "2026-09-01", "code": "002600", "name": "领益智造", "close": 12.52, "score": 25.7, "atr": 3.26, "def_days": 10, "idx_rsv": 8.8, "volx": 0.85, "dd250": -33.4, "cooldown": true, "outcome": null}
+{"T": "2026-09-01", "code": "000066", "name": "中国长城", "close": 14.51, "score": 25.7, "atr": 3.34, "def_days": 10, "idx_rsv": 8.8, "volx": 0.59, "dd250": -43.6, "cooldown": true, "outcome": null}
+{"T": "2026-09-01", "code": "603019", "name": "中科曙光", "close": 86.67, "score": 22.0, "atr": 3.32, "def_days": 10, "idx_rsv": 8.8, "volx": 0.69, "dd250": -32.1, "cooldown": true, "outcome": null}
+{"T": "2026-09-01", "code": "002261", "name": "拓维信息", "close": 26.27, "score": 22.0, "atr": 3.3, "def_days": 10, "idx_rsv": 8.8, "volx": 1.37, "dd250": -42.2, "cooldown": true, "outcome": null}
+{"T": "2026-09-01", "code": "600160", "name": "巨化股份", "close": 39.05, "score": 22.0, "atr": 3.46, "def_days": 10, "idx_rsv": 8.8, "volx": 0.83, "dd250": -32.7, "cooldown": true, "outcome": null}
+{"T": "2026-09-01", "code": "300124", "name": "汇川技术", "close": 60.95, "score": 18.3, "atr": 2.8, "def_days": 10, "idx_rsv": 8.8, "volx": 0.98, "dd250": -32.7, "cooldown": true, "outcome": null}

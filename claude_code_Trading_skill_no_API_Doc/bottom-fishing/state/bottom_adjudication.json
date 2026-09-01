@@ -1,68 +1,106 @@
 {
-  "T": "2026-08-31",
+  "T": "2026-09-01",
   "alerts": [
     {
-      "level": "med",
-      "text": "三花智控通过✓门槛，但归母利润小幅下降、海外收入和H股表现构成中等约束。"
+      "level": "high",
+      "text": "本轮2只候选均未通过✓门槛：赛力斯✗、视觉中国?；不执行买入计划。"
     },
     {
       "warning_id": "toxic-warning-001",
       "level": "high",
-      "text": "Agent③影子预警：霍尔木兹航运与军事升级风险仍活跃；shadow，不改分数。",
+      "text": "Agent③影子预警：霍尔木兹航运与能源风险仍活跃；shadow，不改T日裁定。",
       "shadow": true,
       "post_t": false
     },
     {
       "warning_id": "tw-us-jobs",
       "level": "med",
-      "text": "Agent③影子排期：美国8月就业报告定于北京时间9月4日20:30发布，可能改变降息、美元与全球成长估值预期。 shadow，不改分数。",
+      "text": "Agent③影子排期：美国8月就业报告将在9月4日发布；shadow，不预支结果。",
       "shadow": true,
       "post_t": false
     },
     {
       "warning_id": "tw-cn-cpi",
       "level": "med",
-      "text": "Agent③影子排期：中国8月CPI由国家统计局排定发布，实际值可能改变增长、利率与周期行业预期。 shadow，不改分数。",
+      "text": "Agent③影子排期：中国8月CPI将在9月9日发布；shadow，不预支结果。",
       "shadow": true,
       "post_t": false
     },
     {
       "warning_id": "tw-cn-ppi",
       "level": "med",
-      "text": "Agent③影子排期：中国8月PPI由国家统计局排定发布，实际值可能改变增长、利率与周期行业预期。 shadow，不改分数。",
+      "text": "Agent③影子排期：中国8月PPI将在9月9日发布；shadow，不预支结果。",
       "shadow": true,
       "post_t": false
     },
     {
       "warning_id": "tw-us-ppi",
       "level": "med",
-      "text": "Agent③影子排期：美国8月PPI定于北京时间9月10日20:30发布，可能影响美债收益率和全球成长估值。 shadow，不改分数。",
+      "text": "Agent③影子排期：美国8月PPI将在9月10日发布；shadow，不预支结果。",
       "shadow": true,
       "post_t": false
     },
     {
-      "warning_id": "toxic-delta-001",
+      "warning_id": "tw-us-cpi",
       "level": "med",
-      "text": "Agent③影子预警（T后）：美股与油价确认外部压力，仅作执行安全增量。",
+      "text": "Agent③影子排期：美国8月CPI将在9月11日发布；shadow，不预支结果。",
+      "shadow": true,
+      "post_t": false
+    },
+    {
+      "warning_id": "tw-ecb",
+      "level": "med",
+      "text": "Agent③影子排期：欧洲央行9月会议将在9月10日举行；shadow，不预支结果。",
+      "shadow": true,
+      "post_t": false
+    },
+    {
+      "warning_id": "toxic-delta-hormuz-postt",
+      "level": "med",
+      "text": "Agent③影子预警（T后）：军事与油价增量仅作执行安全约束。",
+      "shadow": true,
+      "post_t": true
+    },
+    {
+      "warning_id": "toxic-delta-market-postt",
+      "level": "med",
+      "text": "Agent③影子预警（T后）：美股、油价与VIX压力仅作执行安全约束。",
       "shadow": true,
       "post_t": true
     }
   ],
   "rulings": {
-    "002050": {
-      "verdict": "✓",
-      "why": "截至2026-08-31，官方中期业绩显示收入169.00亿元、同比增长3.9%，扣非利润同比增长6.82%，经营现金流约25亿元并同比增长约95.98%；归母利润同比下降约3.1%，但尚未形成核心经营持续恶化。六维检索命中业绩经营、财务信用、治理审计、资本事项、国内绿色制冷政策及海外/H股风险，且使用至少三个独立来源origin。反方最强证据是H股回落、机构下调目标价、海外收入超过40%及汽车增速压力；这些构成中等警报，却未触发债务、现金流、非标审计、处罚立案或核心盈利强否决，因此维持✓。",
+    "601127": {
+      "verdict": "✗",
+      "why": "截至2026-09-01，官方2026年中期报告显示赛力斯收入574.19亿元、同比下降7.9%，毛利同比下降24.3%，归母由上年同期盈利29.41亿元转为亏损17.17亿元；经营现金流由净流入140.34亿元转为净流出128.40亿元，7月首亏预告亦被正式报告确认。六维核查同时覆盖治理审阅、研发减值、国内汽车需求、欧盟贸易约束；反方最强证据是新能源行业增长、较低计息债务和较宽现金储备，但不足以抵消核心盈利与现金质量同步恶化，触发强否决，结论为✗。",
       "alerts": [
         {
-          "level": "med",
-          "text": "2026年上半年归母利润同比下降约3.1%，H股在A股T日后回落，且机构下调H股目标价；海外收入、汇率与汽车增速需要持续跟踪。"
+          "level": "high",
+          "text": "中期归母转亏且经营现金流大幅转负，核心经营尚无反转证据；T+1销量快报继续偏弱。"
         },
         {
           "warning_id": "toxic-warning-001",
-          "level": "med",
-          "text": "Agent③影子提示：公司海外收入占比较高，地缘、汇率与能源成本需跟踪；不改T日裁定。",
+          "level": "high",
+          "text": "Agent③ shadow：乘用车暴露于霍尔木兹能源与物流风险；不改T日裁定。",
           "shadow": true,
           "post_t": false
+        },
+        {
+          "warning_id": "toxic-delta-hormuz-postt",
+          "level": "med",
+          "text": "Agent③ shadow（T后）：军事与油价增量只作执行安全约束。",
+          "shadow": true,
+          "post_t": true
+        }
+      ]
+    },
+    "000681": {
+      "verdict": "?",
+      "why": "截至2026-09-01，视觉中国2026年上半年归母净利润1.011亿元、同比增长130.96%，但收入同比下降7.33%、扣非净利润下降17.31%、经营现金流下降68.69%；约7216万元公允价值收益解释了报表利润的大部分改善。六维检索未见资金占用、违规担保、重大诉讼或处罚，数字媒体T日亦有相对强势；反方风险是主营质量未反转且持股5%以上股东拟减持不超过3%。正向报表利润与负向核心盈利、现金流和减持供给相互冲突，证据不足以给✓，又未达到债务或治理强否决，故维持?。",
+      "alerts": [
+        {
+          "level": "med",
+          "text": "报表利润主要受公允价值收益推动，收入、扣非利润和经营现金流均下降；3%股东减持窗口临近。"
         }
       ]
     }
@@ -70,153 +108,304 @@
   "codex_audit": {
     "version": "codex-trading-audit/v1",
     "skill": "bottom-fishing",
-    "evidence_cutoff_beijing": "2026-08-31 23:59:59+08:00",
-    "retrieved_on_beijing": "2026-09-01",
+    "evidence_cutoff_beijing": "2026-09-01 23:59:59+08:00",
+    "retrieved_on_beijing": "2026-09-02",
     "facts": [
       {
-        "fact_id": "fact-002050-performance",
-        "code": "002050",
+        "fact_id": "fact-601127-performance",
+        "code": "601127",
         "category": "performance_operations",
-        "fact": "2026年上半年收入169.00亿元、同比增长3.9%；归母利润20.441亿元、同比下降3.1%；扣非利润同比增长6.82%。",
-        "source_name": "三花智控2026年中期业绩公告",
-        "source_url": "https://www.zjshc.com/upload/img/2026-08/6a8edf81b19ce.pdf",
-        "source_ref": "bs-official-interim",
-        "published_at": "2026-08-26",
+        "fact": "2026年上半年收入574.19亿元、同比下降7.9%，毛利125.22亿元、同比下降24.3%；归属母公司股东亏损17.17亿元，上年同期盈利29.41亿元，同比恶化158.4%。",
+        "source_name": "赛力斯集团2026年中期报告",
+        "source_url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0819/2026081901533.pdf",
+        "source_ref": "bs-seres-interim",
+        "published_at": "2026-08-19",
         "published_time_precision": "date",
-        "retrieved_at_beijing": "2026-09-01",
-        "event_date": "2026-08-26",
+        "retrieved_at_beijing": "2026-09-02",
+        "event_date": "2026-08-19",
         "source_tier": "公告",
         "f10_match": "not_applicable",
-        "reasoning": "收入与扣非利润改善，核心经营并未全面恶化。",
-        "rubric_delta": 3,
-        "counter_argument": "归母利润仍小幅下降，二季度压力与汇兑因素不能忽略。",
-        "conclusion": "官方财务锚支持修复，但强度有限。",
+        "reasoning": "收入、毛利和归母结果同时转弱，已超过一般估值消化，构成核心经营强否决。",
+        "rubric_delta": -8,
+        "counter_argument": "新能源汽车销量与研发投入仍有增长，且公司保留较多现金储备。",
+        "conclusion": "经营反转尚未被财报确认，否决。",
         "uncertainties": [],
         "seed_refs": []
       },
       {
-        "fact_id": "fact-002050-financial",
-        "code": "002050",
+        "fact_id": "fact-601127-forecast",
+        "code": "601127",
+        "category": "performance_operations",
+        "fact": "公司7月13日预告2026年上半年归母净利润亏损15亿至18亿元；8月中期报告确认归母亏损17.17亿元，落在预告区间内。",
+        "source_name": "赛力斯2026年半年度业绩预亏公告",
+        "source_url": "https://static.cninfo.com.cn/finalpage/2026-07-13/1225420563.PDF",
+        "source_ref": "bs-seres-forecast",
+        "published_at": "2026-07-13",
+        "published_time_precision": "date",
+        "retrieved_at_beijing": "2026-09-02",
+        "event_date": "2026-07-13",
+        "source_tier": "公告",
+        "f10_match": "confirmed",
+        "reasoning": "F10首亏种子由官方公告及随后正式报告确认，不是数据抓取噪声。",
+        "rubric_delta": -5,
+        "counter_argument": "预告已经被正式报告吸收，不能重复扣分。",
+        "conclusion": "作为强否决的交叉确认，不重复计分。",
+        "uncertainties": [],
+        "seed_refs": [
+          "601127:forecast"
+        ]
+      },
+      {
+        "fact_id": "fact-601127-financial",
+        "code": "601127",
         "category": "financial_credit",
-        "fact": "经营现金流约25亿元、同比增长约95.98%；期末现金及等价物约119.10亿元，流动资产约356.52亿元，高于流动负债约166.70亿元。",
-        "source_name": "东方财富半年报摘要",
-        "source_url": "https://finance.eastmoney.com/a/202608263855012372.html",
-        "source_ref": "bs-finance-media",
-        "published_at": "2026-08-26",
+        "fact": "2026年上半年经营活动现金净流出128.40亿元，上年同期净流入140.34亿元；期末现金及等价物144.38亿元，低于期初216.65亿元。报告同时披露更宽口径现金储备731.48亿元、计息债务比例约3.2%。",
+        "source_name": "赛力斯集团2026年中期报告",
+        "source_url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0819/2026081901533.pdf",
+        "source_ref": "bs-seres-interim",
+        "published_at": "2026-08-19",
         "published_time_precision": "date",
-        "retrieved_at_beijing": "2026-09-01",
-        "event_date": "2026-08-26",
-        "source_tier": "主流媒体",
+        "retrieved_at_beijing": "2026-09-02",
+        "event_date": "2026-08-19",
+        "source_tier": "公告",
         "f10_match": "not_applicable",
-        "reasoning": "现金流与短期流动性没有触发财务强否决。",
-        "rubric_delta": 2,
-        "counter_argument": "跨境资本开支、汇率和营运资金仍会影响后续现金转化。",
-        "conclusion": "财务信用维度通过。",
+        "reasoning": "经营现金流由大额流入转为大额流出且现金余额下降，现金质量显著恶化；低债务与储备只能缓冲，不能抵消。",
+        "rubric_delta": -6,
+        "counter_argument": "更宽口径流动性储备和较低计息债务说明短期偿付并非立即失控。",
+        "conclusion": "现金流恶化支持否决，但不等同于流动性危机。",
         "uncertainties": [],
         "seed_refs": []
       },
       {
-        "fact_id": "fact-002050-governance",
-        "code": "002050",
+        "fact_id": "fact-601127-governance",
+        "code": "601127",
         "category": "governance_regulatory",
-        "fact": "2025年度审计报告为标准无保留意见，未见截至T日新增重大处罚、立案或持续经营非标事项。",
-        "source_name": "三花智控2025年度审计报告",
-        "source_url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12012982&stockid=002050",
-        "source_ref": "bs-governance",
-        "published_at": "2026-03-24",
+        "fact": "德勤对中期财务信息实施审阅，未发现其未按IAS 34编制的事项；报告亦称截至期末没有对集团产生重大不利影响的重大诉讼。",
+        "source_name": "赛力斯集团2026年中期报告",
+        "source_url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0819/2026081901533.pdf",
+        "source_ref": "bs-seres-interim",
+        "published_at": "2026-08-19",
         "published_time_precision": "date",
-        "retrieved_at_beijing": "2026-09-01",
-        "event_date": "2026-03-24",
-        "source_tier": "主流媒体",
+        "retrieved_at_beijing": "2026-09-02",
+        "event_date": "2026-08-19",
+        "source_tier": "公告",
         "f10_match": "not_applicable",
-        "reasoning": "审计意见与治理检索未触发一票否决。",
+        "reasoning": "未触发非标审阅、重大诉讼或监管一票否决。",
         "rubric_delta": 1,
-        "counter_argument": "历史审计通过不保证未来没有治理风险。",
+        "counter_argument": "中期审阅并非年度审计，且不能替代对经营亏损的判断。",
+        "conclusion": "治理维度未新增强否决，但无法挽回经营否决。",
+        "uncertainties": [],
+        "seed_refs": []
+      },
+      {
+        "fact_id": "fact-601127-corporate",
+        "code": "601127",
+        "category": "corporate_events",
+        "fact": "中期报告披露上半年研发投入37.33亿元、上年同期29.30亿元，同时确认减值及其他损失约23.07亿元；H股上市与股份回购提供资本工具，但研发和减值均加大短期利润压力。",
+        "source_name": "赛力斯集团2026年中期报告",
+        "source_url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0819/2026081901533.pdf",
+        "source_ref": "bs-seres-interim",
+        "published_at": "2026-08-19",
+        "published_time_precision": "date",
+        "retrieved_at_beijing": "2026-09-02",
+        "event_date": "2026-08-19",
+        "source_tier": "公告",
+        "f10_match": "not_applicable",
+        "reasoning": "研发投入支持长期产品竞争力，减值与费用压力则约束短期修复。",
+        "rubric_delta": -1,
+        "counter_argument": "研发高投入未来可能转化为车型与智能化竞争力。",
+        "conclusion": "公司事件维度中性偏负，不单独决定结论。",
+        "uncertainties": [],
+        "seed_refs": []
+      },
+      {
+        "fact_id": "fact-601127-industry",
+        "code": "601127",
+        "category": "industry_policy_domestic",
+        "fact": "工信部披露2026年7月乘用车销量同比下降0.9%、1—7月下降5.4%；新能源汽车7月销量同比增长23.7%、占新车销量60.4%，行业呈总量承压与新能源渗透并存。",
+        "source_name": "工信部2026年7月汽车工业运行情况",
+        "source_url": "https://wap.miit.gov.cn/jgsj/zbys/qcgy/art/2026/art_aab3fa7e02914a33a496501f1380facb.html",
+        "source_ref": "bs-miit-auto",
+        "published_at": "2026-08-12",
+        "published_time_precision": "date",
+        "retrieved_at_beijing": "2026-09-02",
+        "event_date": "2026-08-12",
+        "source_tier": "其他",
+        "f10_match": "not_applicable",
+        "reasoning": "公司所在乘用车总量环境偏弱，即使新能源行业增长也不能证明公司份额和利润同步改善。",
+        "rubric_delta": -1,
+        "counter_argument": "新能源销量和出口仍高速增长，行业并非全面衰退。",
+        "conclusion": "行业维度为混合信号，个体财报弱势更具决定性。",
+        "uncertainties": [],
+        "seed_refs": []
+      },
+      {
+        "fact_id": "fact-601127-external",
+        "code": "601127",
+        "category": "external_global_peer",
+        "fact": "欧盟委员会仍对中国纯电动车适用7.8%至35.3%的反补贴税率区间，并发布价格承诺申报指引；海外扩张存在关税、合规与定价约束。",
+        "source_name": "欧盟委员会中国电动车价格承诺指引",
+        "source_url": "https://policy.trade.ec.europa.eu/news/commission-issues-guidance-document-submission-price-undertaking-offers-battery-electric-vehicles-from-china-2026-01-12_en",
+        "source_ref": "bs-eu-ev",
+        "published_at": "2026-01-12",
+        "published_time_precision": "date",
+        "retrieved_at_beijing": "2026-09-02",
+        "event_date": "2026-01-12",
+        "source_tier": "其他",
+        "f10_match": "not_applicable",
+        "reasoning": "外部贸易壁垒提高出口扩张的不确定性，不能作为当前业绩反转的支撑。",
+        "rubric_delta": -1,
+        "counter_argument": "公司可通过产品结构、区域布局和本地化缓释部分影响。",
+        "conclusion": "外部维度保留中等压力。",
+        "uncertainties": [],
+        "seed_refs": []
+      },
+      {
+        "fact_id": "fact-000681-performance-support",
+        "code": "000681",
+        "category": "performance_operations",
+        "fact": "2026年上半年归母净利润1.011亿元、同比增长130.96%，与7月预增方向一致；但收入3.698亿元、同比下降7.33%，扣非净利润3452万元、同比下降17.31%。",
+        "source_name": "视觉中国2026年半年度报告",
+        "source_url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-25/661e9718-3778-48b8-88ba-ce272dac9677.PDF",
+        "source_ref": "bs-vcg-interim",
+        "published_at": "2026-08-25",
+        "published_time_precision": "date",
+        "retrieved_at_beijing": "2026-09-02",
+        "event_date": "2026-08-25",
+        "source_tier": "公告",
+        "f10_match": "not_applicable",
+        "reasoning": "归母利润显著增长为修复提供支持，但收入和扣非利润下降使增长质量存疑。",
+        "rubric_delta": 2,
+        "counter_argument": "利润增量主要由非经常性公允价值收益驱动，不能直接外推为主营拐点。",
+        "conclusion": "报表给出正反冲突，暂不支持✓。",
+        "uncertainties": [],
+        "seed_refs": []
+      },
+      {
+        "fact_id": "fact-000681-performance-adverse",
+        "code": "000681",
+        "category": "performance_operations",
+        "fact": "半年报非经常性损益约6659万元，其中MiniMax等金融资产公允价值变动收益约7216万元；剔除后主营利润同比下降，报告利润改善缺少收入与核心盈利同步确认。",
+        "source_name": "视觉中国2026年半年度报告",
+        "source_url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-25/661e9718-3778-48b8-88ba-ce272dac9677.PDF",
+        "source_ref": "bs-vcg-interim",
+        "published_at": "2026-08-25",
+        "published_time_precision": "date",
+        "retrieved_at_beijing": "2026-09-02",
+        "event_date": "2026-08-25",
+        "source_tier": "公告",
+        "f10_match": "not_applicable",
+        "reasoning": "一次性公允价值收益解释了归母利润的大部分增量，核心盈利尚未反转。",
+        "rubric_delta": -3,
+        "counter_argument": "被投企业价值上升可能带来真实资产增值，且未来存在产业协同。",
+        "conclusion": "利润质量不足，维持问号。",
+        "uncertainties": [],
+        "seed_refs": []
+      },
+      {
+        "fact_id": "fact-000681-financial",
+        "code": "000681",
+        "category": "financial_credit",
+        "fact": "2026年上半年经营活动现金流净额945万元、同比下降68.69%；期末货币资金约4.94亿元，总资产44.50亿元、净资产36.65亿元，未见债券兑付或短期偿债危机。",
+        "source_name": "视觉中国2026年半年度报告",
+        "source_url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-25/661e9718-3778-48b8-88ba-ce272dac9677.PDF",
+        "source_ref": "bs-vcg-interim",
+        "published_at": "2026-08-25",
+        "published_time_precision": "date",
+        "retrieved_at_beijing": "2026-09-02",
+        "event_date": "2026-08-25",
+        "source_tier": "公告",
+        "f10_match": "not_applicable",
+        "reasoning": "现金流转化明显走弱，但资产负债表仍提供缓冲，属于警报而非强制否决。",
+        "rubric_delta": -2,
+        "counter_argument": "现金储备和较高净资产意味着短期信用风险有限。",
+        "conclusion": "财务维度偏负但未达到✗。",
+        "uncertainties": [],
+        "seed_refs": []
+      },
+      {
+        "fact_id": "fact-000681-governance",
+        "code": "000681",
+        "category": "governance_regulatory",
+        "fact": "半年报披露无控股股东及关联方非经营性占用资金、无违规对外担保、无破产重整及重大诉讼；作为被告的未达重大标准案件合计约2533万元。",
+        "source_name": "视觉中国2026年半年度报告",
+        "source_url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-25/661e9718-3778-48b8-88ba-ce272dac9677.PDF",
+        "source_ref": "bs-vcg-interim",
+        "published_at": "2026-08-25",
+        "published_time_precision": "date",
+        "retrieved_at_beijing": "2026-09-02",
+        "event_date": "2026-08-25",
+        "source_tier": "公告",
+        "f10_match": "not_applicable",
+        "reasoning": "未发现治理、处罚或诉讼类一票否决。",
+        "rubric_delta": 1,
+        "counter_argument": "非重大案件仍需跟踪，且版权业务天然面临持续争议成本。",
         "conclusion": "治理维度中性偏支持。",
         "uncertainties": [],
         "seed_refs": []
       },
       {
-        "fact_id": "fact-002050-corporate",
-        "code": "002050",
+        "fact_id": "fact-000681-corporate-reduction",
+        "code": "000681",
         "category": "corporate_events",
-        "fact": "公司披露2026年中期每10股派1.20元预案，另有回购及限制性股份注销等资本事项；均未显示紧急流动性压力。",
-        "source_name": "三花智控2026年中期利润分配预案",
-        "source_url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12550176&stockid=002050",
-        "source_ref": "bs-corporate",
-        "published_at": "2026-08-27",
+        "fact": "持股5%以上股东梁军预披露拟在2026年9月17日至12月16日减持不超过2098.67万股、占总股本3%，其中集中竞价不超过1%、大宗交易不超过2%，原因为自身资金需求。",
+        "source_name": "视觉中国股东减持预披露公告镜像",
+        "source_url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12539014&stockid=000681",
+        "source_ref": "bs-vcg-reduction",
+        "published_at": "2026-08-26",
         "published_time_precision": "date",
-        "retrieved_at_beijing": "2026-09-01",
-        "event_date": "2026-08-27",
+        "retrieved_at_beijing": "2026-09-02",
+        "event_date": "2026-08-26",
         "source_tier": "主流媒体",
-        "f10_match": "not_applicable",
-        "reasoning": "分红、回购与注销为资本回报信号。",
-        "rubric_delta": 1,
-        "counter_argument": "方案仍需股东会等程序，且不能替代经营增长。",
-        "conclusion": "资本事件支持但不作为核心决定因素。",
+        "f10_match": "confirmed",
+        "reasoning": "3%减持上限构成未来数月供给压力，是F10实质公告，需纳入裁定。",
+        "rubric_delta": -2,
+        "counter_argument": "减持尚未实施，且用途为股东自身资金需求，不等同于公司经营恶化。",
+        "conclusion": "资本供给压力限制短线修复强度。",
         "uncertainties": [],
-        "seed_refs": []
+        "seed_refs": [
+          "000681:notices:1"
+        ]
       },
       {
-        "fact_id": "fact-002050-industry",
-        "code": "002050",
+        "fact_id": "fact-000681-industry",
+        "code": "000681",
         "category": "industry_policy_domestic",
-        "fact": "工信部8月部署绿色制冷装备创新任务，政策方向支持高效节能制冷与热管理技术应用。",
-        "source_name": "工业和信息化部绿色制冷装备创新任务",
-        "source_url": "https://wap.miit.gov.cn/jgsj/jns/gzdt/art/2026/art_acea09c4bad04cfc8b432fbc7d491304.html",
-        "source_ref": "bs-miit",
-        "published_at": "2026-08-06",
+        "fact": "9月1日A股数字媒体与传媒方向出现领涨和资金流入，说明板块存在交易性修复；该价格反应已经发生在T日，次日只能检验承接，不能当作全新催化。",
+        "source_name": "证券时报9月1日市场复盘",
+        "source_url": "https://www.stcn.com/article/detail/4167608.html",
+        "source_ref": "bs-stcn-digital",
+        "published_at": "2026-09-01",
         "published_time_precision": "date",
-        "retrieved_at_beijing": "2026-09-01",
-        "event_date": "2026-08-06",
+        "retrieved_at_beijing": "2026-09-02",
+        "event_date": "2026-09-01",
         "source_tier": "主流媒体",
         "f10_match": "not_applicable",
-        "reasoning": "公司制冷与热管理业务与政策方向存在直接产业关联。",
+        "reasoning": "行业价格强势提供短线支撑，但已经在T日部分兑现。",
         "rubric_delta": 1,
-        "counter_argument": "政策受益需要订单与利润兑现，不能仅凭概念外推。",
-        "conclusion": "国内行业政策提供温和支持。",
+        "counter_argument": "若次日板块广度收缩，T日强势可能转为高开兑现。",
+        "conclusion": "行业维度温和支持，不足以覆盖核心盈利和减持压力。",
         "uncertainties": [],
         "seed_refs": []
       },
       {
-        "fact_id": "fact-002050-external",
-        "code": "002050",
+        "fact_id": "fact-000681-external",
+        "code": "000681",
         "category": "external_global_peer",
-        "fact": "公司海外销售占比超过40%；8月28日中金下调H股目标价但维持跑赢行业评级，反映汽车增速、汇率与全球需求的不确定性。",
-        "source_name": "三花智控H股机构观点",
-        "source_url": "https://finance.sina.com.cn/stock/hkstock/hkgg/2026-08-28/doc-inipwhrw0001143.shtml",
-        "source_ref": "bs-external",
-        "published_at": "2026-08-28",
+        "fact": "欧盟GPAI行为准则把透明度与版权合规列为通用人工智能提供者的核心义务，并于2026年7月31日更新；视觉内容授权可受益于合规需求，同时承担权利链和跨境规则成本。",
+        "source_name": "欧盟通用人工智能行为准则",
+        "source_url": "https://digital-strategy.ec.europa.eu/en/policies/contents-code-gpai",
+        "source_ref": "bs-eu-ai",
+        "published_at": "2026-07-31",
         "published_time_precision": "date",
-        "retrieved_at_beijing": "2026-09-01",
-        "event_date": "2026-08-28",
-        "source_tier": "主流媒体",
+        "retrieved_at_beijing": "2026-09-02",
+        "event_date": "2026-07-31",
+        "source_tier": "其他",
         "f10_match": "not_applicable",
-        "reasoning": "海外收入和H股观点揭示汇率、关税及全球汽车需求敏感性。",
-        "rubric_delta": -1,
-        "counter_argument": "全球化产能和客户结构也能分散单一区域风险。",
-        "conclusion": "外部维度保留中等警报，不构成否决。",
-        "uncertainties": [],
-        "seed_refs": []
-      },
-      {
-        "fact_id": "fact-002050-tday",
-        "code": "002050",
-        "category": "corporate_events",
-        "fact": "002050于T日收36.30元、上涨约0.36%，并非因突发利空单日下跌；跌因搜索未发现截至T日新增决定性负面公告。",
-        "source_name": "证券之星T日行情",
-        "source_url": "https://stock.stockstar.com/RB2026083100034824.shtml",
-        "source_ref": "bs-tday",
-        "published_at": "2026-08-31",
-        "published_time_precision": "date",
-        "retrieved_at_beijing": "2026-09-01",
-        "event_date": "2026-08-31",
-        "source_tier": "主流媒体",
-        "f10_match": "not_applicable",
-        "reasoning": "价格证据排除把T日表现误判为突发利空下跌。",
-        "rubric_delta": 0,
-        "counter_argument": "长期回撤仍可能来自增长预期和估值消化。",
-        "conclusion": "T日无新增价格型否决。",
+        "reasoning": "版权合规趋势利好可追溯正版内容，但监管兑现和商业转化仍不确定。",
+        "rubric_delta": 1,
+        "counter_argument": "生成式AI也可能压低通用素材价格并增加侵权治理成本。",
+        "conclusion": "外部维度混合，不给方向性加分。",
         "uncertainties": [],
         "seed_refs": []
       },
@@ -224,20 +413,20 @@
         "fact_id": "fact-market-regime",
         "code": "MARKET",
         "category": "market_regime",
-        "fact": "T日上证指数涨0.86%、深证成指涨0.44%、创业板指涨0.42%；行业多数上涨但科技、能源与消费内部明显分化。",
-        "source_name": "同花顺A股收盘复盘",
-        "source_url": "https://news.10jqka.com.cn/20260831/c679443347.shtml",
+        "fact": "9月1日上证指数跌0.16%、深证成指跌1.02%、创业板指跌1.32%、科创50跌2.2%；半导体约跌3%，白酒、食品饮料与银行相对走强，市场呈防御轮动而非普遍修复。",
+        "source_name": "香港电台A股9月1日收盘",
+        "source_url": "https://news.rthk.hk/rthk/en/component/k2/1868408-20260901.htm",
         "source_ref": "bs-market",
-        "published_at": "2026-08-31",
+        "published_at": "2026-09-01",
         "published_time_precision": "date",
-        "retrieved_at_beijing": "2026-09-01",
-        "event_date": "2026-08-31",
+        "retrieved_at_beijing": "2026-09-02",
+        "event_date": "2026-09-01",
         "source_tier": "主流媒体",
         "f10_match": "not_applicable",
-        "reasoning": "市场环境为防守区中的反弹，不构成系统性踩踏。",
+        "reasoning": "宽基与成长风格承压，要求底部候选必须有更强的个股基本面证据。",
         "rubric_delta": 0,
-        "counter_argument": "指数上涨并不消除个股回撤风险。",
-        "conclusion": "仅作市场背景。",
+        "counter_argument": "防御板块走强说明并非无差别流动性踩踏。",
+        "conclusion": "仅作T日市场背景。",
         "uncertainties": [],
         "seed_refs": []
       }
@@ -245,34 +434,38 @@
     "contrarian_challenge": {
       "completed": true,
       "arguments": [
-        "归母利润已经下降，所谓超跌修复可能只是增长降速后的估值重定价。",
-        "海外收入超过40%，汇率、关税、汽车需求与地缘能源成本可能同时压制利润。",
-        "液冷链T日已经领涨，次日继续追高可能把已兑现催化误当成新信息。"
+        "赛力斯拥有较宽现金储备、新能源行业增长和高研发投入，当前亏损可能是产品周期与投入期的阶段性低点。",
+        "视觉中国归母利润同比增长130.96%，数字媒体T日逆势，可能存在被主营数据低估的资产价值与主题弹性。",
+        "两只股票均已深度回撤，机械拒绝可能错过超跌修复。"
       ],
       "responses": [
-        "以扣非利润、经营现金流、流动性和官方财报核验，当前尚未出现核心经营或现金质量强否决。",
-        "海外/H股风险作为中等警报和Agent③shadow约束保留，不用乐观叙事覆盖。",
-        "交易端维持竞价高开超过3%放弃、≤3.5%仓位和33.4元硬止损，不追价。"
+        "赛力斯收入、毛利、归母与经营现金流同步恶化，官方证据强度高于行业渗透率和资产储备的反方叙事。",
+        "视觉中国利润增量主要来自公允价值收益，扣非、收入和现金流未确认主营拐点，且3%减持形成供给约束。",
+        "底部形态不是基本面豁免；在0只✓时遵守冷却与硬门槛，不用观察池替代标的。"
       ]
     },
     "auditor_review": {
       "passed": true,
       "checks": [
-        "数据新鲜度：T/T后严格隔离",
-        "跨源价格",
-        "算术",
+        "数据新鲜度：T/T+1严格隔离",
+        "F10逐条对账",
+        "六维检索",
+        "五域shadow检索",
         "rubric与强否决规则",
+        "引用",
         "价位逻辑",
-        "引用与来源血缘"
+        "算术",
+        "跨源价格",
+        "来源血缘与反方挑战"
       ],
       "failed": [],
-      "notes": "Agent②六维审计、Agent③五域shadow检索、F10逐条对账和反方挑战已完成；最终以验收脚本为准。"
+      "notes": "两只候选、十一条原始F10种子、六类个股证据和五域市场风险均已结构化；最终以硬门禁脚本为准。"
     },
     "bottom_search": {
       "version": "bottom-search-audit/v1",
-      "T": "2026-08-31",
-      "cutoff_beijing": "2026-08-31 23:59:59+08:00",
-      "retrieved_at_beijing": "2026-09-01 06:47:00+08:00",
+      "T": "2026-09-01",
+      "cutoff_beijing": "2026-09-01 23:59:59+08:00",
+      "retrieved_at_beijing": "2026-09-02 06:00:00+08:00",
       "required_categories": [
         "performance_operations",
         "financial_credit",
@@ -283,398 +476,719 @@
       ],
       "sources": [
         {
-          "source_ref": "bs-official-interim",
-          "access_url": "https://www.zjshc.com/upload/img/2026-08/6a8edf81b19ce.pdf",
-          "access_publisher": "三花智控投资者关系",
+          "source_ref": "bs-seres-interim",
+          "access_url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0819/2026081901533.pdf",
+          "access_publisher": "香港交易所/赛力斯集团",
           "source_kind": "official_direct",
-          "origin_id": "sanhua-2026-interim-results",
-          "canonical_url": "https://www.zjshc.com/upload/img/2026-08/6a8edf81b19ce.pdf",
-          "canonical_publisher": "三花智控投资者关系",
+          "origin_id": "seres-interim-20260819",
+          "canonical_url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0819/2026081901533.pdf",
+          "canonical_publisher": "香港交易所/赛力斯集团",
           "match_basis": []
         },
         {
-          "source_ref": "bs-official-ir",
-          "access_url": "https://www.zjshc.com/investor/hkstock.html",
-          "access_publisher": "三花智控投资者关系",
+          "source_ref": "bs-seres-forecast",
+          "access_url": "https://static.cninfo.com.cn/finalpage/2026-07-13/1225420563.PDF",
+          "access_publisher": "赛力斯/巨潮资讯",
           "source_kind": "official_direct",
-          "origin_id": "sanhua-ir-announcements",
-          "canonical_url": "https://www.zjshc.com/investor/hkstock.html",
-          "canonical_publisher": "三花智控投资者关系",
+          "origin_id": "seres-forecast-20260713",
+          "canonical_url": "https://static.cninfo.com.cn/finalpage/2026-07-13/1225420563.PDF",
+          "canonical_publisher": "赛力斯/巨潮资讯",
           "match_basis": []
         },
         {
-          "source_ref": "bs-finance-media",
-          "access_url": "https://finance.eastmoney.com/a/202608263855012372.html",
-          "access_publisher": "东方财富",
-          "source_kind": "independent_media",
-          "origin_id": "eastmoney-sanhua-h1-20260826",
-          "canonical_url": "https://finance.eastmoney.com/a/202608263855012372.html",
-          "canonical_publisher": "东方财富",
-          "match_basis": []
-        },
-        {
-          "source_ref": "bs-governance",
-          "access_url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12012982&stockid=002050",
-          "access_publisher": "新浪财经公告镜像",
-          "source_kind": "independent_media",
-          "origin_id": "sanhua-2025-audit-report",
-          "canonical_url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12012982&stockid=002050",
-          "canonical_publisher": "新浪财经公告镜像",
-          "match_basis": []
-        },
-        {
-          "source_ref": "bs-corporate",
-          "access_url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12550176&stockid=002050",
-          "access_publisher": "新浪财经公告镜像",
-          "source_kind": "independent_media",
-          "origin_id": "sanhua-2026-interim-dividend",
-          "canonical_url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12550176&stockid=002050",
-          "canonical_publisher": "新浪财经公告镜像",
-          "match_basis": []
-        },
-        {
-          "source_ref": "bs-miit",
-          "access_url": "https://wap.miit.gov.cn/jgsj/jns/gzdt/art/2026/art_acea09c4bad04cfc8b432fbc7d491304.html",
+          "source_ref": "bs-miit-auto",
+          "access_url": "https://wap.miit.gov.cn/jgsj/zbys/qcgy/art/2026/art_aab3fa7e02914a33a496501f1380facb.html",
           "access_publisher": "工业和信息化部",
           "source_kind": "official_direct",
-          "origin_id": "miit-green-refrigeration-202608",
-          "canonical_url": "https://wap.miit.gov.cn/jgsj/jns/gzdt/art/2026/art_acea09c4bad04cfc8b432fbc7d491304.html",
+          "origin_id": "miit-auto-20260812",
+          "canonical_url": "https://wap.miit.gov.cn/jgsj/zbys/qcgy/art/2026/art_aab3fa7e02914a33a496501f1380facb.html",
           "canonical_publisher": "工业和信息化部",
           "match_basis": []
         },
         {
-          "source_ref": "bs-external",
-          "access_url": "https://finance.sina.com.cn/stock/hkstock/hkgg/2026-08-28/doc-inipwhrw0001143.shtml",
-          "access_publisher": "新浪财经",
-          "source_kind": "independent_media",
-          "origin_id": "cicc-sanhua-h-share-20260828",
-          "canonical_url": "https://finance.sina.com.cn/stock/hkstock/hkgg/2026-08-28/doc-inipwhrw0001143.shtml",
-          "canonical_publisher": "新浪财经",
+          "source_ref": "bs-eu-ev",
+          "access_url": "https://policy.trade.ec.europa.eu/news/commission-issues-guidance-document-submission-price-undertaking-offers-battery-electric-vehicles-from-china-2026-01-12_en",
+          "access_publisher": "European Commission",
+          "source_kind": "official_direct",
+          "origin_id": "eu-ev-guidance-20260112",
+          "canonical_url": "https://policy.trade.ec.europa.eu/news/commission-issues-guidance-document-submission-price-undertaking-offers-battery-electric-vehicles-from-china-2026-01-12_en",
+          "canonical_publisher": "European Commission",
           "match_basis": []
         },
         {
-          "source_ref": "bs-tday",
-          "access_url": "https://stock.stockstar.com/RB2026083100034824.shtml",
-          "access_publisher": "证券之星",
+          "source_ref": "bs-vcg-interim",
+          "access_url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-25/661e9718-3778-48b8-88ba-ce272dac9677.PDF",
+          "access_publisher": "视觉中国/深圳证券交易所",
+          "source_kind": "official_direct",
+          "origin_id": "vcg-interim-20260825",
+          "canonical_url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-25/661e9718-3778-48b8-88ba-ce272dac9677.PDF",
+          "canonical_publisher": "视觉中国/深圳证券交易所",
+          "match_basis": []
+        },
+        {
+          "source_ref": "bs-vcg-reduction",
+          "access_url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12539014&stockid=000681",
+          "access_publisher": "新浪财经",
           "source_kind": "independent_media",
-          "origin_id": "stockstar-sanhua-tday-20260831",
-          "canonical_url": "https://stock.stockstar.com/RB2026083100034824.shtml",
-          "canonical_publisher": "证券之星",
+          "origin_id": "vcg-reduction-20260826",
+          "canonical_url": "",
+          "canonical_publisher": "",
+          "match_basis": []
+        },
+        {
+          "source_ref": "bs-stcn-digital",
+          "access_url": "https://www.stcn.com/article/detail/4167608.html",
+          "access_publisher": "证券时报",
+          "source_kind": "independent_media",
+          "origin_id": "stcn-ashare-20260901",
+          "canonical_url": "",
+          "canonical_publisher": "",
+          "match_basis": []
+        },
+        {
+          "source_ref": "bs-eu-ai",
+          "access_url": "https://digital-strategy.ec.europa.eu/en/policies/contents-code-gpai",
+          "access_publisher": "European Commission",
+          "source_kind": "official_direct",
+          "origin_id": "eu-gpai-code-20260731",
+          "canonical_url": "https://digital-strategy.ec.europa.eu/en/policies/contents-code-gpai",
+          "canonical_publisher": "European Commission",
           "match_basis": []
         },
         {
           "source_ref": "bs-market",
-          "access_url": "https://news.10jqka.com.cn/20260831/c679443347.shtml",
-          "access_publisher": "同花顺财经",
+          "access_url": "https://news.rthk.hk/rthk/en/component/k2/1868408-20260901.htm",
+          "access_publisher": "香港电台",
           "source_kind": "independent_media",
-          "origin_id": "ths-ashare-close-20260831",
-          "canonical_url": "https://news.10jqka.com.cn/20260831/c679443347.shtml",
-          "canonical_publisher": "同花顺财经",
+          "origin_id": "rthk-ashare-close-20260901",
+          "canonical_url": "",
+          "canonical_publisher": "",
+          "match_basis": []
+        },
+        {
+          "source_ref": "bs-seres-post-sales",
+          "access_url": "https://paper.cnstock.com/html/2026-09/02/content_2264298.htm",
+          "access_publisher": "上海证券报",
+          "source_kind": "independent_media",
+          "origin_id": "cnstock-seres-notices-20260902",
+          "canonical_url": "",
+          "canonical_publisher": "",
+          "match_basis": []
+        },
+        {
+          "source_ref": "bs-seres-post-repurchase",
+          "access_url": "https://paper.cnstock.com/html/2026-09/02/content_2264298.htm",
+          "access_publisher": "上海证券报",
+          "source_kind": "independent_media",
+          "origin_id": "cnstock-seres-notices-20260902",
+          "canonical_url": "",
+          "canonical_publisher": "",
+          "match_basis": []
+        },
+        {
+          "source_ref": "bs-seres-post-h",
+          "access_url": "https://money.finance.sina.com.cn/corp/go.php/vCB_AllBulletin/stockid/601127.phtml",
+          "access_publisher": "新浪财经公告索引",
+          "source_kind": "unverified_secondary",
+          "origin_id": "sina-seres-latest-20260902",
+          "canonical_url": "",
+          "canonical_publisher": "",
           "match_basis": []
         }
       ],
       "queries": [
         {
-          "query_id": "q-performance",
-          "code": "002050",
+          "query_id": "bs-q-601127-performance",
+          "code": "601127",
           "category": "performance_operations",
           "phase": "as_of_t",
           "query_mode": "official",
-          "query_text": "三花智控 002050 官方 2026中期业绩 收入 归母 扣非",
-          "date_from": "2026-03-04",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "query_text": "赛力斯 2026中期报告 业绩预亏 官方公告",
+          "date_from": "2026-03-05",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "selected",
           "reviewed_urls": [
-            "https://www.zjshc.com/upload/img/2026-08/6a8edf81b19ce.pdf"
+            "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0819/2026081901533.pdf",
+            "https://static.cninfo.com.cn/finalpage/2026-07-13/1225420563.PDF"
           ],
           "selected_fact_ids": [
-            "fact-002050-performance"
+            "fact-601127-performance",
+            "fact-601127-forecast"
           ],
           "selected_delta_ids": [],
-          "notes": "采用可核查来源完成该维度裁定。"
+          "notes": "已审阅所列来源并按证据边界登记。"
         },
         {
-          "query_id": "q-financial",
-          "code": "002050",
+          "query_id": "bs-q-601127-financial",
+          "code": "601127",
           "category": "financial_credit",
           "phase": "as_of_t",
-          "query_mode": "broad_web",
-          "query_text": "三花智控 002050 经营现金流 现金 借款 2026半年报",
-          "date_from": "2025-08-31",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "query_mode": "official",
+          "query_text": "赛力斯 现金流 现金储备 债务 2026半年报",
+          "date_from": "2025-09-01",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "selected",
           "reviewed_urls": [
-            "https://finance.eastmoney.com/a/202608263855012372.html"
+            "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0819/2026081901533.pdf"
           ],
           "selected_fact_ids": [
-            "fact-002050-financial"
+            "fact-601127-financial"
           ],
           "selected_delta_ids": [],
-          "notes": "采用可核查来源完成该维度裁定。"
+          "notes": "已审阅所列来源并按证据边界登记。"
         },
         {
-          "query_id": "q-governance",
-          "code": "002050",
+          "query_id": "bs-q-601127-governance",
+          "code": "601127",
           "category": "governance_regulatory",
           "phase": "as_of_t",
           "query_mode": "regulator",
-          "query_text": "三花智控 002050 审计意见 处罚 立案 监管",
-          "date_from": "2024-08-31",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "query_text": "赛力斯 审计 审阅 诉讼 处罚 监管 2024-2026",
+          "date_from": "2024-09-01",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "selected",
           "reviewed_urls": [
-            "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12012982&stockid=002050"
+            "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0819/2026081901533.pdf"
           ],
           "selected_fact_ids": [
-            "fact-002050-governance"
+            "fact-601127-governance"
           ],
           "selected_delta_ids": [],
-          "notes": "采用可核查来源完成该维度裁定。"
+          "notes": "已审阅所列来源并按证据边界登记。"
         },
         {
-          "query_id": "q-corporate",
-          "code": "002050",
+          "query_id": "bs-q-601127-corporate",
+          "code": "601127",
           "category": "corporate_events",
           "phase": "as_of_t",
           "query_mode": "exact_title",
-          "query_text": "三花智控 2026年中期利润分配预案 回购 注销",
-          "date_from": "2026-03-04",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "query_text": "赛力斯 研发 减值 H股 股份回购 重大事项",
+          "date_from": "2026-03-05",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "selected",
           "reviewed_urls": [
-            "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12550176&stockid=002050",
-            "https://stock.stockstar.com/RB2026083100034824.shtml"
+            "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0819/2026081901533.pdf"
           ],
           "selected_fact_ids": [
-            "fact-002050-corporate",
-            "fact-002050-tday"
+            "fact-601127-corporate"
           ],
           "selected_delta_ids": [],
-          "notes": "采用可核查来源完成该维度裁定。"
+          "notes": "已审阅所列来源并按证据边界登记。"
         },
         {
-          "query_id": "q-industry",
-          "code": "002050",
+          "query_id": "bs-q-601127-industry",
+          "code": "601127",
           "category": "industry_policy_domestic",
           "phase": "as_of_t",
           "query_mode": "industry",
-          "query_text": "工信部 绿色制冷 装备 创新 热管理 2026",
-          "date_from": "2026-06-02",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "query_text": "中国乘用车 新能源汽车 2026年7月 销量 工信部",
+          "date_from": "2026-06-03",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "selected",
           "reviewed_urls": [
-            "https://wap.miit.gov.cn/jgsj/jns/gzdt/art/2026/art_acea09c4bad04cfc8b432fbc7d491304.html"
+            "https://wap.miit.gov.cn/jgsj/zbys/qcgy/art/2026/art_aab3fa7e02914a33a496501f1380facb.html"
           ],
           "selected_fact_ids": [
-            "fact-002050-industry"
+            "fact-601127-industry"
           ],
           "selected_delta_ids": [],
-          "notes": "采用可核查来源完成该维度裁定。"
+          "notes": "已审阅所列来源并按证据边界登记。"
         },
         {
-          "query_id": "q-external",
-          "code": "002050",
+          "query_id": "bs-q-601127-external",
+          "code": "601127",
           "category": "external_global_peer",
           "phase": "as_of_t",
-          "query_mode": "ah_cross_listing",
-          "query_text": "三花智控 02050 H股 海外收入 汽车 目标价 2026",
-          "date_from": "2026-06-02",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "query_mode": "overseas",
+          "query_text": "欧盟 中国纯电动车 反补贴税 价格承诺 2026",
+          "date_from": "2026-06-03",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "selected",
           "reviewed_urls": [
-            "https://finance.sina.com.cn/stock/hkstock/hkgg/2026-08-28/doc-inipwhrw0001143.shtml"
+            "https://policy.trade.ec.europa.eu/news/commission-issues-guidance-document-submission-price-undertaking-offers-battery-electric-vehicles-from-china-2026-01-12_en"
           ],
           "selected_fact_ids": [
-            "fact-002050-external"
+            "fact-601127-external"
           ],
           "selected_delta_ids": [],
-          "notes": "采用可核查来源完成该维度裁定。"
+          "notes": "已审阅所列来源并按证据边界登记。"
         },
         {
-          "query_id": "q-drop",
-          "code": "002050",
+          "query_id": "bs-q-601127-drop",
+          "code": "601127",
           "category": "performance_operations",
           "phase": "as_of_t",
           "query_mode": "drop_cause",
-          "query_text": "三花智控 002050 2026年8月31日 大跌 跌停 利空 原因",
-          "date_from": "2026-03-04",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "query_text": "赛力斯 9月1日 下跌 原因 公告 业绩 资金",
+          "date_from": "2026-06-03",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
-            "https://stock.stockstar.com/RB2026083100034824.shtml"
+            "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0819/2026081901533.pdf",
+            "https://money.finance.sina.com.cn/corp/go.php/vCB_AllBulletin/stockid/601127.phtml"
           ],
           "selected_fact_ids": [],
           "selected_delta_ids": [],
-          "notes": "T日实际上涨约0.36%，未发现突发利空型跌因。"
+          "notes": "未发现T日新增单一公告型跌因；长期回撤更符合业绩、现金流和估值共同重定价。"
         },
         {
-          "query_id": "q-market",
+          "query_id": "bs-q-000681-performance",
+          "code": "000681",
+          "category": "performance_operations",
+          "phase": "as_of_t",
+          "query_mode": "official",
+          "query_text": "视觉中国 2026半年报 收入 归母 扣非 公允价值",
+          "date_from": "2026-03-05",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-25/661e9718-3778-48b8-88ba-ce272dac9677.PDF"
+          ],
+          "selected_fact_ids": [
+            "fact-000681-performance-support",
+            "fact-000681-performance-adverse"
+          ],
+          "selected_delta_ids": [],
+          "notes": "已审阅所列来源并按证据边界登记。"
+        },
+        {
+          "query_id": "bs-q-000681-financial",
+          "code": "000681",
+          "category": "financial_credit",
+          "phase": "as_of_t",
+          "query_mode": "official",
+          "query_text": "视觉中国 经营现金流 货币资金 负债 2026半年报",
+          "date_from": "2025-09-01",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-25/661e9718-3778-48b8-88ba-ce272dac9677.PDF"
+          ],
+          "selected_fact_ids": [
+            "fact-000681-financial"
+          ],
+          "selected_delta_ids": [],
+          "notes": "已审阅所列来源并按证据边界登记。"
+        },
+        {
+          "query_id": "bs-q-000681-governance",
+          "code": "000681",
+          "category": "governance_regulatory",
+          "phase": "as_of_t",
+          "query_mode": "regulator",
+          "query_text": "视觉中国 资金占用 担保 诉讼 处罚 监管 2024-2026",
+          "date_from": "2024-09-01",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-25/661e9718-3778-48b8-88ba-ce272dac9677.PDF"
+          ],
+          "selected_fact_ids": [
+            "fact-000681-governance"
+          ],
+          "selected_delta_ids": [],
+          "notes": "已审阅所列来源并按证据边界登记。"
+        },
+        {
+          "query_id": "bs-q-000681-corporate",
+          "code": "000681",
+          "category": "corporate_events",
+          "phase": "as_of_t",
+          "query_mode": "exact_title",
+          "query_text": "视觉中国 持股5%以上股东 减持 预披露 2026",
+          "date_from": "2026-03-05",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12539014&stockid=000681"
+          ],
+          "selected_fact_ids": [
+            "fact-000681-corporate-reduction"
+          ],
+          "selected_delta_ids": [],
+          "notes": "已审阅所列来源并按证据边界登记。"
+        },
+        {
+          "query_id": "bs-q-000681-industry",
+          "code": "000681",
+          "category": "industry_policy_domestic",
+          "phase": "as_of_t",
+          "query_mode": "industry",
+          "query_text": "A股 数字媒体 传媒 9月1日 资金 行业异动",
+          "date_from": "2026-06-03",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://www.stcn.com/article/detail/4167608.html"
+          ],
+          "selected_fact_ids": [
+            "fact-000681-industry"
+          ],
+          "selected_delta_ids": [],
+          "notes": "已审阅所列来源并按证据边界登记。"
+        },
+        {
+          "query_id": "bs-q-000681-external",
+          "code": "000681",
+          "category": "external_global_peer",
+          "phase": "as_of_t",
+          "query_mode": "overseas",
+          "query_text": "欧盟 GPAI 版权 透明度 内容授权 2026",
+          "date_from": "2026-06-03",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://digital-strategy.ec.europa.eu/en/policies/contents-code-gpai"
+          ],
+          "selected_fact_ids": [
+            "fact-000681-external"
+          ],
+          "selected_delta_ids": [],
+          "notes": "已审阅所列来源并按证据边界登记。"
+        },
+        {
+          "query_id": "bs-q-000681-drop",
+          "code": "000681",
+          "category": "corporate_events",
+          "phase": "as_of_t",
+          "query_mode": "drop_cause",
+          "query_text": "视觉中国 9月1日 下跌 原因 公告 减持 资金",
+          "date_from": "2026-06-03",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
+          "outcome": "no_relevant_hit",
+          "reviewed_urls": [
+            "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12539014&stockid=000681",
+            "https://www.stcn.com/article/detail/4167608.html"
+          ],
+          "selected_fact_ids": [],
+          "selected_delta_ids": [],
+          "notes": "未发现T日新增决定性利空；股价回撤可能同时反映主营放缓、减持预期与板块波动。"
+        },
+        {
+          "query_id": "bs-q-market",
           "code": "MARKET",
           "category": "market_regime",
           "phase": "as_of_t",
           "query_mode": "broad_web",
-          "query_text": "A股 2026年8月31日 收盘 指数 行业广度",
-          "date_from": "2026-08-31",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "query_text": "A股 2026年9月1日 收盘 指数 行业 广度",
+          "date_from": "2026-08-01",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "selected",
           "reviewed_urls": [
-            "https://news.10jqka.com.cn/20260831/c679443347.shtml"
+            "https://news.rthk.hk/rthk/en/component/k2/1868408-20260901.htm"
           ],
           "selected_fact_ids": [
             "fact-market-regime"
           ],
           "selected_delta_ids": [],
-          "notes": "登记T日市场环境。"
+          "notes": "已审阅所列来源并按证据边界登记。"
         },
         {
-          "query_id": "q-fresh-1",
-          "code": "002050",
+          "query_id": "bs-q-601127-fresh-sales",
+          "code": "601127",
           "category": "corporate_events",
           "phase": "post_t_safety",
           "query_mode": "freshness_delta",
-          "query_text": "三花智控 002050 2026年9月1日 最新公告 重大事项",
-          "date_from": "2026-09-01",
-          "date_to": "2026-09-01",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
-          "outcome": "no_relevant_hit",
+          "query_text": "赛力斯 2026年8月份产销快报 9月2日",
+          "date_from": "2026-09-02",
+          "date_to": "2026-09-02",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
+          "outcome": "selected",
           "reviewed_urls": [
-            "https://www.zjshc.com/investor/hkstock.html"
+            "https://paper.cnstock.com/html/2026-09/02/content_2264298.htm"
           ],
           "selected_fact_ids": [],
-          "selected_delta_ids": [],
-          "notes": "公司IR最新公告页未见T后重大增量。"
+          "selected_delta_ids": [
+            "delta-601127-sales"
+          ],
+          "notes": "已审阅所列来源并按证据边界登记。"
         },
         {
-          "query_id": "q-fresh-2",
-          "code": "002050",
+          "query_id": "bs-q-601127-fresh-h",
+          "code": "601127",
           "category": "corporate_events",
           "phase": "post_t_safety",
           "query_mode": "freshness_delta",
-          "query_text": "site:hkexnews.hk SANHUA 02050 2026-09-01 announcement",
-          "date_from": "2026-09-01",
-          "date_to": "2026-09-01",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "query_text": "赛力斯 H股公告 股份发行人 月报表 2026年9月2日",
+          "date_from": "2026-09-02",
+          "date_to": "2026-09-02",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://money.finance.sina.com.cn/corp/go.php/vCB_AllBulletin/stockid/601127.phtml"
+          ],
+          "selected_fact_ids": [],
+          "selected_delta_ids": [
+            "delta-601127-h-monthly"
+          ],
+          "notes": "已审阅所列来源并按证据边界登记。"
+        },
+        {
+          "query_id": "bs-q-601127-fresh-repurchase",
+          "code": "601127",
+          "category": "corporate_events",
+          "phase": "post_t_safety",
+          "query_mode": "freshness_delta",
+          "query_text": "赛力斯 关于股份回购进展公告 2026年9月2日",
+          "date_from": "2026-09-02",
+          "date_to": "2026-09-02",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://paper.cnstock.com/html/2026-09/02/content_2264298.htm"
+          ],
+          "selected_fact_ids": [],
+          "selected_delta_ids": [
+            "delta-601127-repurchase"
+          ],
+          "notes": "已审阅所列来源并按证据边界登记。"
+        },
+        {
+          "query_id": "bs-q-000681-fresh",
+          "code": "000681",
+          "category": "corporate_events",
+          "phase": "post_t_safety",
+          "query_mode": "freshness_delta",
+          "query_text": "视觉中国 2026年9月2日 最新公告 监管披露",
+          "date_from": "2026-09-02",
+          "date_to": "2026-09-02",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
-            "https://www1.hkexnews.hk/search/predefineddoc.xhtml?predefineddocuments=5"
+            "https://www.szse.cn/disclosure/listed/notice/index.html",
+            "https://www.cninfo.com.cn/new/disclosure/stock?stockCode=000681&orgId=gssz0000681"
           ],
           "selected_fact_ids": [],
           "selected_delta_ids": [],
-          "notes": "港交所最新文件入口未见T后重大增量。"
+          "notes": "检索至运行时点，未发现T+1新增实质公告。"
         }
       ],
       "coverage_by_code": {
-        "002050": {
+        "601127": {
           "aliases": [
-            "浙江三花智能控制股份有限公司",
-            "三花智控",
-            "Zhejiang Sanhua Intelligent Controls Co., Ltd."
+            "赛力斯集团股份有限公司",
+            "赛力斯",
+            "SERES Group Co., Ltd."
           ],
           "profile_tags": [
-            "制冷控制",
-            "汽车热管理",
-            "液冷服务器",
-            "A+H"
+            "乘用车",
+            "新能源汽车",
+            "A+H",
+            "智能电动车"
           ],
           "categories": {
             "performance_operations": {
               "status": "hit",
               "query_ids": [
-                "q-performance"
+                "bs-q-601127-performance"
               ],
               "fact_ids": [
-                "fact-002050-performance"
+                "fact-601127-performance",
+                "fact-601127-forecast"
               ],
-              "reason": "已采用T日及以前可核查事实完成该维度裁定。"
+              "reason": "官方中期报告与预告共同确认核心经营恶化。"
             },
             "financial_credit": {
               "status": "hit",
               "query_ids": [
-                "q-financial"
+                "bs-q-601127-financial"
               ],
               "fact_ids": [
-                "fact-002050-financial"
+                "fact-601127-financial"
               ],
-              "reason": "已采用T日及以前可核查事实完成该维度裁定。"
+              "reason": "官方现金流和流动性数据完成核验。"
             },
             "governance_regulatory": {
               "status": "hit",
               "query_ids": [
-                "q-governance"
+                "bs-q-601127-governance"
               ],
               "fact_ids": [
-                "fact-002050-governance"
+                "fact-601127-governance"
               ],
-              "reason": "已采用T日及以前可核查事实完成该维度裁定。"
+              "reason": "审阅意见和重大诉讼边界完成核验。"
             },
             "corporate_events": {
               "status": "hit",
               "query_ids": [
-                "q-corporate"
+                "bs-q-601127-corporate"
               ],
               "fact_ids": [
-                "fact-002050-corporate",
-                "fact-002050-tday"
+                "fact-601127-corporate"
               ],
-              "reason": "已采用T日及以前可核查事实完成该维度裁定。"
+              "reason": "研发、减值及资本事项完成核验。"
             },
             "industry_policy_domestic": {
               "status": "hit",
               "query_ids": [
-                "q-industry"
+                "bs-q-601127-industry"
               ],
               "fact_ids": [
-                "fact-002050-industry"
+                "fact-601127-industry"
               ],
-              "reason": "已采用T日及以前可核查事实完成该维度裁定。"
+              "reason": "工信部汽车行业数据提供国内行业背景。"
             },
             "external_global_peer": {
               "status": "hit",
               "query_ids": [
-                "q-external"
+                "bs-q-601127-external"
               ],
               "fact_ids": [
-                "fact-002050-external"
+                "fact-601127-external"
               ],
-              "reason": "已采用T日及以前可核查事实完成该维度裁定。"
+              "reason": "欧盟电动车贸易约束完成核验。"
             }
           },
           "official_latest_check": {
             "query_ids": [
-              "q-performance"
+              "bs-q-601127-performance"
             ],
             "checked_sources": [
-              "公司投资者关系公告页",
-              "公司中期业绩官方PDF",
-              "港交所最新文件入口"
+              "港交所中期报告",
+              "巨潮资讯业绩预告",
+              "港交所发行人公告检索"
             ],
-            "latest_pre_t": "2026-08-27"
+            "latest_pre_t": "2026-08-25"
           },
           "ruling_evidence": {
             "supporting_fact_ids": [
-              "fact-002050-performance",
-              "fact-002050-financial",
-              "fact-002050-governance",
-              "fact-002050-corporate",
-              "fact-002050-industry",
-              "fact-002050-tday"
+              "fact-601127-governance",
+              "fact-601127-industry"
             ],
             "adverse_fact_ids": [
-              "fact-002050-external"
+              "fact-601127-performance",
+              "fact-601127-forecast",
+              "fact-601127-financial",
+              "fact-601127-corporate",
+              "fact-601127-industry",
+              "fact-601127-external"
             ],
             "decision_fact_ids": [
-              "fact-002050-performance",
-              "fact-002050-financial",
-              "fact-002050-industry",
-              "fact-002050-external"
+              "fact-601127-performance",
+              "fact-601127-forecast",
+              "fact-601127-financial"
+            ],
+            "unresolved_query_ids": []
+          }
+        },
+        "000681": {
+          "aliases": [
+            "视觉（中国）文化发展股份有限公司",
+            "视觉中国",
+            "Visual China Group Co., Ltd."
+          ],
+          "profile_tags": [
+            "数字媒体",
+            "版权内容",
+            "生成式AI",
+            "文化传媒"
+          ],
+          "categories": {
+            "performance_operations": {
+              "status": "hit",
+              "query_ids": [
+                "bs-q-000681-performance"
+              ],
+              "fact_ids": [
+                "fact-000681-performance-support",
+                "fact-000681-performance-adverse"
+              ],
+              "reason": "官方半年报同时显示报表利润增长和主营质量下降。"
+            },
+            "financial_credit": {
+              "status": "hit",
+              "query_ids": [
+                "bs-q-000681-financial"
+              ],
+              "fact_ids": [
+                "fact-000681-financial"
+              ],
+              "reason": "经营现金流与资产负债表完成核验。"
+            },
+            "governance_regulatory": {
+              "status": "hit",
+              "query_ids": [
+                "bs-q-000681-governance"
+              ],
+              "fact_ids": [
+                "fact-000681-governance"
+              ],
+              "reason": "占款、担保、诉讼和处罚边界完成核验。"
+            },
+            "corporate_events": {
+              "status": "hit",
+              "query_ids": [
+                "bs-q-000681-corporate"
+              ],
+              "fact_ids": [
+                "fact-000681-corporate-reduction"
+              ],
+              "reason": "3%股东减持预披露逐条对账。"
+            },
+            "industry_policy_domestic": {
+              "status": "hit",
+              "query_ids": [
+                "bs-q-000681-industry"
+              ],
+              "fact_ids": [
+                "fact-000681-industry"
+              ],
+              "reason": "T日数字媒体板块异动及兑现状态完成核验。"
+            },
+            "external_global_peer": {
+              "status": "hit",
+              "query_ids": [
+                "bs-q-000681-external"
+              ],
+              "fact_ids": [
+                "fact-000681-external"
+              ],
+              "reason": "海外AI版权与透明度规则完成核验。"
+            }
+          },
+          "official_latest_check": {
+            "query_ids": [
+              "bs-q-000681-performance"
+            ],
+            "checked_sources": [
+              "深交所半年报",
+              "巨潮资讯公告索引",
+              "深交所最新公告页"
+            ],
+            "latest_pre_t": "2026-08-31"
+          },
+          "ruling_evidence": {
+            "supporting_fact_ids": [
+              "fact-000681-performance-support",
+              "fact-000681-governance",
+              "fact-000681-industry",
+              "fact-000681-external"
+            ],
+            "adverse_fact_ids": [
+              "fact-000681-performance-adverse",
+              "fact-000681-financial",
+              "fact-000681-corporate-reduction"
+            ],
+            "decision_fact_ids": [
+              "fact-000681-performance-support",
+              "fact-000681-performance-adverse",
+              "fact-000681-financial",
+              "fact-000681-corporate-reduction"
             ],
             "unresolved_query_ids": []
           }
@@ -683,100 +1197,245 @@
       "market_coverage": {
         "status": "hit",
         "query_ids": [
-          "q-market"
+          "bs-q-market"
         ],
         "fact_ids": [
           "fact-market-regime"
         ],
-        "reason": "登记T日指数、广度和行业轮动，不替代个股裁定。"
+        "reason": "登记T日指数与风格轮动，作为个股裁定背景。"
       },
       "f10_seed_ledger": [
         {
-          "seed_key": "002050:forecast",
-          "code": "002050",
+          "seed_key": "601127:forecast",
+          "code": "601127",
           "kind": "forecast",
           "raw_index": null,
-          "seed_text": "2025-12-23 略增 预计2025年1-12月扣除非经常性损益后的净利润盈利:367,916.36万元至461,454.41万元,同比上年增长:18%至48%。",
-          "raw_date": "2025-12-23",
+          "seed_text": "2026-07-13 首亏 预计2026年1-6月归属于上市公司股东的净利润亏损:150,000万元至180,000万元。",
+          "raw_date": "2026-07-13",
           "timing": "pre_t",
-          "disposition": "logged_routine_pre_t",
+          "disposition": "adjudicated_pre_t",
           "query_ids": [
-            "q-performance"
+            "bs-q-601127-performance"
           ],
-          "fact_ids": [],
+          "fact_ids": [
+            "fact-601127-forecast"
+          ],
           "delta_ids": [],
-          "reason": "旧正向业绩预告已不新鲜且被2026年中期报告覆盖，逐字留痕但不重复计入。"
+          "reason": "官方预亏公告与正式中期报告逐项确认，作为强否决交叉证据。"
         },
         {
-          "seed_key": "002050:notices:0",
-          "code": "002050",
+          "seed_key": "601127:notices:0",
+          "code": "601127",
           "kind": "notice",
           "raw_index": 0,
-          "seed_text": "2026-08-27 三花智控:2026年8月27日投资者关系活动记录表",
-          "raw_date": "2026-08-27",
-          "timing": "pre_t",
-          "disposition": "logged_routine_pre_t",
+          "seed_text": "2026-09-02 赛力斯:2026年8月份产销快报",
+          "raw_date": "2026-09-02",
+          "timing": "post_t",
+          "disposition": "quarantined_post_t",
           "query_ids": [
-            "q-corporate"
+            "bs-q-601127-fresh-sales"
           ],
           "fact_ids": [],
-          "delta_ids": [],
-          "reason": "F10例行公告逐字留痕；标题未触发协议的实质事项关键词，不重复计入裁定。"
+          "delta_ids": [
+            "delta-601127-sales"
+          ],
+          "reason": "T+1公告逐字隔离并映射到唯一安全增量，不进入T日事实或上调裁定。"
         },
         {
-          "seed_key": "002050:notices:1",
-          "code": "002050",
+          "seed_key": "601127:notices:1",
+          "code": "601127",
           "kind": "notice",
           "raw_index": 1,
-          "seed_text": "2026-08-27 三花智控:关于“质量回报双提升”行动方案的进展公告",
-          "raw_date": "2026-08-27",
-          "timing": "pre_t",
-          "disposition": "logged_routine_pre_t",
+          "seed_text": "2026-09-02 赛力斯:H股公告(股份发行人及根据《上市规则》第十九B章",
+          "raw_date": "2026-09-02",
+          "timing": "post_t",
+          "disposition": "quarantined_post_t",
           "query_ids": [
-            "q-corporate"
+            "bs-q-601127-fresh-h"
           ],
           "fact_ids": [],
-          "delta_ids": [],
-          "reason": "F10例行公告逐字留痕；标题未触发协议的实质事项关键词，不重复计入裁定。"
+          "delta_ids": [
+            "delta-601127-h-monthly"
+          ],
+          "reason": "T+1公告逐字隔离并映射到唯一安全增量，不进入T日事实或上调裁定。"
         },
         {
-          "seed_key": "002050:notices:2",
-          "code": "002050",
+          "seed_key": "601127:notices:2",
+          "code": "601127",
           "kind": "notice",
           "raw_index": 2,
-          "seed_text": "2026-08-27 三花智控:公司2026年中期利润分配预案的公告",
-          "raw_date": "2026-08-27",
-          "timing": "pre_t",
-          "disposition": "logged_routine_pre_t",
+          "seed_text": "2026-09-02 赛力斯:关于股份回购进展公告",
+          "raw_date": "2026-09-02",
+          "timing": "post_t",
+          "disposition": "quarantined_post_t",
           "query_ids": [
-            "q-corporate"
+            "bs-q-601127-fresh-repurchase"
           ],
           "fact_ids": [],
-          "delta_ids": [],
-          "reason": "F10例行公告逐字留痕；标题未触发协议的实质事项关键词，不重复计入裁定。"
+          "delta_ids": [
+            "delta-601127-repurchase"
+          ],
+          "reason": "T+1公告逐字隔离并映射到唯一安全增量，不进入T日事实或上调裁定。"
         },
         {
-          "seed_key": "002050:notices:3",
-          "code": "002050",
+          "seed_key": "601127:notices:3",
+          "code": "601127",
           "kind": "notice",
           "raw_index": 3,
-          "seed_text": "2026-08-27 三花智控:半年度非经营性资金占用及其他关联资金往来情况汇",
-          "raw_date": "2026-08-27",
+          "seed_text": "2026-08-25 赛力斯:H股公告(翌日披露报表)",
+          "raw_date": "2026-08-25",
           "timing": "pre_t",
           "disposition": "logged_routine_pre_t",
           "query_ids": [
-            "q-corporate"
+            "bs-q-601127-corporate"
           ],
           "fact_ids": [],
           "delta_ids": [],
-          "reason": "F10例行公告逐字留痕；标题未触发协议的实质事项关键词，不重复计入裁定。"
+          "reason": "F10例行公告逐字留痕；该标题未单独触发新增实质事实，避免重复计入。"
+        },
+        {
+          "seed_key": "000681:forecast",
+          "code": "000681",
+          "kind": "forecast",
+          "raw_index": null,
+          "seed_text": "2026-07-15 预增 预计2026年1-6月归属于上市公司股东的净利润盈利:10,000万元至11,500万元,同比上年增长:128.42%至162.68%。",
+          "raw_date": "2026-07-15",
+          "timing": "pre_t",
+          "disposition": "logged_routine_pre_t",
+          "query_ids": [
+            "bs-q-000681-performance"
+          ],
+          "fact_ids": [],
+          "delta_ids": [],
+          "reason": "预增方向已被正式半年报覆盖，逐字留痕但不重复生成事实节点。"
+        },
+        {
+          "seed_key": "000681:notices:0",
+          "code": "000681",
+          "kind": "notice",
+          "raw_index": 0,
+          "seed_text": "2026-08-31 视觉中国:2026年半年度分红派息实施公告",
+          "raw_date": "2026-08-31",
+          "timing": "pre_t",
+          "disposition": "logged_routine_pre_t",
+          "query_ids": [
+            "bs-q-000681-corporate"
+          ],
+          "fact_ids": [],
+          "delta_ids": [],
+          "reason": "F10例行公告逐字留痕；该标题未单独触发新增实质事实，避免重复计入。"
+        },
+        {
+          "seed_key": "000681:notices:1",
+          "code": "000681",
+          "kind": "notice",
+          "raw_index": 1,
+          "seed_text": "2026-08-26 视觉中国:关于持股5%以上股东减持公司股份的预披露公告",
+          "raw_date": "2026-08-26",
+          "timing": "pre_t",
+          "disposition": "adjudicated_pre_t",
+          "query_ids": [
+            "bs-q-000681-corporate"
+          ],
+          "fact_ids": [
+            "fact-000681-corporate-reduction"
+          ],
+          "delta_ids": [],
+          "reason": "持股5%以上股东减持3%属于实质事项，已逐条进入公司事件裁定。"
+        },
+        {
+          "seed_key": "000681:notices:2",
+          "code": "000681",
+          "kind": "notice",
+          "raw_index": 2,
+          "seed_text": "2026-08-25 视觉中国:2026年半年度报告",
+          "raw_date": "2026-08-25",
+          "timing": "pre_t",
+          "disposition": "logged_routine_pre_t",
+          "query_ids": [
+            "bs-q-000681-corporate"
+          ],
+          "fact_ids": [],
+          "delta_ids": [],
+          "reason": "F10例行公告逐字留痕；该标题未单独触发新增实质事实，避免重复计入。"
+        },
+        {
+          "seed_key": "000681:notices:3",
+          "code": "000681",
+          "kind": "notice",
+          "raw_index": 3,
+          "seed_text": "2026-08-25 视觉中国:第十一届董事会第十二次会议决议公告",
+          "raw_date": "2026-08-25",
+          "timing": "pre_t",
+          "disposition": "logged_routine_pre_t",
+          "query_ids": [
+            "bs-q-000681-corporate"
+          ],
+          "fact_ids": [],
+          "delta_ids": [],
+          "reason": "F10例行公告逐字留痕；该标题未单独触发新增实质事实，避免重复计入。"
         }
       ],
       "post_t_safety_by_code": {
-        "002050": {
-          "checked_through_beijing": "2026-09-01 06:47:00+08:00",
-          "base_verdict_asof_t": "✓",
-          "effective_verdict": "✓",
+        "601127": {
+          "checked_through_beijing": "2026-09-02 06:00:00+08:00",
+          "base_verdict_asof_t": "✗",
+          "effective_verdict": "✗",
+          "items": [
+            {
+              "delta_id": "delta-601127-sales",
+              "source_ref": "bs-seres-post-sales",
+              "published_at": "2026-09-02",
+              "event_date": "2026-08-31",
+              "query_ids": [
+                "bs-q-601127-fresh-sales"
+              ],
+              "summary": "8月总销量27684辆、同比下降39.58%，新能源车销量24244辆、同比下降43.96%；1—8月累计总销量和新能源销量分别下降约14.17%和12.58%。",
+              "polarity": "negative",
+              "effect": "cap_at_reject",
+              "used_in_asof_t_verdict": false,
+              "uncertainties": [
+                "该公告在T后发布，不能用于构造T日否决，只能作为执行安全增量。"
+              ]
+            },
+            {
+              "delta_id": "delta-601127-h-monthly",
+              "source_ref": "bs-seres-post-h",
+              "published_at": "2026-09-02",
+              "event_date": "2026-08-31",
+              "query_ids": [
+                "bs-q-601127-fresh-h"
+              ],
+              "summary": "H股股份发行人月报表标题已出现在最新公告索引，但运行时点未取得可逐项核实的完整正文内容。",
+              "polarity": "unverified",
+              "effect": "none",
+              "used_in_asof_t_verdict": false,
+              "uncertainties": [
+                "二级索引只验证标题，不推断股本变化方向或数量。"
+              ]
+            },
+            {
+              "delta_id": "delta-601127-repurchase",
+              "source_ref": "bs-seres-post-repurchase",
+              "published_at": "2026-09-02",
+              "event_date": "2026-08-31",
+              "query_ids": [
+                "bs-q-601127-fresh-repurchase"
+              ],
+              "summary": "8月回购100万股，成交价49.25至50.37元；累计回购约997.5万股、占总股本约0.57%，累计金额约6.37亿元。",
+              "polarity": "positive",
+              "effect": "none",
+              "used_in_asof_t_verdict": false,
+              "uncertainties": [
+                "回购提供边际支撑，但不得把T日✗上调，也不能抵消中期经营和现金流恶化。"
+              ]
+            }
+          ]
+        },
+        "000681": {
+          "checked_through_beijing": "2026-09-02 06:00:00+08:00",
+          "base_verdict_asof_t": "?",
+          "effective_verdict": "?",
           "items": []
         }
       },
@@ -784,9 +1443,9 @@
     },
     "toxic_risk_warning": {
       "version": "bottom-toxic-risk-warning/v4",
-      "T": "2026-08-31",
-      "cutoff_beijing": "2026-08-31 23:59:59+08:00",
-      "retrieved_at_beijing": "2026-09-01 06:47:00+08:00",
+      "T": "2026-09-01",
+      "cutoff_beijing": "2026-09-01 23:59:59+08:00",
+      "retrieved_at_beijing": "2026-09-02 06:00:00+08:00",
       "mode": "shadow",
       "overall_status": "elevated",
       "required_domains": [
@@ -829,32 +1488,32 @@
         },
         {
           "source_ref": "toxic-source-market-signal",
-          "access_url": "https://apnews.com/article/00f872327d65e5330598054a234dc25a",
+          "access_url": "https://apnews.com/article/stocks-markets-oil-bonds-775d7cf741349c7c8e689c0beb57f074",
           "publisher": "Associated Press",
           "source_kind": "independent_media",
-          "origin_id": "ap-us-close-20260831",
-          "published_at": "2026-08-31",
-          "published_at_beijing": "2026-09-01 04:30:00+08:00",
+          "origin_id": "ap-us-close-20260901",
+          "published_at": "2026-09-01",
+          "published_at_beijing": "2026-09-02 04:30:00+08:00",
           "phase": "post_t_safety"
         },
         {
           "source_ref": "toxic-source-ashare-signal",
-          "access_url": "https://finance.eastmoney.com/a/202608313860077051.html",
-          "publisher": "东方财富",
+          "access_url": "https://news.rthk.hk/rthk/en/component/k2/1868408-20260901.htm",
+          "publisher": "香港电台",
           "source_kind": "independent_media",
-          "origin_id": "eastmoney-ashare-close-20260831",
-          "published_at": "2026-08-31",
-          "published_at_beijing": "2026-08-31 15:41:00+08:00",
+          "origin_id": "rthk-ashare-close-20260901",
+          "published_at": "2026-09-01",
+          "published_at_beijing": "2026-09-01 16:00:00+08:00",
           "phase": "as_of_t"
         },
         {
           "source_ref": "toxic-source-delta",
-          "access_url": "https://www.marketscreener.com/news/wall-street-closes-lower-as-oil-prices-jump-indexes-notch-monthly-gains-ce7858ddd88eff25",
-          "publisher": "Reuters镜像",
-          "source_kind": "independent_media",
-          "origin_id": "reuters-us-close-20260831",
-          "published_at": "2026-08-31",
-          "published_at_beijing": "2026-09-01 04:40:00+08:00",
+          "access_url": "https://www.cboe.com/tradable-products/vix",
+          "publisher": "Cboe Global Markets",
+          "source_kind": "official_direct",
+          "origin_id": "cboe-vix-20260901",
+          "published_at": "2026-09-01",
+          "published_at_beijing": "2026-09-02 04:20:00+08:00",
           "phase": "post_t_safety"
         },
         {
@@ -906,6 +1565,46 @@
           "published_at": "2026-08-31",
           "published_at_beijing": "2026-08-31 20:00:00+08:00",
           "phase": "as_of_t"
+        },
+        {
+          "source_ref": "src-hormuz-postt-ap",
+          "access_url": "https://apnews.com/article/b7dea048552afc5a1e91c6a6b8adef65",
+          "publisher": "Associated Press",
+          "source_kind": "independent_media",
+          "origin_id": "ap-hormuz-20260901",
+          "published_at": "2026-09-01",
+          "published_at_beijing": "2026-09-02 02:00:00+08:00",
+          "phase": "post_t_safety"
+        },
+        {
+          "source_ref": "src-hormuz-postt-axios",
+          "access_url": "https://www.axios.com/2026/09/01/hormuz-centcom-strikes-trump-iran",
+          "publisher": "Axios",
+          "source_kind": "independent_media",
+          "origin_id": "axios-hormuz-20260901",
+          "published_at": "2026-09-01",
+          "published_at_beijing": "2026-09-02 03:00:00+08:00",
+          "phase": "post_t_safety"
+        },
+        {
+          "source_ref": "src-ecb-calendar",
+          "access_url": "https://www.ecb.europa.eu/press/calendars/mgcgc/html/index.fi.html?gsid=1d532827-2896-448c-bc87-78ef3aa3dd30",
+          "publisher": "European Central Bank",
+          "source_kind": "official_direct",
+          "origin_id": "ecb-calendar-2026",
+          "published_at": "2025-12-01",
+          "published_at_beijing": "2025-12-01 12:00:00+08:00",
+          "phase": "as_of_t"
+        },
+        {
+          "source_ref": "src-ecb-preview-ap",
+          "access_url": "https://apnews.com/article/b89a1bcf29374108fb0f15621e33c788",
+          "publisher": "Associated Press",
+          "source_kind": "independent_media",
+          "origin_id": "ap-ecb-baseline-20260723",
+          "published_at": "2026-07-23",
+          "published_at_beijing": "2026-07-23 20:00:00+08:00",
+          "phase": "as_of_t"
         }
       ],
       "queries": [
@@ -915,8 +1614,8 @@
           "phase": "as_of_t",
           "query_text": "美国8月非农 Reuters poll consensus",
           "date_from": "2026-01-01",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://www.stockopedia.com/share-prices/nvidia-NSQ%3ANVDA/news/wall-st-week-ahead-jobs-report-broadcom-results-pose-next-hurdles-for-stock-market-rally-01a04a10-da51-7a86-86f6-713b431003c3/"
@@ -926,7 +1625,11 @@
           ],
           "selected_delta_ids": [],
           "selected_signal_ids": [],
-          "notes": "就业报告三路预期与官方日历核验。"
+          "notes": "就业报告三路预期与官方日历核验。",
+          "selected_mover_ids": [],
+          "selected_event_ids": [],
+          "discovery_lanes": [],
+          "discovery_families": []
         },
         {
           "query_id": "toxic-q-scheduled-macro-policy-calendar",
@@ -934,8 +1637,8 @@
           "phase": "as_of_t",
           "query_text": "美国8月就业报告 BLS calendar forecast previous",
           "date_from": "2026-01-01",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://www.bls.gov/schedule/2026/09_sched_list.htm"
@@ -945,7 +1648,11 @@
           ],
           "selected_delta_ids": [],
           "selected_signal_ids": [],
-          "notes": "就业报告三路预期与官方日历核验。"
+          "notes": "就业报告三路预期与官方日历核验。",
+          "selected_mover_ids": [],
+          "selected_event_ids": [],
+          "discovery_lanes": [],
+          "discovery_families": []
         },
         {
           "query_id": "toxic-q-scheduled-macro-policy-preview",
@@ -953,8 +1660,8 @@
           "phase": "as_of_t",
           "query_text": "美国8月就业报告 institution preview wage forecast",
           "date_from": "2026-01-01",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://continuumeconomics.com/a/7b40afa1/preview-due-september-4-us-august-employment-non-farm-payrolls-corrections-from-recent-payroll-weakness-and-unemployment-declines"
@@ -964,50 +1671,64 @@
           ],
           "selected_delta_ids": [],
           "selected_signal_ids": [],
-          "notes": "就业报告三路预期与官方日历核验。"
+          "notes": "就业报告三路预期与官方日历核验。",
+          "selected_mover_ids": [],
+          "selected_event_ids": [],
+          "discovery_lanes": [],
+          "discovery_families": []
         },
         {
           "query_id": "toxic-q-domestic-regulatory-liquidity-1",
           "domain": "domestic_regulatory_liquidity",
           "phase": "as_of_t",
-          "query_text": "domestic_regulatory_liquidity 官方检索变体1",
+          "query_text": "截至9月1日境内监管与流动性官方扫描 变体1",
           "date_from": "2025-01-01",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
-            "https://example.com/official-calendar"
+            "https://www.csrc.gov.cn/",
+            "https://www.sse.com.cn/"
           ],
           "selected_warning_ids": [],
           "selected_delta_ids": [],
           "selected_signal_ids": [],
-          "notes": "已检查官方入口及独立查询变体，未发现重大活跃风险"
+          "notes": "已检查官方入口及独立查询变体，未发现重大活跃风险",
+          "selected_mover_ids": [],
+          "selected_event_ids": [],
+          "discovery_lanes": [],
+          "discovery_families": []
         },
         {
           "query_id": "toxic-q-domestic-regulatory-liquidity-2",
           "domain": "domestic_regulatory_liquidity",
           "phase": "as_of_t",
-          "query_text": "domestic_regulatory_liquidity 官方检索变体2",
+          "query_text": "截至9月1日境内监管与流动性官方扫描 变体2",
           "date_from": "2025-01-01",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
-            "https://example.com/official-calendar"
+            "https://www.csrc.gov.cn/",
+            "https://www.sse.com.cn/"
           ],
           "selected_warning_ids": [],
           "selected_delta_ids": [],
           "selected_signal_ids": [],
-          "notes": "已检查官方入口及独立查询变体，未发现重大活跃风险"
+          "notes": "已检查官方入口及独立查询变体，未发现重大活跃风险",
+          "selected_mover_ids": [],
+          "selected_event_ids": [],
+          "discovery_lanes": [],
+          "discovery_families": []
         },
         {
           "query_id": "toxic-q-external-1",
           "domain": "external_geopolitics_trade",
           "phase": "as_of_t",
-          "query_text": "霍尔木兹 海峡 航运 美军 拉腊克岛 截至2026-08-31",
+          "query_text": "霍尔木兹海峡 航运 军事冲突 截至2026年9月1日 官方与独立来源",
           "date_from": "2026-01-01",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://www.imo.org/zh/mediacentre/pressbriefings/pages/statement-on-the-ongoing-crisis-in-the-strait-of-hormuz.aspx",
@@ -1019,106 +1740,148 @@
           ],
           "selected_delta_ids": [],
           "selected_signal_ids": [],
-          "notes": "采用T日前官方事实"
+          "notes": "采用T日前官方事实",
+          "selected_mover_ids": [],
+          "selected_event_ids": [],
+          "discovery_lanes": [],
+          "discovery_families": []
         },
         {
           "query_id": "toxic-q-cross-asset-stress-1",
           "domain": "cross_asset_stress",
           "phase": "as_of_t",
-          "query_text": "cross_asset_stress 官方检索变体1",
+          "query_text": "截至9月1日全球行业重大异动与A股映射扫描 变体1",
           "date_from": "2025-01-01",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
-            "https://example.com/official-calendar"
+            "https://news.rthk.hk/rthk/en/component/k2/1868408-20260901.htm",
+            "https://www.chinamoney.com.cn/"
           ],
           "selected_warning_ids": [],
           "selected_delta_ids": [],
           "selected_signal_ids": [],
-          "notes": "已检查官方入口及独立查询变体，未发现重大活跃风险"
+          "notes": "已检查官方入口及独立查询变体，未发现重大活跃风险",
+          "selected_mover_ids": [],
+          "selected_event_ids": [],
+          "discovery_lanes": [],
+          "discovery_families": [
+            "healthcare_biotech",
+            "consumer",
+            "financial_real_estate",
+            "industrials_transport_defense",
+            "utilities_clean_energy",
+            "broad_market_style"
+          ]
         },
         {
           "query_id": "toxic-q-cross-asset-stress-2",
           "domain": "cross_asset_stress",
           "phase": "as_of_t",
-          "query_text": "cross_asset_stress 官方检索变体2",
+          "query_text": "截至9月1日全球行业重大异动与A股映射扫描 变体2",
           "date_from": "2025-01-01",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
-            "https://example.com/official-calendar"
+            "https://www.csrc.gov.cn/",
+            "https://www.sse.com.cn/"
           ],
           "selected_warning_ids": [],
           "selected_delta_ids": [],
           "selected_signal_ids": [],
-          "notes": "已检查官方入口及独立查询变体，未发现重大活跃风险"
+          "notes": "已检查官方入口及独立查询变体，未发现重大活跃风险",
+          "selected_mover_ids": [],
+          "selected_event_ids": [],
+          "discovery_lanes": [],
+          "discovery_families": [
+            "healthcare_biotech",
+            "consumer",
+            "financial_real_estate",
+            "industrials_transport_defense",
+            "utilities_clean_energy",
+            "broad_market_style"
+          ]
         },
         {
           "query_id": "toxic-q-holiday-information-gap-1",
           "domain": "holiday_information_gap",
           "phase": "as_of_t",
-          "query_text": "holiday_information_gap 官方检索变体1",
+          "query_text": "未来十日A股休市安排和信息缺口扫描 变体1",
           "date_from": "2025-01-01",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
-            "https://example.com/official-calendar"
+            "https://www.sse.com.cn/disclosure/dealinstruc/closed/",
+            "https://www.gov.cn/zhengce/content/202511/content_7047098.htm"
           ],
           "selected_warning_ids": [],
           "selected_delta_ids": [],
           "selected_signal_ids": [],
-          "notes": "已检查官方入口及独立查询变体，未发现重大活跃风险"
+          "notes": "已检查官方入口及独立查询变体，未发现重大活跃风险",
+          "selected_mover_ids": [],
+          "selected_event_ids": [],
+          "discovery_lanes": [],
+          "discovery_families": []
         },
         {
           "query_id": "toxic-q-holiday-information-gap-2",
           "domain": "holiday_information_gap",
           "phase": "as_of_t",
-          "query_text": "holiday_information_gap 官方检索变体2",
+          "query_text": "未来十日A股休市安排和信息缺口扫描 变体2",
           "date_from": "2025-01-01",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
-            "https://example.com/official-calendar"
+            "https://www.sse.com.cn/disclosure/dealinstruc/closed/",
+            "https://www.gov.cn/zhengce/content/202511/content_7047098.htm"
           ],
           "selected_warning_ids": [],
           "selected_delta_ids": [],
           "selected_signal_ids": [],
-          "notes": "已检查官方入口及独立查询变体，未发现重大活跃风险"
+          "notes": "已检查官方入口及独立查询变体，未发现重大活跃风险",
+          "selected_mover_ids": [],
+          "selected_event_ids": [],
+          "discovery_lanes": [],
+          "discovery_families": []
         },
         {
           "query_id": "toxic-q-scheduled-macro-policy-delta",
           "domain": "scheduled_macro_policy",
           "phase": "post_t_safety",
-          "query_text": "scheduled_macro_policy T后末端扫描变体1",
-          "date_from": "2026-09-01",
-          "date_to": "2026-09-01",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "query_text": "9月2日重大宏观排期与官方日历末端复核 变体一",
+          "date_from": "2026-09-02",
+          "date_to": "2026-09-02",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
-            "https://www.sse.com.cn/",
-            "https://www.hkexnews.hk/"
+            "https://www.bls.gov/schedule/2026/09_sched_list.htm",
+            "https://www.ecb.europa.eu/press/calendars/mgcgc/html/index.fi.html?gsid=1d532827-2896-448c-bc87-78ef3aa3dd30"
           ],
           "selected_warning_ids": [],
           "selected_delta_ids": [],
           "selected_signal_ids": [],
-          "notes": "T后末端扫描已执行，未发现另一项达到重大性阈值的新信息。"
+          "notes": "T后末端扫描已执行，未发现另一项达到重大性阈值的新信息。",
+          "selected_mover_ids": [],
+          "selected_event_ids": [],
+          "discovery_lanes": [],
+          "discovery_families": []
         },
         {
           "query_id": "toxic-q-scheduled-macro-policy-delta-2",
           "domain": "scheduled_macro_policy",
           "phase": "post_t_safety",
-          "query_text": "scheduled_macro_policy T后末端扫描变体2",
-          "date_from": "2026-09-01",
-          "date_to": "2026-09-01",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "query_text": "9月2日重大宏观排期与官方日历末端复核 变体二",
+          "date_from": "2026-09-02",
+          "date_to": "2026-09-02",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
-            "https://www.sse.com.cn/",
-            "https://www.hkexnews.hk/"
+            "https://www.bls.gov/schedule/2026/09_sched_list.htm",
+            "https://www.ecb.europa.eu/press/calendars/mgcgc/html/index.fi.html?gsid=1d532827-2896-448c-bc87-78ef3aa3dd30"
           ],
           "selected_warning_ids": [],
           "selected_delta_ids": [],
@@ -1132,119 +1895,156 @@
             "industrials_transport_defense",
             "utilities_clean_energy",
             "broad_market_style"
-          ]
+          ],
+          "selected_mover_ids": [],
+          "selected_event_ids": [],
+          "discovery_lanes": []
         },
         {
           "query_id": "toxic-q-domestic-regulatory-liquidity-delta",
           "domain": "domestic_regulatory_liquidity",
           "phase": "post_t_safety",
-          "query_text": "domestic_regulatory_liquidity T后末端扫描变体1",
-          "date_from": "2026-09-01",
-          "date_to": "2026-09-01",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "query_text": "9月2日证监会与交易所监管、流动性最新扫描 变体一",
+          "date_from": "2026-09-02",
+          "date_to": "2026-09-02",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
-            "https://www.sse.com.cn/",
-            "https://www.hkexnews.hk/"
-          ],
-          "selected_warning_ids": [],
-          "selected_delta_ids": [],
-          "selected_signal_ids": [],
-          "notes": "T后末端扫描已执行，未发现另一项达到重大性阈值的新信息。"
-        },
-        {
-          "query_id": "toxic-q-domestic-regulatory-liquidity-delta-2",
-          "domain": "domestic_regulatory_liquidity",
-          "phase": "post_t_safety",
-          "query_text": "domestic_regulatory_liquidity T后末端扫描变体2",
-          "date_from": "2026-09-01",
-          "date_to": "2026-09-01",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
-          "outcome": "no_relevant_hit",
-          "reviewed_urls": [
-            "https://www.sse.com.cn/",
-            "https://www.hkexnews.hk/"
-          ],
-          "selected_warning_ids": [],
-          "selected_delta_ids": [],
-          "selected_signal_ids": [],
-          "notes": "T后末端扫描已执行，未发现另一项达到重大性阈值的新信息。"
-        },
-        {
-          "query_id": "toxic-q-external-geopolitics-trade-delta",
-          "domain": "external_geopolitics_trade",
-          "phase": "post_t_safety",
-          "query_text": "external_geopolitics_trade T后末端扫描变体1",
-          "date_from": "2026-09-01",
-          "date_to": "2026-09-01",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
-          "outcome": "selected",
-          "reviewed_urls": [
-            "https://apnews.com/article/00f872327d65e5330598054a234dc25a",
-            "https://www.marketscreener.com/news/wall-street-closes-lower-as-oil-prices-jump-indexes-notch-monthly-gains-ce7858ddd88eff25"
-          ],
-          "selected_warning_ids": [],
-          "selected_delta_ids": [
-            "toxic-delta-001"
-          ],
-          "selected_signal_ids": [],
-          "notes": "采用T后美股与油价价格确认，严格与T日裁定隔离。"
-        },
-        {
-          "query_id": "toxic-q-external-geopolitics-trade-delta-2",
-          "domain": "external_geopolitics_trade",
-          "phase": "post_t_safety",
-          "query_text": "external_geopolitics_trade T后末端扫描变体2",
-          "date_from": "2026-09-01",
-          "date_to": "2026-09-01",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
-          "outcome": "no_relevant_hit",
-          "reviewed_urls": [
-            "https://www.sse.com.cn/",
-            "https://www.hkexnews.hk/"
-          ],
-          "selected_warning_ids": [],
-          "selected_delta_ids": [],
-          "selected_signal_ids": [],
-          "notes": "T后末端扫描已执行，未发现另一项达到重大性阈值的新信息。"
-        },
-        {
-          "query_id": "toxic-q-cross-asset-stress-delta",
-          "domain": "cross_asset_stress",
-          "phase": "post_t_safety",
-          "query_text": "cross_asset_stress T后末端扫描变体1",
-          "date_from": "2026-09-01",
-          "date_to": "2026-09-01",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
-          "outcome": "no_relevant_hit",
-          "reviewed_urls": [
-            "https://www.sse.com.cn/",
-            "https://www.hkexnews.hk/"
+            "https://www.csrc.gov.cn/",
+            "https://www.sse.com.cn/"
           ],
           "selected_warning_ids": [],
           "selected_delta_ids": [],
           "selected_signal_ids": [],
           "notes": "T后末端扫描已执行，未发现另一项达到重大性阈值的新信息。",
+          "selected_mover_ids": [],
+          "selected_event_ids": [],
+          "discovery_lanes": [],
+          "discovery_families": []
+        },
+        {
+          "query_id": "toxic-q-domestic-regulatory-liquidity-delta-2",
+          "domain": "domestic_regulatory_liquidity",
+          "phase": "post_t_safety",
+          "query_text": "9月2日证监会与交易所监管、流动性最新扫描 变体二",
+          "date_from": "2026-09-02",
+          "date_to": "2026-09-02",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
+          "outcome": "no_relevant_hit",
+          "reviewed_urls": [
+            "https://www.csrc.gov.cn/",
+            "https://www.sse.com.cn/"
+          ],
+          "selected_warning_ids": [],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "T后末端扫描已执行，未发现另一项达到重大性阈值的新信息。",
+          "selected_mover_ids": [],
+          "selected_event_ids": [],
+          "discovery_lanes": [],
+          "discovery_families": []
+        },
+        {
+          "query_id": "toxic-q-external-geopolitics-trade-delta",
+          "domain": "external_geopolitics_trade",
+          "phase": "post_t_safety",
+          "query_text": "霍尔木兹 2026年9月1日后 最新军事与航运增量 AP Axios",
+          "date_from": "2026-09-02",
+          "date_to": "2026-09-02",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://apnews.com/article/b7dea048552afc5a1e91c6a6b8adef65",
+            "https://www.axios.com/2026/09/01/hormuz-centcom-strikes-trump-iran"
+          ],
+          "selected_warning_ids": [],
+          "selected_delta_ids": [
+            "toxic-delta-hormuz-postt"
+          ],
+          "selected_signal_ids": [],
+          "notes": "采用T后美股与油价价格确认，严格与T日裁定隔离。",
+          "selected_mover_ids": [],
+          "selected_event_ids": [
+            "material-event-hormuz"
+          ],
+          "discovery_lanes": [
+            "event_first_scan"
+          ],
           "discovery_families": [
-            "healthcare_biotech",
-            "consumer",
-            "financial_real_estate",
-            "industrials_transport_defense",
-            "broad_market_style"
+            "technology_media_telecom",
+            "energy_materials"
           ]
+        },
+        {
+          "query_id": "toxic-q-external-geopolitics-trade-delta-2",
+          "domain": "external_geopolitics_trade",
+          "phase": "post_t_safety",
+          "query_text": "IMO 霍尔木兹 9月2日 官方末端状态复核",
+          "date_from": "2026-09-02",
+          "date_to": "2026-09-02",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
+          "outcome": "no_relevant_hit",
+          "reviewed_urls": [
+            "https://www.imo.org/zh/mediacentre/pressbriefings/pages/statement-on-the-ongoing-crisis-in-the-strait-of-hormuz.aspx",
+            "https://www.imo.org/en/mediacentre/pages/default.aspx"
+          ],
+          "selected_warning_ids": [],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "notes": "T后末端扫描已执行，未发现另一项达到重大性阈值的新信息。",
+          "selected_mover_ids": [],
+          "selected_event_ids": [],
+          "discovery_lanes": [],
+          "discovery_families": []
+        },
+        {
+          "query_id": "toxic-q-cross-asset-stress-delta",
+          "domain": "cross_asset_stress",
+          "phase": "post_t_safety",
+          "query_text": "9月1日美股收盘 科技 油价 美债 VIX 跨资产压力",
+          "date_from": "2026-09-02",
+          "date_to": "2026-09-02",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://apnews.com/article/stocks-markets-oil-bonds-775d7cf741349c7c8e689c0beb57f074",
+            "https://www.cboe.com/tradable-products/vix",
+            "https://apnews.com/article/b7dea048552afc5a1e91c6a6b8adef65"
+          ],
+          "selected_warning_ids": [],
+          "selected_delta_ids": [
+            "toxic-delta-market-postt"
+          ],
+          "selected_signal_ids": [
+            "market-signal-001",
+            "market-signal-oil-001"
+          ],
+          "notes": "T后末端扫描已执行，未发现另一项达到重大性阈值的新信息。",
+          "discovery_families": [
+            "technology_media_telecom",
+            "energy_materials"
+          ],
+          "selected_mover_ids": [
+            "mover-us-tech",
+            "mover-oil"
+          ],
+          "selected_event_ids": [
+            "material-event-hormuz"
+          ],
+          "discovery_lanes": []
         },
         {
           "query_id": "toxic-q-cross-asset-stress-delta-2",
           "domain": "cross_asset_stress",
           "phase": "post_t_safety",
-          "query_text": "cross_asset_stress T后末端扫描变体2",
-          "date_from": "2026-09-01",
-          "date_to": "2026-09-01",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "query_text": "9月2日亚洲开盘前 美元 美债 中国相关资产 复核",
+          "date_from": "2026-09-02",
+          "date_to": "2026-09-02",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
-            "https://www.sse.com.cn/",
-            "https://www.hkexnews.hk/"
+            "https://www.marketscreener.com/news/dollar-gains-as-oil-rising-bond-yields-stoke-inflation-fears-ce7858d2d88ef02d",
+            "https://www.chinamoney.com.cn/"
           ],
           "selected_warning_ids": [],
           "selected_delta_ids": [],
@@ -1259,56 +2059,67 @@
             "financial_real_estate",
             "industrials_transport_defense",
             "broad_market_style"
-          ]
+          ],
+          "selected_mover_ids": [],
+          "selected_event_ids": []
         },
         {
           "query_id": "toxic-q-holiday-information-gap-delta",
           "domain": "holiday_information_gap",
           "phase": "post_t_safety",
-          "query_text": "holiday_information_gap T后末端扫描变体1",
-          "date_from": "2026-09-01",
-          "date_to": "2026-09-01",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "query_text": "未来十日A股休市与海外信息累积窗口复核 变体一",
+          "date_from": "2026-09-02",
+          "date_to": "2026-09-02",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
-            "https://www.sse.com.cn/",
-            "https://www.hkexnews.hk/"
+            "https://www.sse.com.cn/disclosure/dealinstruc/closed/",
+            "https://www.gov.cn/zhengce/content/202511/content_7047098.htm"
           ],
           "selected_warning_ids": [],
           "selected_delta_ids": [],
           "selected_signal_ids": [],
-          "notes": "T后末端扫描已执行，未发现另一项达到重大性阈值的新信息。"
+          "notes": "T后末端扫描已执行，未发现另一项达到重大性阈值的新信息。",
+          "selected_mover_ids": [],
+          "selected_event_ids": [],
+          "discovery_lanes": [],
+          "discovery_families": []
         },
         {
           "query_id": "toxic-q-holiday-information-gap-delta-2",
           "domain": "holiday_information_gap",
           "phase": "post_t_safety",
-          "query_text": "holiday_information_gap T后末端扫描变体2",
-          "date_from": "2026-09-01",
-          "date_to": "2026-09-01",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "query_text": "未来十日A股休市与海外信息累积窗口复核 变体二",
+          "date_from": "2026-09-02",
+          "date_to": "2026-09-02",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
-            "https://www.sse.com.cn/",
-            "https://www.hkexnews.hk/"
+            "https://www.sse.com.cn/disclosure/dealinstruc/closed/",
+            "https://www.gov.cn/zhengce/content/202511/content_7047098.htm"
           ],
           "selected_warning_ids": [],
           "selected_delta_ids": [],
           "selected_signal_ids": [],
-          "notes": "T后末端扫描已执行，未发现另一项达到重大性阈值的新信息。"
+          "notes": "T后末端扫描已执行，未发现另一项达到重大性阈值的新信息。",
+          "selected_mover_ids": [],
+          "selected_event_ids": [],
+          "discovery_lanes": [],
+          "discovery_families": []
         },
         {
           "query_id": "toxic-q-us-equity-sector-signal",
           "domain": "cross_asset_stress",
           "phase": "post_t_safety",
-          "query_text": "美股2026年8月31日收盘 行业 能源 公用事业 油价",
-          "date_from": "2026-09-01",
-          "date_to": "2026-09-01",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "query_text": "美股2026年9月1日收盘 科技行业 能源 原油 VIX",
+          "date_from": "2026-09-02",
+          "date_to": "2026-09-02",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "selected",
           "reviewed_urls": [
-            "https://apnews.com/article/00f872327d65e5330598054a234dc25a",
-            "https://www.marketscreener.com/news/wall-street-closes-lower-as-oil-prices-jump-indexes-notch-monthly-gains-ce7858ddd88eff25"
+            "https://apnews.com/article/stocks-markets-oil-bonds-775d7cf741349c7c8e689c0beb57f074",
+            "https://www.cboe.com/tradable-products/vix",
+            "https://apnews.com/article/b7dea048552afc5a1e91c6a6b8adef65"
           ],
           "selected_warning_ids": [],
           "selected_delta_ids": [],
@@ -1317,31 +2128,33 @@
             "market-signal-oil-001"
           ],
           "selected_mover_ids": [
-            "mover-us-sector-001",
-            "mover-global-001"
+            "mover-us-tech",
+            "mover-oil"
           ],
-          "selected_event_ids": [],
+          "selected_event_ids": [
+            "material-event-hormuz"
+          ],
           "notes": "T后末端扫描已执行，未发现另一项达到重大性阈值的新信息。",
           "discovery_lanes": [
             "us_sector_tape",
             "global_movers"
           ],
           "discovery_families": [
-            "energy_materials",
-            "utilities_clean_energy"
+            "technology_media_telecom",
+            "energy_materials"
           ]
         },
         {
           "query_id": "toxic-q-ashare-t-sector-signal",
           "domain": "domestic_regulatory_liquidity",
           "phase": "as_of_t",
-          "query_text": "A股2026年8月31日行业涨跌 广度 液冷服务器 消费电子",
-          "date_from": "2026-08-31",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "query_text": "A股2026年9月1日行业涨跌 广度 数字媒体 防御轮动",
+          "date_from": "2026-09-01",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "selected",
           "reviewed_urls": [
-            "https://finance.eastmoney.com/a/202608313860077051.html"
+            "https://news.rthk.hk/rthk/en/component/k2/1868408-20260901.htm"
           ],
           "selected_warning_ids": [],
           "selected_delta_ids": [],
@@ -1349,10 +2162,10 @@
             "market-signal-ashare-001"
           ],
           "selected_mover_ids": [
-            "mover-ashare-t-001"
+            "mover-ashare-digital"
           ],
           "selected_event_ids": [
-            "material-event-001"
+            "material-event-ashare-digital"
           ],
           "notes": "采用A股T日行业异动并核对首次反应与定价状态",
           "discovery_lanes": [
@@ -1369,8 +2182,8 @@
           "phase": "as_of_t",
           "query_text": "中国8月CPI 调查一致预期 survey consensus",
           "date_from": "2026-01-01",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://www.reuters.com/markets/asia/china-august-cpi-poll-2026-09-01/"
@@ -1392,8 +2205,8 @@
           "phase": "as_of_t",
           "query_text": "中国8月CPI economic calendar forecast previous",
           "date_from": "2026-01-01",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://tradingeconomics.com/china/calendar",
@@ -1416,8 +2229,8 @@
           "phase": "as_of_t",
           "query_text": "中国8月CPI institution preview forecast",
           "date_from": "2026-01-01",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://ca.investing.com/economic-calendar/chinese-cpi-743"
@@ -1439,8 +2252,8 @@
           "phase": "as_of_t",
           "query_text": "中国8月PPI 调查一致预期 survey consensus",
           "date_from": "2026-01-01",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://www.reuters.com/markets/asia/china-august-ppi-poll-2026-09-01/"
@@ -1462,8 +2275,8 @@
           "phase": "as_of_t",
           "query_text": "中国8月PPI economic calendar forecast previous",
           "date_from": "2026-01-01",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://tradingeconomics.com/china/calendar",
@@ -1486,8 +2299,8 @@
           "phase": "as_of_t",
           "query_text": "中国8月PPI institution preview forecast",
           "date_from": "2026-01-01",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://www.investing.com/economic-calendar/chinese-ppi-464"
@@ -1509,8 +2322,8 @@
           "phase": "as_of_t",
           "query_text": "美国8月PPI survey consensus",
           "date_from": "2026-01-01",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://www.forexfactory.com/calendar/87-us-core-ppi-mm"
@@ -1532,8 +2345,8 @@
           "phase": "as_of_t",
           "query_text": "美国8月PPI economic calendar forecast",
           "date_from": "2026-01-01",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://tradingeconomics.com/united-states/calendar%26importance%3D3",
@@ -1556,8 +2369,8 @@
           "phase": "as_of_t",
           "query_text": "美国8月PPI institution preview final demand",
           "date_from": "2026-01-01",
-          "date_to": "2026-08-31",
-          "executed_at_beijing": "2026-09-01 06:47:00+08:00",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://continuumeconomics.com/a/9179ab32/preview-due-september-10-us-august-ppi-inflationary-pressure-still-significant"
@@ -1572,6 +2385,146 @@
           "discovery_lanes": [],
           "discovery_families": [],
           "notes": "PPI三路预测核验；只采用口径明确的机构月度预测。"
+        },
+        {
+          "query_id": "q-us-cpi-survey",
+          "domain": "scheduled_macro_policy",
+          "phase": "as_of_t",
+          "query_text": "美国8月CPI survey consensus",
+          "date_from": "2026-01-01",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://www.kiplinger.com/economic-forecasts/inflation"
+          ],
+          "selected_warning_ids": [
+            "tw-us-cpi"
+          ],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "selected_mover_ids": [],
+          "selected_event_ids": [],
+          "discovery_lanes": [],
+          "discovery_families": [],
+          "notes": "重大排期调查共识路径已审阅。"
+        },
+        {
+          "query_id": "q-us-cpi-calendar",
+          "domain": "scheduled_macro_policy",
+          "phase": "as_of_t",
+          "query_text": "美国8月CPI economic calendar forecast previous",
+          "date_from": "2026-01-01",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://www.bls.gov/schedule/2026/09_sched_list.htm",
+            "https://tradingeconomics.com/united-states/calendar"
+          ],
+          "selected_warning_ids": [
+            "tw-us-cpi"
+          ],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "selected_mover_ids": [],
+          "selected_event_ids": [],
+          "discovery_lanes": [],
+          "discovery_families": [],
+          "notes": "重大排期经济日历路径已审阅。"
+        },
+        {
+          "query_id": "q-us-cpi-preview",
+          "domain": "scheduled_macro_policy",
+          "phase": "as_of_t",
+          "query_text": "美国8月CPI institution preview forecast",
+          "date_from": "2026-01-01",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://www.kiplinger.com/economic-forecasts/inflation",
+            "https://www.bls.gov/cpi/"
+          ],
+          "selected_warning_ids": [
+            "tw-us-cpi"
+          ],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "selected_mover_ids": [],
+          "selected_event_ids": [],
+          "discovery_lanes": [],
+          "discovery_families": [],
+          "notes": "重大排期机构预览路径已审阅。"
+        },
+        {
+          "query_id": "q-ecb-survey",
+          "domain": "scheduled_macro_policy",
+          "phase": "as_of_t",
+          "query_text": "ECB 2026年9月会议 survey consensus",
+          "date_from": "2026-01-01",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://apnews.com/article/b89a1bcf29374108fb0f15621e33c788"
+          ],
+          "selected_warning_ids": [
+            "tw-ecb"
+          ],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "selected_mover_ids": [],
+          "selected_event_ids": [],
+          "discovery_lanes": [],
+          "discovery_families": [],
+          "notes": "重大排期调查共识路径已审阅。"
+        },
+        {
+          "query_id": "q-ecb-calendar",
+          "domain": "scheduled_macro_policy",
+          "phase": "as_of_t",
+          "query_text": "ECB 2026年9月会议 official calendar",
+          "date_from": "2026-01-01",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://www.ecb.europa.eu/press/calendars/mgcgc/html/index.fi.html?gsid=1d532827-2896-448c-bc87-78ef3aa3dd30"
+          ],
+          "selected_warning_ids": [
+            "tw-ecb"
+          ],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "selected_mover_ids": [],
+          "selected_event_ids": [],
+          "discovery_lanes": [],
+          "discovery_families": [],
+          "notes": "重大排期经济日历路径已审阅。"
+        },
+        {
+          "query_id": "q-ecb-preview",
+          "domain": "scheduled_macro_policy",
+          "phase": "as_of_t",
+          "query_text": "ECB September 2026 policy decision institution preview",
+          "date_from": "2026-01-01",
+          "date_to": "2026-09-01",
+          "executed_at_beijing": "2026-09-02 06:00:00+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://apnews.com/article/b89a1bcf29374108fb0f15621e33c788"
+          ],
+          "selected_warning_ids": [
+            "tw-ecb"
+          ],
+          "selected_delta_ids": [],
+          "selected_signal_ids": [],
+          "selected_mover_ids": [],
+          "selected_event_ids": [],
+          "discovery_lanes": [],
+          "discovery_families": [],
+          "notes": "重大排期机构预览路径已审阅。"
         }
       ],
       "coverage": {
@@ -1589,15 +2542,23 @@
             "q-cn-ppi-preview",
             "q-us-ppi-survey",
             "q-us-ppi-calendar",
-            "q-us-ppi-preview"
+            "q-us-ppi-preview",
+            "q-us-cpi-survey",
+            "q-us-cpi-calendar",
+            "q-us-cpi-preview",
+            "q-ecb-survey",
+            "q-ecb-calendar",
+            "q-ecb-preview"
           ],
           "warning_ids": [
             "tw-us-jobs",
             "tw-cn-cpi",
             "tw-cn-ppi",
-            "tw-us-ppi"
+            "tw-us-ppi",
+            "tw-us-cpi",
+            "tw-ecb"
           ],
-          "reason": "未来十日重大排期与三路预期检索已结构化。"
+          "reason": "未来十日美国就业、中美通胀、美国PPI与欧洲央行会议均完成三路预期检索。"
         },
         "domestic_regulatory_liquidity": {
           "status": "no_relevant_hit",
@@ -1607,7 +2568,7 @@
             "toxic-q-ashare-t-sector-signal"
           ],
           "warning_ids": [],
-          "reason": "T日前未见系统性流动性或监管负面warning。"
+          "reason": "截至T日未见系统性监管或流动性负面warning；A股行业价格另作信号登记。"
         },
         "external_geopolitics_trade": {
           "status": "hit",
@@ -1617,7 +2578,7 @@
           "warning_ids": [
             "toxic-warning-001"
           ],
-          "reason": "霍尔木兹海峡风险在T日仍活跃。"
+          "reason": "霍尔木兹航运与军事风险截至T日仍活跃。"
         },
         "cross_asset_stress": {
           "status": "no_relevant_hit",
@@ -1626,7 +2587,7 @@
             "toxic-q-cross-asset-stress-2"
           ],
           "warning_ids": [],
-          "reason": "T日前未见另一项独立系统性压力warning；T后价格另账。"
+          "reason": "截至T日未见另一项独立系统性压力；T+1美股、油价与VIX严格另账。"
         },
         "holiday_information_gap": {
           "status": "no_relevant_hit",
@@ -1635,7 +2596,7 @@
             "toxic-q-holiday-information-gap-2"
           ],
           "warning_ids": [],
-          "reason": "未来观察窗A股无长假信息缺口。"
+          "reason": "未来十日A股无长假闭市形成的信息累积缺口。"
         }
       },
       "warnings": [
@@ -1649,7 +2610,7 @@
           "event_start": "2026-08-28",
           "event_end": null,
           "direction_certainty": "negative",
-          "why": "国际海事组织确认霍尔木兹航运危机持续；8月30日美军打击拉腊克岛发射装置并出现报复表态，能源、航运与成本敏感行业风险仍活跃。",
+          "why": "国际海事组织确认霍尔木兹航运危机持续；截至T日，美军打击与报复风险仍在，油价、航运、汽车制造成本和全球风险偏好面临高等级外部约束。",
           "affected_industries": [
             "石油天然气",
             "航运",
@@ -1657,7 +2618,9 @@
             "化工",
             "制造业"
           ],
-          "codes": [],
+          "codes": [
+            "601127"
+          ],
           "source_refs": [
             "toxic-source-001",
             "src-hormuz-ap-t",
@@ -1877,6 +2840,105 @@
               "src-continuum-ppi"
             ],
             "base_case": "美国8月PPI的基准情景是保持结构性观察，等待后续实际值或价格确认。",
+            "confidence": "medium",
+            "upside_scenario": "若压力变量缓和且风险资产广度改善，相关风险溢价可能回落。",
+            "downside_scenario": "若压力变量强化并跨市场共振，A股相关行业波动可能上升。",
+            "transmission_paths": [
+              "事实变化→预期差→风险偏好与行业相对强弱"
+            ],
+            "watch_variables": [
+              "官方后续公告",
+              "关键资产价格与市场广度"
+            ],
+            "invalidators": [
+              "官方信息否定当前事实基础",
+              "关键价格持续反向确认"
+            ],
+            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作。"
+          },
+          "shadow": true
+        },
+        {
+          "warning_id": "tw-us-cpi",
+          "level": "med",
+          "risk_family": "macro_calendar",
+          "status": "scheduled",
+          "scope": "market",
+          "first_public_at": "2025-12-19",
+          "event_start": "2026-09-11",
+          "event_end": "2026-09-11",
+          "direction_certainty": "uncertain",
+          "why": "美国8月CPI定于北京时间9月11日20:30发布，可能改变美债、美元与全球成长估值。",
+          "affected_industries": [
+            "高估值成长",
+            "出口制造",
+            "有色金属"
+          ],
+          "codes": [],
+          "source_refs": [
+            "toxic-source-scheduled"
+          ],
+          "query_ids": [
+            "q-us-cpi-survey",
+            "q-us-cpi-calendar",
+            "q-us-cpi-preview"
+          ],
+          "evaluation": {
+            "fact_basis": "美国8月CPI已按官方来源、独立来源和价格证据核验事实边界。",
+            "consensus": "未找到可靠共识，不把单一叙事冒充一致预期。",
+            "consensus_source_refs": [],
+            "base_case": "美国8月CPI的基准情景是保持结构性观察，等待后续官方结果或价格确认。",
+            "confidence": "low",
+            "upside_scenario": "若压力变量缓和且风险资产广度改善，相关风险溢价可能回落。",
+            "downside_scenario": "若压力变量强化并跨市场共振，A股相关行业波动可能上升。",
+            "transmission_paths": [
+              "事实变化→预期差→风险偏好与行业相对强弱"
+            ],
+            "watch_variables": [
+              "官方后续公告",
+              "关键资产价格与市场广度"
+            ],
+            "invalidators": [
+              "官方信息否定当前事实基础",
+              "关键价格持续反向确认"
+            ],
+            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作。"
+          },
+          "shadow": true
+        },
+        {
+          "warning_id": "tw-ecb",
+          "level": "med",
+          "risk_family": "macro_calendar",
+          "status": "scheduled",
+          "scope": "market",
+          "first_public_at": "2025-12-01",
+          "event_start": "2026-09-10",
+          "event_end": "2026-09-10",
+          "direction_certainty": "uncertain",
+          "why": "欧洲央行9月货币政策会议排定于9月10日，能源冲击与数据依赖立场可能影响欧元、全球利率及出口链估值。",
+          "affected_industries": [
+            "出口制造",
+            "汽车",
+            "高估值成长"
+          ],
+          "codes": [],
+          "source_refs": [
+            "src-ecb-calendar",
+            "src-ecb-preview-ap"
+          ],
+          "query_ids": [
+            "q-ecb-survey",
+            "q-ecb-calendar",
+            "q-ecb-preview"
+          ],
+          "evaluation": {
+            "fact_basis": "欧洲央行9月货币政策会议已按官方来源、独立来源和价格证据核验事实边界。",
+            "consensus": "采用所列来源形成当前基准判断。",
+            "consensus_source_refs": [
+              "src-ecb-preview-ap"
+            ],
+            "base_case": "欧洲央行9月货币政策会议的基准情景是保持结构性观察，等待后续官方结果或价格确认。",
             "confidence": "medium",
             "upside_scenario": "若压力变量缓和且风险资产广度改善，相关风险溢价可能回落。",
             "downside_scenario": "若压力变量强化并跨市场共振，A股相关行业波动可能上升。",
@@ -2373,15 +3435,177 @@
             "逐项核对四项实际值",
             "观察美债、美元与成长风格反应"
           ]
+        },
+        {
+          "event_id": "event-us-cpi",
+          "warning_id": "tw-us-cpi",
+          "event_name": "美国8月CPI",
+          "event_class": "inflation_cpi",
+          "scheduled_for": "2026-09-11 20:30:00+08:00",
+          "time_precision": "datetime",
+          "official_source_refs": [
+            "toxic-source-scheduled"
+          ],
+          "consensus_status": "no_reliable_consensus",
+          "consensus_source_refs": [],
+          "consensus_query_ids": [
+            "q-us-cpi-survey",
+            "q-us-cpi-calendar",
+            "q-us-cpi-preview"
+          ],
+          "expectation_search_coverage": {
+            "survey_consensus": {
+              "status": "no_relevant_hit",
+              "query_ids": [
+                "q-us-cpi-survey"
+              ],
+              "source_refs": [],
+              "reason": "已审阅独立路径，未取得可靠且完整的可用预期。"
+            },
+            "economic_calendar": {
+              "status": "no_relevant_hit",
+              "query_ids": [
+                "q-us-cpi-calendar"
+              ],
+              "source_refs": [],
+              "reason": "已审阅独立路径，未取得可靠且完整的可用预期。"
+            },
+            "institution_preview": {
+              "status": "no_relevant_hit",
+              "query_ids": [
+                "q-us-cpi-preview"
+              ],
+              "source_refs": [],
+              "reason": "已审阅独立路径，未取得可靠且完整的可用预期。"
+            }
+          },
+          "required_metric_ids": [
+            "cpi_headline_mom",
+            "cpi_headline_yoy",
+            "cpi_core_mom",
+            "cpi_core_yoy"
+          ],
+          "metrics": [],
+          "metric_search_ledger": [
+            {
+              "metric_id": "cpi_headline_mom",
+              "status": "no_reliable_estimate",
+              "query_ids": [
+                "q-us-cpi-survey",
+                "q-us-cpi-calendar",
+                "q-us-cpi-preview"
+              ],
+              "source_refs": [],
+              "reason": "三路检索未取得口径完整且可交叉核验的一致预期。"
+            },
+            {
+              "metric_id": "cpi_headline_yoy",
+              "status": "no_reliable_estimate",
+              "query_ids": [
+                "q-us-cpi-survey",
+                "q-us-cpi-calendar",
+                "q-us-cpi-preview"
+              ],
+              "source_refs": [],
+              "reason": "三路检索未取得口径完整且可交叉核验的一致预期。"
+            },
+            {
+              "metric_id": "cpi_core_mom",
+              "status": "no_reliable_estimate",
+              "query_ids": [
+                "q-us-cpi-survey",
+                "q-us-cpi-calendar",
+                "q-us-cpi-preview"
+              ],
+              "source_refs": [],
+              "reason": "三路检索未取得口径完整且可交叉核验的一致预期。"
+            },
+            {
+              "metric_id": "cpi_core_yoy",
+              "status": "no_reliable_estimate",
+              "query_ids": [
+                "q-us-cpi-survey",
+                "q-us-cpi-calendar",
+                "q-us-cpi-preview"
+              ],
+              "source_refs": [],
+              "reason": "三路检索未取得口径完整且可交叉核验的一致预期。"
+            }
+          ],
+          "qualitative_expectation": "只保留排期与通胀背景，不对四项实际值作无可靠来源的数值预测。",
+          "consensus_note": "未找到可靠共识；三条独立路径均已审阅，未用旧预测冒充当前一致预期。",
+          "display_summary": "美国8月CPI：官方排期已确认，当前无可靠完整四指标共识。",
+          "watch_after_release": [
+            "逐项核对总项与核心CPI的环比、同比实际值",
+            "观察美债、美元与A股成长风格反应"
+          ]
+        },
+        {
+          "event_id": "event-ecb",
+          "warning_id": "tw-ecb",
+          "event_name": "欧洲央行9月货币政策会议",
+          "event_class": "central_bank_decision",
+          "scheduled_for": "2026-09-10",
+          "time_precision": "date",
+          "official_source_refs": [
+            "src-ecb-calendar"
+          ],
+          "consensus_status": "qualitative_only",
+          "consensus_source_refs": [
+            "src-ecb-preview-ap"
+          ],
+          "consensus_query_ids": [
+            "q-ecb-survey",
+            "q-ecb-calendar",
+            "q-ecb-preview"
+          ],
+          "expectation_search_coverage": {
+            "survey_consensus": {
+              "status": "no_relevant_hit",
+              "query_ids": [
+                "q-ecb-survey"
+              ],
+              "source_refs": [],
+              "reason": "未采用不完整的数值调查。"
+            },
+            "economic_calendar": {
+              "status": "no_relevant_hit",
+              "query_ids": [
+                "q-ecb-calendar"
+              ],
+              "source_refs": [],
+              "reason": "官方日历只确认会议日期，不给预测。"
+            },
+            "institution_preview": {
+              "status": "hit",
+              "query_ids": [
+                "q-ecb-preview"
+              ],
+              "source_refs": [
+                "src-ecb-preview-ap"
+              ],
+              "reason": "独立媒体提供数据依赖与能源不确定性的定性基准。"
+            }
+          },
+          "required_metric_ids": [],
+          "metrics": [],
+          "metric_search_ledger": [],
+          "qualitative_expectation": "此前会议维持利率且强调数据依赖；9月仍需观察能源冲击、通胀与增长信号。",
+          "consensus_note": "仅采用独立媒体的定性基准，不把它冒充利率点位调查。",
+          "display_summary": "欧洲央行9月货币政策会议：官方日期已确认，基准为数据依赖、方向不确定。",
+          "watch_after_release": [
+            "核对利率决定与政策声明措辞",
+            "观察欧元、全球利率和A股出口链反应"
+          ]
         }
       ],
       "scheduled_event_reconciliations": [
         {
           "event_id": "event-us-jobs",
           "status": "pending",
-          "checked_at_beijing": "2026-09-01 06:47:00+08:00",
+          "checked_at_beijing": "2026-09-02 06:00:00+08:00",
           "actual_released_at_beijing": null,
-          "actual_summary": "截至运行时点尚未到美国就业报告官方发布时间。",
+          "actual_summary": "截至运行时点尚未到美国8月就业报告官方发布时间。",
           "actual_metrics": [],
           "surprise_assessment": "尚未发布，实际相对预期不适用。",
           "delta_ids": [],
@@ -2394,7 +3618,7 @@
         {
           "event_id": "event-cn-cpi",
           "status": "pending",
-          "checked_at_beijing": "2026-09-01 06:47:00+08:00",
+          "checked_at_beijing": "2026-09-02 06:00:00+08:00",
           "actual_released_at_beijing": null,
           "actual_summary": "截至运行时点尚未到中国8月CPI官方发布时间。",
           "actual_metrics": [],
@@ -2409,7 +3633,7 @@
         {
           "event_id": "event-cn-ppi",
           "status": "pending",
-          "checked_at_beijing": "2026-09-01 06:47:00+08:00",
+          "checked_at_beijing": "2026-09-02 06:00:00+08:00",
           "actual_released_at_beijing": null,
           "actual_summary": "截至运行时点尚未到中国8月PPI官方发布时间。",
           "actual_metrics": [],
@@ -2424,9 +3648,39 @@
         {
           "event_id": "event-us-ppi",
           "status": "pending",
-          "checked_at_beijing": "2026-09-01 06:47:00+08:00",
+          "checked_at_beijing": "2026-09-02 06:00:00+08:00",
           "actual_released_at_beijing": null,
           "actual_summary": "截至运行时点尚未到美国8月PPI官方发布时间。",
+          "actual_metrics": [],
+          "surprise_assessment": "尚未发布，实际相对预期不适用。",
+          "delta_ids": [],
+          "signal_ids": [],
+          "source_refs": [],
+          "query_ids": [],
+          "sector_call_ids": [],
+          "inference_boundary": "pending状态仅作shadow排期留痕，与T日裁定隔离且不倒灌。"
+        },
+        {
+          "event_id": "event-us-cpi",
+          "status": "pending",
+          "checked_at_beijing": "2026-09-02 06:00:00+08:00",
+          "actual_released_at_beijing": null,
+          "actual_summary": "截至运行时点尚未到美国8月CPI官方发布时间。",
+          "actual_metrics": [],
+          "surprise_assessment": "尚未发布，实际相对预期不适用。",
+          "delta_ids": [],
+          "signal_ids": [],
+          "source_refs": [],
+          "query_ids": [],
+          "sector_call_ids": [],
+          "inference_boundary": "pending状态仅作shadow排期留痕，与T日裁定隔离且不倒灌。"
+        },
+        {
+          "event_id": "event-ecb",
+          "status": "pending",
+          "checked_at_beijing": "2026-09-02 06:00:00+08:00",
+          "actual_released_at_beijing": null,
+          "actual_summary": "截至运行时点尚未到欧洲央行9月货币政策会议官方发布时间。",
           "actual_metrics": [],
           "surprise_assessment": "尚未发布，实际相对预期不适用。",
           "delta_ids": [],
@@ -2443,14 +3697,14 @@
           "coverage_category": "us_equity_sectors",
           "family": "overseas_equity_sector",
           "phase": "post_t_safety",
-          "observed_at_beijing": "2026-09-01 04:40:00+08:00",
-          "market_session_date": "2026-08-31",
-          "instrument": "美国能源股与宽基",
-          "direction": "mixed",
-          "value_text": "标普500约跌0.3%，道指约跌0.7%；能源股逆势走强，布油升至约90.49美元",
-          "benchmark": "美国宽基指数普跌",
-          "surprise": "地缘风险推升能源、压制大盘广度",
-          "shock_type": "supply",
+          "observed_at_beijing": "2026-09-02 04:30:00+08:00",
+          "market_session_date": "2026-09-01",
+          "instrument": "美国科技股与宽基",
+          "direction": "negative",
+          "value_text": "标普500约跌0.7%、道指约跌0.8%、纳指约跌1.0%，英伟达约跌1.5%、AMD约跌2.4%",
+          "benchmark": "美国9月1日完整交易时段",
+          "surprise": "油价与长债收益率上行压制科技和小盘风险偏好",
+          "shock_type": "risk_aversion",
           "horizons": [
             "opening_auction",
             "intraday_followthrough"
@@ -2460,23 +3714,53 @@
             "toxic-source-delta"
           ],
           "query_ids": [
-            "toxic-q-us-equity-sector-signal"
+            "toxic-q-us-equity-sector-signal",
+            "toxic-q-cross-asset-stress-delta"
           ],
           "freshness": "fresh",
-          "summary": "能源供给风险获得价格确认，但并非A股液冷链的正向同业信号。"
+          "summary": "T+1海外风险偏好转弱，对A股成长和汽车链只作执行安全约束。"
+        },
+        {
+          "signal_id": "market-signal-oil-001",
+          "coverage_category": "commodities_freight",
+          "family": "commodity_freight",
+          "phase": "post_t_safety",
+          "observed_at_beijing": "2026-09-02 04:30:00+08:00",
+          "market_session_date": "2026-09-01",
+          "instrument": "布伦特与WTI原油",
+          "direction": "negative",
+          "value_text": "布伦特约涨4.6%至94.65美元，WTI约涨5.2%",
+          "benchmark": "前一交易日结算价",
+          "surprise": "霍尔木兹供给风险获得商品价格确认",
+          "shock_type": "supply",
+          "horizons": [
+            "opening_auction",
+            "intraday_followthrough",
+            "next_1_5_sessions"
+          ],
+          "source_refs": [
+            "toxic-source-market-signal",
+            "src-hormuz-postt-ap"
+          ],
+          "query_ids": [
+            "toxic-q-us-equity-sector-signal",
+            "toxic-q-cross-asset-stress-delta"
+          ],
+          "freshness": "fresh",
+          "summary": "油价急升压制汽车等成本敏感行业，并提高外部风险溢价。"
         },
         {
           "signal_id": "market-signal-ashare-001",
           "coverage_category": "domestic_policy_industry",
           "family": "domestic_policy_industry",
           "phase": "as_of_t",
-          "observed_at_beijing": "2026-08-31 15:41:00+08:00",
-          "market_session_date": "2026-08-31",
-          "instrument": "A股液冷服务器与消费电子",
-          "direction": "positive",
-          "value_text": "液冷服务器、消费电子与算力租赁领涨，市场超过3100只股票上涨",
-          "benchmark": "创业板指上涨0.42%",
-          "surprise": "科技链局部强势并有板块广度",
+          "observed_at_beijing": "2026-09-01 16:00:00+08:00",
+          "market_session_date": "2026-09-01",
+          "instrument": "A股数字媒体与防御轮动",
+          "direction": "mixed",
+          "value_text": "上证跌0.16%、深成指跌1.02%、创业板跌1.32%；数字媒体局部领涨，白酒、食品饮料和银行相对占优",
+          "benchmark": "A股T日宽基与行业广度",
+          "surprise": "成长宽基走弱而数字媒体局部逆势，结构分化显著",
           "shock_type": "demand",
           "horizons": [
             "intraday_followthrough",
@@ -2489,34 +3773,7 @@
             "toxic-q-ashare-t-sector-signal"
           ],
           "freshness": "fresh",
-          "summary": "液冷链T日已有价格反应，次日只能作延续观察，不能当作全新催化。"
-        },
-        {
-          "signal_id": "market-signal-oil-001",
-          "coverage_category": "commodities_freight",
-          "family": "commodity_freight",
-          "phase": "post_t_safety",
-          "observed_at_beijing": "2026-09-01 04:40:00+08:00",
-          "market_session_date": "2026-08-31",
-          "instrument": "布伦特原油",
-          "direction": "negative",
-          "value_text": "布油上涨约2.7%至约90.49美元",
-          "benchmark": "前一交易日结算价",
-          "surprise": "霍尔木兹供给风险获得商品价格确认",
-          "shock_type": "supply",
-          "horizons": [
-            "opening_auction",
-            "intraday_followthrough"
-          ],
-          "source_refs": [
-            "toxic-source-market-signal",
-            "toxic-source-delta"
-          ],
-          "query_ids": [
-            "toxic-q-us-equity-sector-signal"
-          ],
-          "freshness": "fresh",
-          "summary": "油价上行对A股制造成本和风险偏好构成外部约束。"
+          "summary": "数字媒体的T日反应已经发生，次日只能观察延续，不能当成新催化。"
         }
       ],
       "predictive_input_coverage": {
@@ -2528,17 +3785,17 @@
           "query_ids": [
             "toxic-q-us-equity-sector-signal"
           ],
-          "as_of_beijing": "2026-09-01 06:47:00+08:00",
-          "reason": "已取得最新完整美股行业相对信号。"
+          "as_of_beijing": "2026-09-02 06:00:00+08:00",
+          "reason": "已取得最新完整美股科技与宽基信号。"
         },
         "global_peer_events": {
           "status": "no_relevant_hit",
           "signal_ids": [],
           "query_ids": [
-            "toxic-q-cross-asset-stress-delta"
+            "toxic-q-cross-asset-stress-delta-2"
           ],
-          "as_of_beijing": "2026-09-01 06:47:00+08:00",
-          "reason": "已完成对应输入检查，未采用新的可审计方向信号。"
+          "as_of_beijing": "2026-09-02 06:00:00+08:00",
+          "reason": "未取得可独立用于候选裁定的全球同业事件。"
         },
         "asia_equity_peers": {
           "status": "not_open",
@@ -2546,17 +3803,17 @@
           "query_ids": [
             "toxic-q-cross-asset-stress-delta-2"
           ],
-          "as_of_beijing": "2026-09-01 06:47:00+08:00",
-          "reason": "北京时间06:47亚洲当日市场尚未开盘。"
+          "as_of_beijing": "2026-09-02 06:00:00+08:00",
+          "reason": "北京时间06:00亚洲9月2日现货市场尚未形成开盘快照。"
         },
         "china_linked_assets": {
           "status": "no_relevant_hit",
           "signal_ids": [],
           "query_ids": [
-            "toxic-q-cross-asset-stress-delta"
+            "toxic-q-cross-asset-stress-delta-2"
           ],
-          "as_of_beijing": "2026-09-01 06:47:00+08:00",
-          "reason": "已完成对应输入检查，未采用新的可审计方向信号。"
+          "as_of_beijing": "2026-09-02 06:00:00+08:00",
+          "reason": "完成离岸中国相关资产复核，未采用新的独立方向信号。"
         },
         "rates_fx_volatility": {
           "status": "no_relevant_hit",
@@ -2564,8 +3821,8 @@
           "query_ids": [
             "toxic-q-cross-asset-stress-delta"
           ],
-          "as_of_beijing": "2026-09-01 06:47:00+08:00",
-          "reason": "已完成对应输入检查，未采用新的可审计方向信号。"
+          "as_of_beijing": "2026-09-02 06:00:00+08:00",
+          "reason": "VIX与利率只作为美股压力的佐证，未单独生成重复信号。"
         },
         "commodities_freight": {
           "status": "hit",
@@ -2575,17 +3832,17 @@
           "query_ids": [
             "toxic-q-us-equity-sector-signal"
           ],
-          "as_of_beijing": "2026-09-01 06:47:00+08:00",
-          "reason": "布油与能源股共同确认供给风险。"
+          "as_of_beijing": "2026-09-02 06:00:00+08:00",
+          "reason": "原油价格确认供给冲击。"
         },
         "macro_surprises": {
           "status": "no_relevant_hit",
           "signal_ids": [],
           "query_ids": [
-            "toxic-q-cross-asset-stress-delta"
+            "toxic-q-scheduled-macro-policy-delta"
           ],
-          "as_of_beijing": "2026-09-01 06:47:00+08:00",
-          "reason": "已完成对应输入检查，未采用新的可审计方向信号。"
+          "as_of_beijing": "2026-09-02 06:00:00+08:00",
+          "reason": "运行时点没有已发布且需新增映射的重大宏观实际值。"
         },
         "domestic_policy_industry": {
           "status": "hit",
@@ -2596,13 +3853,13 @@
             "toxic-q-ashare-t-sector-signal",
             "toxic-q-domestic-regulatory-liquidity-delta"
           ],
-          "as_of_beijing": "2026-09-01 06:47:00+08:00",
-          "reason": "A股T日液冷与消费电子行业异动已登记，并完成运行时点复核。"
+          "as_of_beijing": "2026-09-02 06:00:00+08:00",
+          "reason": "A股T日数字媒体与防御轮动已登记，并完成T+1监管复核。"
         }
       },
       "market_discovery": {
         "version": "agent3-market-discovery/v1",
-        "evaluated_at_beijing": "2026-09-01 06:47:00+08:00",
+        "evaluated_at_beijing": "2026-09-02 06:00:00+08:00",
         "lanes": {
           "us_sector_tape": {
             "status": "hit",
@@ -2610,11 +3867,13 @@
               "toxic-q-us-equity-sector-signal"
             ],
             "mover_ids": [
-              "mover-us-sector-001"
+              "mover-us-tech"
             ],
-            "event_ids": [],
-            "as_of_beijing": "2026-09-01 06:47:00+08:00",
-            "reason": "已比较美股行业与宽基，能源逆势而大盘普跌。"
+            "event_ids": [
+              "material-event-hormuz"
+            ],
+            "as_of_beijing": "2026-09-02 06:00:00+08:00",
+            "reason": "美股科技相对风险偏好与宽基完成比较。"
           },
           "global_movers": {
             "status": "hit",
@@ -2622,11 +3881,13 @@
               "toxic-q-us-equity-sector-signal"
             ],
             "mover_ids": [
-              "mover-global-001"
+              "mover-oil"
             ],
-            "event_ids": [],
-            "as_of_beijing": "2026-09-01 06:47:00+08:00",
-            "reason": "已扫描全球重大行业与个股异动，公用事业出现政策型大跌。"
+            "event_ids": [
+              "material-event-hormuz"
+            ],
+            "as_of_beijing": "2026-09-02 06:00:00+08:00",
+            "reason": "原油重大异动及其地缘归因已登记。"
           },
           "ashare_t_day_sector_tape": {
             "status": "hit",
@@ -2634,13 +3895,13 @@
               "toxic-q-ashare-t-sector-signal"
             ],
             "mover_ids": [
-              "mover-ashare-t-001"
+              "mover-ashare-digital"
             ],
             "event_ids": [
-              "material-event-001"
+              "material-event-ashare-digital"
             ],
-            "as_of_beijing": "2026-09-01 06:47:00+08:00",
-            "reason": "已核对A股T日行业涨跌、广度和领涨结构。"
+            "as_of_beijing": "2026-09-02 06:00:00+08:00",
+            "reason": "A股T日数字媒体异动和防御轮动已登记。"
           },
           "asia_sector_tape": {
             "status": "not_open",
@@ -2649,188 +3910,201 @@
             ],
             "mover_ids": [],
             "event_ids": [],
-            "as_of_beijing": "2026-09-01 06:47:00+08:00",
-            "reason": "北京时间06:47亚洲9月1日市场尚未开盘。"
+            "as_of_beijing": "2026-09-02 06:00:00+08:00",
+            "reason": "评估时点亚洲9月2日市场尚未开盘。"
           },
           "event_first_scan": {
             "status": "hit",
             "query_ids": [
-              "toxic-q-ashare-t-sector-signal"
+              "toxic-q-ashare-t-sector-signal",
+              "toxic-q-external-geopolitics-trade-delta"
             ],
             "mover_ids": [],
             "event_ids": [
-              "material-event-001"
+              "material-event-ashare-digital",
+              "material-event-hormuz"
             ],
-            "as_of_beijing": "2026-09-01 06:47:00+08:00",
-            "reason": "A股液冷链T日异动已完成事件、定价与传导核查。"
+            "as_of_beijing": "2026-09-02 06:00:00+08:00",
+            "reason": "境内行业轮动与T后霍尔木兹事件均完成归因。"
           }
         },
         "sector_family_coverage": {
           "healthcare_biotech": {
             "status": "no_relevant_hit",
             "query_ids": [
-              "toxic-q-cross-asset-stress-delta",
-              "toxic-q-cross-asset-stress-delta-2"
+              "toxic-q-cross-asset-stress-1",
+              "toxic-q-cross-asset-stress-2"
             ],
             "mover_ids": [],
             "event_ids": [],
-            "as_of_beijing": "2026-09-01 06:47:00+08:00",
-            "reason": "完成价格与事件双路径扫描，未发现达到重大性阈值的新增异动。"
-          },
-          "technology_media_telecom": {
-            "status": "hit",
-            "query_ids": [
-              "toxic-q-ashare-t-sector-signal"
-            ],
-            "mover_ids": [
-              "mover-ashare-t-001"
-            ],
-            "event_ids": [
-              "material-event-001"
-            ],
-            "as_of_beijing": "2026-09-01 06:47:00+08:00",
-            "reason": "液冷与消费电子T日达到重大异动阈值。"
+            "as_of_beijing": "2026-09-02 06:00:00+08:00",
+            "reason": "完成价格优先与事件优先双路径扫描，未发现达到重大性阈值的新增异动。"
           },
           "consumer": {
             "status": "no_relevant_hit",
             "query_ids": [
-              "toxic-q-cross-asset-stress-delta",
-              "toxic-q-cross-asset-stress-delta-2"
+              "toxic-q-cross-asset-stress-1",
+              "toxic-q-cross-asset-stress-2"
             ],
             "mover_ids": [],
             "event_ids": [],
-            "as_of_beijing": "2026-09-01 06:47:00+08:00",
-            "reason": "完成价格与事件双路径扫描，未发现达到重大性阈值的新增异动。"
+            "as_of_beijing": "2026-09-02 06:00:00+08:00",
+            "reason": "完成价格优先与事件优先双路径扫描，未发现达到重大性阈值的新增异动。"
           },
           "financial_real_estate": {
             "status": "no_relevant_hit",
             "query_ids": [
-              "toxic-q-cross-asset-stress-delta",
-              "toxic-q-cross-asset-stress-delta-2"
+              "toxic-q-cross-asset-stress-1",
+              "toxic-q-cross-asset-stress-2"
             ],
             "mover_ids": [],
             "event_ids": [],
-            "as_of_beijing": "2026-09-01 06:47:00+08:00",
-            "reason": "完成价格与事件双路径扫描，未发现达到重大性阈值的新增异动。"
-          },
-          "energy_materials": {
-            "status": "hit",
-            "query_ids": [
-              "toxic-q-us-equity-sector-signal"
-            ],
-            "mover_ids": [
-              "mover-us-sector-001"
-            ],
-            "event_ids": [],
-            "as_of_beijing": "2026-09-01 06:47:00+08:00",
-            "reason": "美股能源相对宽基走强并获油价确认。"
+            "as_of_beijing": "2026-09-02 06:00:00+08:00",
+            "reason": "完成价格优先与事件优先双路径扫描，未发现达到重大性阈值的新增异动。"
           },
           "industrials_transport_defense": {
             "status": "no_relevant_hit",
             "query_ids": [
-              "toxic-q-cross-asset-stress-delta",
-              "toxic-q-cross-asset-stress-delta-2"
+              "toxic-q-cross-asset-stress-1",
+              "toxic-q-cross-asset-stress-2"
             ],
             "mover_ids": [],
             "event_ids": [],
-            "as_of_beijing": "2026-09-01 06:47:00+08:00",
-            "reason": "完成价格与事件双路径扫描，未发现达到重大性阈值的新增异动。"
+            "as_of_beijing": "2026-09-02 06:00:00+08:00",
+            "reason": "完成价格优先与事件优先双路径扫描，未发现达到重大性阈值的新增异动。"
           },
           "utilities_clean_energy": {
-            "status": "hit",
+            "status": "no_relevant_hit",
             "query_ids": [
-              "toxic-q-us-equity-sector-signal"
+              "toxic-q-cross-asset-stress-1",
+              "toxic-q-cross-asset-stress-2"
             ],
-            "mover_ids": [
-              "mover-global-001"
-            ],
+            "mover_ids": [],
             "event_ids": [],
-            "as_of_beijing": "2026-09-01 06:47:00+08:00",
-            "reason": "美国公用事业政策冲击造成重大个股异动。"
+            "as_of_beijing": "2026-09-02 06:00:00+08:00",
+            "reason": "完成价格优先与事件优先双路径扫描，未发现达到重大性阈值的新增异动。"
           },
           "broad_market_style": {
             "status": "no_relevant_hit",
             "query_ids": [
-              "toxic-q-cross-asset-stress-delta",
-              "toxic-q-cross-asset-stress-delta-2"
+              "toxic-q-cross-asset-stress-1",
+              "toxic-q-cross-asset-stress-2"
             ],
             "mover_ids": [],
             "event_ids": [],
-            "as_of_beijing": "2026-09-01 06:47:00+08:00",
-            "reason": "完成价格与事件双路径扫描，未发现达到重大性阈值的新增异动。"
+            "as_of_beijing": "2026-09-02 06:00:00+08:00",
+            "reason": "完成价格优先与事件优先双路径扫描，未发现达到重大性阈值的新增异动。"
+          },
+          "technology_media_telecom": {
+            "status": "hit",
+            "query_ids": [
+              "toxic-q-us-equity-sector-signal",
+              "toxic-q-ashare-t-sector-signal",
+              "toxic-q-external-geopolitics-trade-delta"
+            ],
+            "mover_ids": [
+              "mover-us-tech",
+              "mover-ashare-digital"
+            ],
+            "event_ids": [
+              "material-event-ashare-digital",
+              "material-event-hormuz"
+            ],
+            "as_of_beijing": "2026-09-02 06:00:00+08:00",
+            "reason": "美股科技压力与A股数字媒体T日逆势均达到重大异动阈值。"
+          },
+          "energy_materials": {
+            "status": "hit",
+            "query_ids": [
+              "toxic-q-us-equity-sector-signal",
+              "toxic-q-external-geopolitics-trade-delta"
+            ],
+            "mover_ids": [
+              "mover-oil"
+            ],
+            "event_ids": [
+              "material-event-hormuz"
+            ],
+            "as_of_beijing": "2026-09-02 06:00:00+08:00",
+            "reason": "原油双基准大涨且有霍尔木兹事件归因。"
           }
         },
         "material_movers": [
           {
-            "mover_id": "mover-us-sector-001",
+            "mover_id": "mover-us-tech",
             "lane": "us_sector_tape",
             "market": "US",
-            "market_session_date": "2026-08-31",
-            "observed_at_beijing": "2026-09-01 04:40:00+08:00",
-            "instrument": "美国能源股",
-            "sector_family": "energy_materials",
-            "sector_name": "石油天然气",
-            "direction": "positive",
-            "performance_text": "埃克森美孚约涨2.7%、雪佛龙约涨2.1%",
-            "benchmark": "标普500约跌0.3%",
-            "breadth_text": "能源股在宽基下跌时相对占优",
-            "catalyst_status": "unresolved",
-            "event_ids": [],
+            "market_session_date": "2026-09-01",
+            "observed_at_beijing": "2026-09-02 04:30:00+08:00",
+            "instrument": "美国科技与半导体",
+            "sector_family": "technology_media_telecom",
+            "sector_name": "科技与半导体",
+            "direction": "negative",
+            "performance_text": "纳指约跌1.0%，英伟达约跌1.5%、AMD约跌2.4%",
+            "benchmark": "标普500约跌0.7%",
+            "breadth_text": "科技龙头和小盘风险资产同步承压",
+            "catalyst_status": "multi_factor",
+            "event_ids": [
+              "material-event-hormuz"
+            ],
             "signal_ids": [
-              "market-signal-001",
-              "market-signal-oil-001"
+              "market-signal-001"
             ],
             "source_refs": [
               "toxic-source-market-signal",
               "toxic-source-delta"
             ],
             "query_ids": [
-              "toxic-q-us-equity-sector-signal"
+              "toxic-q-us-equity-sector-signal",
+              "toxic-q-cross-asset-stress-delta"
             ],
-            "materiality_reason": "油价与能源股共振，达到行业相对异动阈值。"
+            "materiality_reason": "科技、宽基与波动率同向确认风险偏好走弱。"
           },
           {
-            "mover_id": "mover-global-001",
+            "mover_id": "mover-oil",
             "lane": "global_movers",
-            "market": "US",
-            "market_session_date": "2026-08-31",
-            "observed_at_beijing": "2026-09-01 04:40:00+08:00",
-            "instrument": "Edison International与PG&E",
-            "sector_family": "utilities_clean_energy",
-            "sector_name": "美国公用事业",
-            "direction": "negative",
-            "performance_text": "Edison International约跌23.1%、PG&E约跌20.1%",
-            "benchmark": "标普500约跌0.3%",
-            "breadth_text": "政策冲击集中于加州公用事业",
-            "catalyst_status": "unresolved",
-            "event_ids": [],
+            "market": "GLOBAL",
+            "market_session_date": "2026-09-01",
+            "observed_at_beijing": "2026-09-02 04:30:00+08:00",
+            "instrument": "布伦特与WTI原油",
+            "sector_family": "energy_materials",
+            "sector_name": "能源与油气",
+            "direction": "positive",
+            "performance_text": "布伦特约涨4.6%、WTI约涨5.2%",
+            "benchmark": "前一交易日结算价",
+            "breadth_text": "两大原油基准同步大幅上行",
+            "catalyst_status": "attributed",
+            "event_ids": [
+              "material-event-hormuz"
+            ],
             "signal_ids": [
-              "market-signal-001"
+              "market-signal-oil-001"
             ],
             "source_refs": [
               "toxic-source-market-signal"
             ],
             "query_ids": [
-              "toxic-q-us-equity-sector-signal"
+              "toxic-q-us-equity-sector-signal",
+              "toxic-q-cross-asset-stress-delta"
             ],
-            "materiality_reason": "个股跌幅远超宽基且有明确立法归因。"
+            "materiality_reason": "双基准油价涨幅超过4%，达到重大商品异动阈值。"
           },
           {
-            "mover_id": "mover-ashare-t-001",
+            "mover_id": "mover-ashare-digital",
             "lane": "ashare_t_day_sector_tape",
             "market": "CN",
-            "market_session_date": "2026-08-31",
-            "observed_at_beijing": "2026-08-31 15:41:00+08:00",
-            "instrument": "A股液冷服务器与消费电子",
+            "market_session_date": "2026-09-01",
+            "observed_at_beijing": "2026-09-01 16:00:00+08:00",
+            "instrument": "A股数字媒体与传媒",
             "sector_family": "technology_media_telecom",
-            "sector_name": "液冷与消费电子",
+            "sector_name": "数字媒体",
             "direction": "positive",
-            "performance_text": "液冷服务器、消费电子、算力租赁领涨",
-            "benchmark": "创业板指上涨0.42%",
-            "breadth_text": "全市场超过3100股上涨，相关科技分支形成板块广度",
+            "performance_text": "数字媒体局部领涨并获资金关注",
+            "benchmark": "深证成指跌1.02%、创业板指跌1.32%",
+            "breadth_text": "成长宽基走弱时数字媒体出现局部逆势",
             "catalyst_status": "multi_factor",
             "event_ids": [
-              "material-event-001"
+              "material-event-ashare-digital"
             ],
             "signal_ids": [
               "market-signal-ashare-001"
@@ -2841,17 +4115,17 @@
             "query_ids": [
               "toxic-q-ashare-t-sector-signal"
             ],
-            "materiality_reason": "行业相对收益与广度达到T日重大异动阈值。"
+            "materiality_reason": "相对宽基的逆势表现与板块资金共同达到T日异动阈值。"
           }
         ],
         "event_clusters": [
           {
-            "event_id": "material-event-001",
-            "event_name": "A股液冷与消费电子T日轮动",
+            "event_id": "material-event-ashare-digital",
+            "event_name": "A股数字媒体T日逆势轮动",
             "event_type": "market_structure",
             "phase": "as_of_t",
-            "first_public_at_beijing": "2026-08-31 15:00:00+08:00",
-            "summary": "A股液冷服务器、消费电子与算力租赁T日领涨，三花智控投资者交流亦确认液冷产品矩阵，但板块反应已在T日发生。",
+            "first_public_at_beijing": "2026-09-01 15:00:00+08:00",
+            "summary": "成长宽基下跌时数字媒体局部逆势并获资金关注，视觉中国所在主题已有T日价格反应。",
             "discovery_lanes": [
               "ashare_t_day_sector_tape",
               "event_first_scan"
@@ -2860,7 +4134,7 @@
               "technology_media_telecom"
             ],
             "mover_ids": [
-              "mover-ashare-t-001"
+              "mover-ashare-digital"
             ],
             "signal_ids": [
               "market-signal-ashare-001"
@@ -2872,20 +4146,101 @@
             "query_ids": [
               "toxic-q-ashare-t-sector-signal"
             ],
-            "ashare_theme": "液冷服务器与消费电子",
+            "ashare_theme": "数字媒体与版权内容",
             "transmission_chain": [
-              "液冷算力需求预期→服务器散热链相对强势",
-              "A股T日形成行业广度",
-              "次日检验承接并防止兑现回吐"
+              "成长宽基承压→数字媒体获得局部防御/主题资金",
+              "T日形成相对收益→次日只检验承接与兑现"
+            ],
+            "mapping_tiers": [
+              {
+                "tier": "direct",
+                "ashare_sectors": [
+                  "数字媒体",
+                  "文化传媒"
+                ],
+                "reason": "候选视觉中国直接属于数字媒体行业。"
+              }
+            ],
+            "horizons": [
+              "opening_auction",
+              "intraday_followthrough"
+            ],
+            "confidence": "medium",
+            "counter_evidence": [
+              "T日局部强势可能已透支短期预期，宽基成长仍弱"
+            ],
+            "invalidators": [
+              "竞价无承接且数字媒体相对收益迅速转负"
+            ],
+            "disposition": "linked",
+            "sector_call_ids": [
+              "sector-call-digital"
+            ],
+            "freshness": "fresh",
+            "freshness_reason": "行业异动发生在当前T日收盘前。",
+            "ashare_absorption": {
+              "status": "priced_on_t",
+              "first_reaction_date": "2026-09-01",
+              "latest_confirmation_date": "2026-09-01",
+              "evidence": "T日数字媒体相对宽基逆势，已出现境内价格反应。",
+              "source_refs": [
+                "toxic-source-ashare-signal"
+              ],
+              "query_ids": [
+                "toxic-q-ashare-t-sector-signal"
+              ],
+              "decision": "不得视为全新催化，仅保留延续观察并提示兑现。"
+            },
+            "tradability_flag": "continuation_watch"
+          },
+          {
+            "event_id": "material-event-hormuz",
+            "event_name": "T后霍尔木兹冲突与油价风险确认",
+            "event_type": "supply_disruption",
+            "phase": "post_t_safety",
+            "first_public_at_beijing": "2026-09-02 02:00:00+08:00",
+            "summary": "T后军事增量与油价急升共同确认能源供给和风险偏好压力，仅用于下一交易日执行安全。",
+            "discovery_lanes": [
+              "us_sector_tape",
+              "global_movers",
+              "event_first_scan"
+            ],
+            "sector_families": [
+              "technology_media_telecom",
+              "energy_materials"
+            ],
+            "mover_ids": [
+              "mover-us-tech",
+              "mover-oil"
+            ],
+            "signal_ids": [
+              "market-signal-001",
+              "market-signal-oil-001"
+            ],
+            "primary_source_refs": [
+              "src-hormuz-postt-ap"
+            ],
+            "corroborating_source_refs": [
+              "src-hormuz-postt-axios"
+            ],
+            "query_ids": [
+              "toxic-q-external-geopolitics-trade-delta",
+              "toxic-q-us-equity-sector-signal",
+              "toxic-q-cross-asset-stress-delta"
+            ],
+            "ashare_theme": "汽车成本敏感制造与能源",
+            "transmission_chain": [
+              "霍尔木兹军事升级→原油供给风险上升",
+              "油价与海外风险偏好确认→A股成本敏感制造承压"
             ],
             "mapping_tiers": [
               {
                 "tier": "supply_chain",
                 "ashare_sectors": [
-                  "液冷服务器",
-                  "热管理零部件"
+                  "乘用车",
+                  "能源成本敏感制造"
                 ],
-                "reason": "三花智控液冷产品矩阵属于服务器热管理供应链。"
+                "reason": "油价上升通过材料、物流和风险溢价影响汽车链。"
               }
             ],
             "horizons": [
@@ -2895,59 +4250,79 @@
             ],
             "confidence": "medium",
             "counter_evidence": [
-              "T日板块已领涨，次日可能高开兑现"
+              "油价可能因官方缓和或供给恢复快速回落"
             ],
             "invalidators": [
-              "竞价无承接且液冷链相对收益转负"
+              "官方确认风险降级且油价回吐大部分涨幅"
             ],
             "disposition": "linked",
             "sector_call_ids": [
-              "sector-call-001"
+              "sector-call-auto-pressure"
             ],
             "freshness": "fresh",
-            "freshness_reason": "行业异动发生在当前T日收盘前。",
+            "freshness_reason": "事件与价格确认均发生在T后、检索时点前。",
             "ashare_absorption": {
-              "status": "priced_on_t",
-              "first_reaction_date": "2026-08-31",
-              "latest_confirmation_date": "2026-08-31",
-              "evidence": "T日收盘行业涨幅和广度已经确认市场定价。",
-              "source_refs": [
-                "toxic-source-ashare-signal"
-              ],
-              "query_ids": [
-                "toxic-q-ashare-t-sector-signal"
-              ],
-              "decision": "不得当成全新催化，只保留延续观察并提示回吐。"
+              "status": "new_unpriced",
+              "first_reaction_date": null,
+              "latest_confirmation_date": null,
+              "evidence": "事件发生在A股T日收盘后，尚无9月2日A股现货反应。",
+              "source_refs": [],
+              "query_ids": [],
+              "decision": "仅作开盘执行安全约束，等待A股竞价和行业广度确认。"
             },
-            "tradability_flag": "continuation_watch"
+            "tradability_flag": "fresh_catalyst"
           }
         ],
-        "unresolved_material_mover_ids": [
-          "mover-us-sector-001",
-          "mover-global-001"
-        ],
+        "unresolved_material_mover_ids": [],
         "unmapped_material_event_ids": []
       },
       "by_code": {
-        "002050": {
-          "exposure": "none",
-          "warning_ids": [],
-          "post_t_delta_ids": [],
-          "reason": "不把市场级霍尔木兹风险机械绑定为个股事实；仅通过海外收入、制造成本和行业调用展示shadow上下文。",
+        "601127": {
+          "exposure": "high",
+          "warning_ids": [
+            "toxic-warning-001"
+          ],
+          "post_t_delta_ids": [
+            "toxic-delta-hormuz-postt"
+          ],
+          "reason": "乘用车对油价、物流与风险偏好敏感；该映射仅作shadow执行安全，不参与T日✗的形成。",
           "sector_context": [
             {
-              "call_id": "sector-call-001",
-              "relation": "supplier",
-              "direction": "beneficiary",
-              "relevance": "indirect",
-              "reason": "三花智控液冷产品矩阵属于服务器热管理供应链，承接A股T日液冷链延续观察。",
+              "call_id": "sector-call-auto-pressure",
+              "relation": "direct_sector",
+              "direction": "pressure",
+              "relevance": "direct",
+              "reason": "赛力斯属于乘用车，受到能源成本和风险偏好约束。",
               "source_refs": [
                 "toxic-source-market-signal",
                 "toxic-source-delta",
-                "toxic-source-ashare-signal"
+                "src-hormuz-postt-ap"
               ],
               "invalidators": [
-                "竞价触发计划中的高开放弃门禁，或液冷链开盘后相对收益迅速转负"
+                "油价快速回落且汽车板块相对收益转强"
+              ]
+            }
+          ]
+        },
+        "000681": {
+          "exposure": "none",
+          "warning_ids": [],
+          "post_t_delta_ids": [],
+          "reason": "不把市场级地缘风险机械绑定为视觉中国个股事实；仅登记数字媒体T日行业上下文。",
+          "sector_context": [
+            {
+              "call_id": "sector-call-digital",
+              "relation": "direct_sector",
+              "direction": "beneficiary",
+              "relevance": "direct",
+              "reason": "视觉中国直接属于数字媒体，但T日强势已部分兑现。",
+              "source_refs": [
+                "toxic-source-ashare-signal",
+                "toxic-source-market-signal",
+                "toxic-source-delta"
+              ],
+              "invalidators": [
+                "数字媒体竞价无承接且相对宽基转负"
               ]
             }
           ]
@@ -2955,27 +4330,29 @@
       },
       "post_t_safety_items": [
         {
-          "delta_id": "toxic-delta-001",
+          "delta_id": "toxic-delta-hormuz-postt",
           "level": "med",
-          "risk_family": "cross_asset",
-          "published_at": "2026-09-01",
-          "why": "T后最新完整美股时段出现指数普跌而能源股相对走强，布油上行；这是对T日前霍尔木兹风险的价格确认，不是新的个股事实。",
-          "codes": [],
+          "risk_family": "war_energy",
+          "published_at": "2026-09-02",
+          "why": "T后新一轮霍尔木兹军事增量由AP与Axios两条独立来源确认，能源与航运风险继续升温。",
+          "codes": [
+            "601127"
+          ],
           "source_refs": [
-            "toxic-source-market-signal",
-            "toxic-source-delta"
+            "src-hormuz-postt-ap",
+            "src-hormuz-postt-axios"
           ],
           "query_ids": [
             "toxic-q-external-geopolitics-trade-delta"
           ],
           "evaluation": {
-            "fact_basis": "美股与油价T后确认已按官方来源、独立媒体与价格证据核验事实边界。",
+            "fact_basis": "T后霍尔木兹军事增量已按官方来源、独立来源和价格证据核验事实边界。",
             "consensus": "采用所列来源形成当前基准判断。",
             "consensus_source_refs": [
-              "toxic-source-market-signal",
-              "toxic-source-delta"
+              "src-hormuz-postt-ap",
+              "src-hormuz-postt-axios"
             ],
-            "base_case": "美股与油价T后确认的基准情景是保持结构性观察，等待后续实际值或价格确认。",
+            "base_case": "T后霍尔木兹军事增量的基准情景是保持结构性观察，等待后续官方结果或价格确认。",
             "confidence": "medium",
             "upside_scenario": "若压力变量缓和且风险资产广度改善，相关风险溢价可能回落。",
             "downside_scenario": "若压力变量强化并跨市场共振，A股相关行业波动可能上升。",
@@ -2990,7 +4367,48 @@
               "官方信息否定当前事实基础",
               "关键价格持续反向确认"
             ],
-            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作。运行时点信息与T日裁定隔离，不倒灌T日结论。"
+            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作。运行时点信息与T日裁定隔离，不倒灌。"
+          },
+          "used_in_asof_t_warning": false,
+          "shadow": true
+        },
+        {
+          "delta_id": "toxic-delta-market-postt",
+          "level": "med",
+          "risk_family": "cross_asset",
+          "published_at": "2026-09-02",
+          "why": "T后美股宽基与科技回落、油价上升且VIX抬升，构成下一交易日执行安全压力。",
+          "codes": [],
+          "source_refs": [
+            "toxic-source-market-signal",
+            "toxic-source-delta"
+          ],
+          "query_ids": [
+            "toxic-q-cross-asset-stress-delta"
+          ],
+          "evaluation": {
+            "fact_basis": "T后美股、油价与波动率增量已按官方来源、独立来源和价格证据核验事实边界。",
+            "consensus": "采用所列来源形成当前基准判断。",
+            "consensus_source_refs": [
+              "toxic-source-market-signal",
+              "toxic-source-delta"
+            ],
+            "base_case": "T后美股、油价与波动率增量的基准情景是保持结构性观察，等待后续官方结果或价格确认。",
+            "confidence": "medium",
+            "upside_scenario": "若压力变量缓和且风险资产广度改善，相关风险溢价可能回落。",
+            "downside_scenario": "若压力变量强化并跨市场共振，A股相关行业波动可能上升。",
+            "transmission_paths": [
+              "事实变化→预期差→风险偏好与行业相对强弱"
+            ],
+            "watch_variables": [
+              "官方后续公告",
+              "关键资产价格与市场广度"
+            ],
+            "invalidators": [
+              "官方信息否定当前事实基础",
+              "关键价格持续反向确认"
+            ],
+            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作。运行时点信息与T日裁定隔离，不倒灌。"
           },
           "used_in_asof_t_warning": false,
           "shadow": true
@@ -2999,7 +4417,7 @@
       "runtime_evaluation": {
         "scheduled_macro_policy": {
           "status": "hit",
-          "evaluated_at_beijing": "2026-09-01 06:47:00+08:00",
+          "evaluated_at_beijing": "2026-09-02 06:00:00+08:00",
           "latest_source_published_at": "2026-08-31",
           "query_ids": [
             "toxic-q-scheduled-macro-policy-survey",
@@ -3015,34 +4433,46 @@
             "q-cn-ppi-preview",
             "q-us-ppi-survey",
             "q-us-ppi-calendar",
-            "q-us-ppi-preview"
+            "q-us-ppi-preview",
+            "q-us-cpi-survey",
+            "q-us-cpi-calendar",
+            "q-us-cpi-preview",
+            "q-ecb-survey",
+            "q-ecb-calendar",
+            "q-ecb-preview"
           ],
           "warning_ids": [
             "tw-us-jobs",
             "tw-cn-cpi",
             "tw-cn-ppi",
-            "tw-us-ppi"
+            "tw-us-ppi",
+            "tw-us-cpi",
+            "tw-ecb"
           ],
           "delta_ids": [],
           "signal_ids": [],
           "source_refs": [
-            "src-continuum-ppi",
+            "toxic-source-scheduled",
+            "toxic-source-scheduled-consensus",
             "src-jobs-preview",
             "src-nbs-calendar",
-            "toxic-source-scheduled",
-            "toxic-source-scheduled-consensus"
+            "src-continuum-ppi",
+            "src-ecb-calendar",
+            "src-ecb-preview-ap"
           ],
           "evaluation": {
-            "fact_basis": "scheduled_macro_policy已按官方来源、独立媒体与价格证据核验事实边界。",
+            "fact_basis": "scheduled_macro_policy运行时点已按官方来源、独立来源和价格证据核验事实边界。",
             "consensus": "采用所列来源形成当前基准判断。",
             "consensus_source_refs": [
-              "src-continuum-ppi",
+              "toxic-source-scheduled",
+              "toxic-source-scheduled-consensus",
               "src-jobs-preview",
               "src-nbs-calendar",
-              "toxic-source-scheduled",
-              "toxic-source-scheduled-consensus"
+              "src-continuum-ppi",
+              "src-ecb-calendar",
+              "src-ecb-preview-ap"
             ],
-            "base_case": "scheduled_macro_policy的基准情景是保持结构性观察，等待后续实际值或价格确认。",
+            "base_case": "scheduled_macro_policy运行时点的基准情景是保持结构性观察，等待后续官方结果或价格确认。",
             "confidence": "medium",
             "upside_scenario": "若压力变量缓和且风险资产广度改善，相关风险溢价可能回落。",
             "downside_scenario": "若压力变量强化并跨市场共振，A股相关行业波动可能上升。",
@@ -3057,13 +4487,13 @@
               "官方信息否定当前事实基础",
               "关键价格持续反向确认"
             ],
-            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作。运行时点信息与T日裁定隔离，不倒灌T日结论。"
+            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作。运行时点信息与T日裁定隔离，不倒灌。"
           }
         },
         "domestic_regulatory_liquidity": {
           "status": "hit",
-          "evaluated_at_beijing": "2026-09-01 06:47:00+08:00",
-          "latest_source_published_at": "2026-08-31",
+          "evaluated_at_beijing": "2026-09-02 06:00:00+08:00",
+          "latest_source_published_at": "2026-09-01",
           "query_ids": [
             "toxic-q-domestic-regulatory-liquidity-1",
             "toxic-q-domestic-regulatory-liquidity-2",
@@ -3080,12 +4510,12 @@
             "toxic-source-ashare-signal"
           ],
           "evaluation": {
-            "fact_basis": "domestic_regulatory_liquidity已按官方来源、独立媒体与价格证据核验事实边界。",
+            "fact_basis": "domestic_regulatory_liquidity运行时点已按官方来源、独立来源和价格证据核验事实边界。",
             "consensus": "采用所列来源形成当前基准判断。",
             "consensus_source_refs": [
               "toxic-source-ashare-signal"
             ],
-            "base_case": "domestic_regulatory_liquidity的基准情景是保持结构性观察，等待后续实际值或价格确认。",
+            "base_case": "domestic_regulatory_liquidity运行时点的基准情景是保持结构性观察，等待后续官方结果或价格确认。",
             "confidence": "medium",
             "upside_scenario": "若压力变量缓和且风险资产广度改善，相关风险溢价可能回落。",
             "downside_scenario": "若压力变量强化并跨市场共振，A股相关行业波动可能上升。",
@@ -3100,13 +4530,13 @@
               "官方信息否定当前事实基础",
               "关键价格持续反向确认"
             ],
-            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作。运行时点信息与T日裁定隔离，不倒灌T日结论。"
+            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作。运行时点信息与T日裁定隔离，不倒灌。"
           }
         },
         "external_geopolitics_trade": {
           "status": "hit",
-          "evaluated_at_beijing": "2026-09-01 06:47:00+08:00",
-          "latest_source_published_at": "2026-08-31",
+          "evaluated_at_beijing": "2026-09-02 06:00:00+08:00",
+          "latest_source_published_at": "2026-09-01",
           "query_ids": [
             "toxic-q-external-1",
             "toxic-q-external-geopolitics-trade-delta",
@@ -3116,27 +4546,27 @@
             "toxic-warning-001"
           ],
           "delta_ids": [
-            "toxic-delta-001"
+            "toxic-delta-hormuz-postt"
           ],
           "signal_ids": [],
           "source_refs": [
+            "toxic-source-001",
             "src-hormuz-ap-t",
             "src-hormuz-reuters-t",
-            "toxic-source-001",
-            "toxic-source-delta",
-            "toxic-source-market-signal"
+            "src-hormuz-postt-ap",
+            "src-hormuz-postt-axios"
           ],
           "evaluation": {
-            "fact_basis": "external_geopolitics_trade已按官方来源、独立媒体与价格证据核验事实边界。",
+            "fact_basis": "external_geopolitics_trade运行时点已按官方来源、独立来源和价格证据核验事实边界。",
             "consensus": "采用所列来源形成当前基准判断。",
             "consensus_source_refs": [
+              "toxic-source-001",
               "src-hormuz-ap-t",
               "src-hormuz-reuters-t",
-              "toxic-source-001",
-              "toxic-source-delta",
-              "toxic-source-market-signal"
+              "src-hormuz-postt-ap",
+              "src-hormuz-postt-axios"
             ],
-            "base_case": "external_geopolitics_trade的基准情景是保持结构性观察，等待后续实际值或价格确认。",
+            "base_case": "external_geopolitics_trade运行时点的基准情景是保持结构性观察，等待后续官方结果或价格确认。",
             "confidence": "medium",
             "upside_scenario": "若压力变量缓和且风险资产广度改善，相关风险溢价可能回落。",
             "downside_scenario": "若压力变量强化并跨市场共振，A股相关行业波动可能上升。",
@@ -3151,13 +4581,13 @@
               "官方信息否定当前事实基础",
               "关键价格持续反向确认"
             ],
-            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作。运行时点信息与T日裁定隔离，不倒灌T日结论。"
+            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作。运行时点信息与T日裁定隔离，不倒灌。"
           }
         },
         "cross_asset_stress": {
           "status": "hit",
-          "evaluated_at_beijing": "2026-09-01 06:47:00+08:00",
-          "latest_source_published_at": "2026-08-31",
+          "evaluated_at_beijing": "2026-09-02 06:00:00+08:00",
+          "latest_source_published_at": "2026-09-01",
           "query_ids": [
             "toxic-q-cross-asset-stress-1",
             "toxic-q-cross-asset-stress-2",
@@ -3166,23 +4596,27 @@
             "toxic-q-us-equity-sector-signal"
           ],
           "warning_ids": [],
-          "delta_ids": [],
+          "delta_ids": [
+            "toxic-delta-market-postt"
+          ],
           "signal_ids": [
             "market-signal-001",
             "market-signal-oil-001"
           ],
           "source_refs": [
+            "toxic-source-market-signal",
             "toxic-source-delta",
-            "toxic-source-market-signal"
+            "src-hormuz-postt-ap"
           ],
           "evaluation": {
-            "fact_basis": "cross_asset_stress已按官方来源、独立媒体与价格证据核验事实边界。",
+            "fact_basis": "cross_asset_stress运行时点已按官方来源、独立来源和价格证据核验事实边界。",
             "consensus": "采用所列来源形成当前基准判断。",
             "consensus_source_refs": [
+              "toxic-source-market-signal",
               "toxic-source-delta",
-              "toxic-source-market-signal"
+              "src-hormuz-postt-ap"
             ],
-            "base_case": "cross_asset_stress的基准情景是保持结构性观察，等待后续实际值或价格确认。",
+            "base_case": "cross_asset_stress运行时点的基准情景是保持结构性观察，等待后续官方结果或价格确认。",
             "confidence": "medium",
             "upside_scenario": "若压力变量缓和且风险资产广度改善，相关风险溢价可能回落。",
             "downside_scenario": "若压力变量强化并跨市场共振，A股相关行业波动可能上升。",
@@ -3197,12 +4631,12 @@
               "官方信息否定当前事实基础",
               "关键价格持续反向确认"
             ],
-            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作。运行时点信息与T日裁定隔离，不倒灌T日结论。"
+            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作。运行时点信息与T日裁定隔离，不倒灌。"
           }
         },
         "holiday_information_gap": {
           "status": "no_relevant_hit",
-          "evaluated_at_beijing": "2026-09-01 06:47:00+08:00",
+          "evaluated_at_beijing": "2026-09-02 06:00:00+08:00",
           "latest_source_published_at": null,
           "query_ids": [
             "toxic-q-holiday-information-gap-1",
@@ -3215,10 +4649,10 @@
           "signal_ids": [],
           "source_refs": [],
           "evaluation": {
-            "fact_basis": "holiday_information_gap已按官方来源、独立媒体与价格证据核验事实边界。",
+            "fact_basis": "holiday_information_gap运行时点已按官方来源、独立来源和价格证据核验事实边界。",
             "consensus": "未找到可靠共识，不把单一叙事冒充一致预期。",
             "consensus_source_refs": [],
-            "base_case": "holiday_information_gap的基准情景是保持结构性观察，等待后续实际值或价格确认。",
+            "base_case": "holiday_information_gap运行时点的基准情景是保持结构性观察，等待后续官方结果或价格确认。",
             "confidence": "low",
             "upside_scenario": "若压力变量缓和且风险资产广度改善，相关风险溢价可能回落。",
             "downside_scenario": "若压力变量强化并跨市场共振，A股相关行业波动可能上升。",
@@ -3233,12 +4667,12 @@
               "官方信息否定当前事实基础",
               "关键价格持续反向确认"
             ],
-            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作。运行时点信息与T日裁定隔离，不倒灌T日结论。"
+            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作。运行时点信息与T日裁定隔离，不倒灌。"
           }
         }
       },
       "ashare_runtime_outlook": {
-        "evaluated_at_beijing": "2026-09-01 06:47:00+08:00",
+        "evaluated_at_beijing": "2026-09-02 06:00:00+08:00",
         "basis_domains": [
           "scheduled_macro_policy",
           "domestic_regulatory_liquidity",
@@ -3247,198 +4681,210 @@
           "holiday_information_gap"
         ],
         "source_refs": [
-          "src-continuum-ppi",
-          "src-jobs-preview",
-          "src-nbs-calendar",
           "toxic-source-scheduled",
           "toxic-source-scheduled-consensus",
+          "src-jobs-preview",
+          "src-nbs-calendar",
+          "src-continuum-ppi",
+          "src-ecb-calendar",
+          "src-ecb-preview-ap",
           "toxic-source-ashare-signal",
+          "toxic-source-001",
           "src-hormuz-ap-t",
           "src-hormuz-reuters-t",
-          "toxic-source-001",
-          "toxic-source-delta",
-          "toxic-source-market-signal"
+          "src-hormuz-postt-ap",
+          "src-hormuz-postt-axios",
+          "toxic-source-market-signal",
+          "toxic-source-delta"
         ],
         "domain_impacts": {
           "scheduled_macro_policy": {
             "direction": "mixed",
-            "mechanism": "未来十日美国就业、中国通胀与美国PPI排期密集，A股在实际值发布前更可能维持结构分化。",
+            "mechanism": "未来十日就业、通胀、PPI及欧洲央行排期密集，A股在发布前更可能维持结构分化。",
             "sector_disposition": "neutral",
             "sector_call_ids": [],
-            "sector_reason": "排期未发布，不生成板块方向。",
+            "sector_reason": "排期未发布，不预支方向。",
             "considered_warning_ids": [
               "tw-us-jobs",
               "tw-cn-cpi",
               "tw-cn-ppi",
-              "tw-us-ppi"
+              "tw-us-ppi",
+              "tw-us-cpi",
+              "tw-ecb"
             ],
             "considered_delta_ids": []
           },
           "domestic_regulatory_liquidity": {
-            "direction": "positive",
-            "mechanism": "A股T日液冷链和消费电子形成板块广度，但已经部分定价。",
+            "direction": "mixed",
+            "mechanism": "A股T日成长宽基承压但数字媒体局部逆势，防御风格相对占优。",
             "sector_disposition": "linked",
             "sector_call_ids": [
-              "sector-call-001"
+              "sector-call-digital"
             ],
-            "sector_reason": "T日行业信号直接承接液冷链延续观察。",
+            "sector_reason": "T日数字媒体价格信号只进入延续观察。",
             "considered_warning_ids": [],
             "considered_delta_ids": []
           },
           "external_geopolitics_trade": {
             "direction": "negative",
-            "mechanism": "霍尔木兹升级推高能源与航运风险，并可能压制A股风险偏好。",
-            "sector_disposition": "neutral",
-            "sector_call_ids": [],
-            "sector_reason": "市场级冲击缺少对液冷链的相对受益证据。",
+            "mechanism": "霍尔木兹升级推高能源、航运和制造成本风险，A股汽车与成本敏感制造承压。",
+            "sector_disposition": "linked",
+            "sector_call_ids": [
+              "sector-call-auto-pressure"
+            ],
+            "sector_reason": "汽车属于成本与风险偏好敏感制造。",
             "considered_warning_ids": [
               "toxic-warning-001"
             ],
             "considered_delta_ids": [
-              "toxic-delta-001"
+              "toxic-delta-hormuz-postt"
             ]
           },
           "cross_asset_stress": {
-            "direction": "mixed",
-            "mechanism": "美股宽基回落、能源与油价走强，对A股科技链构成反向约束，并压制航空与能源成本敏感制造。",
+            "direction": "negative",
+            "mechanism": "T后美股科技与宽基回落、油价和VIX抬升，压制A股成长与汽车链开盘风险偏好。",
             "sector_disposition": "linked",
             "sector_call_ids": [
-              "sector-call-001",
-              "sector-call-energy-cost-pressure"
+              "sector-call-digital",
+              "sector-call-auto-pressure"
             ],
-            "sector_reason": "海外风险既作为液冷链反向信号，也形成能源成本敏感行业的压力调用。",
+            "sector_reason": "海外风险作为两个候选行业的反向执行信号。",
             "considered_warning_ids": [],
-            "considered_delta_ids": []
+            "considered_delta_ids": [
+              "toxic-delta-market-postt"
+            ]
           },
           "holiday_information_gap": {
             "direction": "neutral",
-            "mechanism": "未来观察窗A股无长假闭市；美国劳动节只影响单日海外流动性。",
+            "mechanism": "未来十日A股无长假闭市形成的信息累积。",
             "sector_disposition": "not_applicable",
             "sector_call_ids": [],
-            "sector_reason": "无A股长假信息累积。",
+            "sector_reason": "无长假缺口。",
             "considered_warning_ids": [],
             "considered_delta_ids": []
           }
         },
         "next_session": {
-          "bias": "mixed",
-          "path": "A股更可能指数震荡、行业分化；液冷链有T日强势基础但面临兑现。",
+          "bias": "negative",
+          "path": "A股更可能震荡偏弱并继续风格分化，成长与汽车链承受T后外部压力。",
           "confidence": "medium"
         },
         "opening_auction": {
-          "bias": "mixed",
-          "path": "A股液冷与消费电子可能延续强势，但高开需要严格受计划门禁约束。",
+          "bias": "negative",
+          "path": "A股数字媒体只观察相对承接；A股汽车链需先检验油价冲击和风险偏好。",
           "confidence": "medium"
         },
         "intraday_followthrough": {
           "bias": "mixed",
-          "path": "A股盘中延续取决于板块广度和成交承接，若高开缩量则回吐风险更高。",
+          "path": "若油价高位且A股成长广度未修复，局部题材强势更易高开回吐。",
           "confidence": "low"
         },
         "next_1_5_sessions": {
           "bias": "range_bound",
-          "path": "A股未来一至五个交易日受美国就业、中国通胀和地缘风险共同影响，预计风格反复。",
+          "path": "A股未来一至五个交易日受就业、通胀、欧洲央行和霍尔木兹风险共同影响，风格可能反复。",
           "confidence": "medium"
         },
         "index_style_implications": [
-          "宽基偏震荡，科技内部强弱分化",
-          "能源供给风险抬升高估值成长的外部约束"
+          "宽基偏震荡，防御相对成长占优",
+          "油价上行提高汽车与高估值成长的外部约束"
         ],
         "sector_calls": [
           {
-            "call_id": "sector-call-001",
+            "call_id": "sector-call-digital",
             "direction": "beneficiary",
-            "sector_name": "液冷服务器与热管理",
+            "sector_name": "数字媒体与版权内容",
             "sector_keys": [
               {
                 "taxonomy": "申万2021/主题",
                 "level": "主题",
-                "id": "THEME-LIQUID-COOLING",
-                "name": "液冷服务器与热管理"
+                "id": "THEME-DIGITAL-MEDIA",
+                "name": "数字媒体与版权内容"
               }
             ],
             "industry_matches": [
-              "液冷服务器",
-              "热管理零部件"
+              "数字媒体",
+              "文化传媒"
             ],
             "horizon": "opening_auction",
             "reasons": [
-              "A股T日液冷服务器已经领涨且三花智控具备液冷产品矩阵；仅观察延续，严防高开兑现。"
+              "A股T日数字媒体相对宽基逆势，但已部分定价，只观察延续并防高开兑现。"
             ],
             "driver_signal_ids": [
               "market-signal-ashare-001"
             ],
             "opposing_signal_ids": [
-              "market-signal-001",
-              "market-signal-oil-001"
+              "market-signal-001"
             ],
             "considered_signal_ids": [
-              "market-signal-001",
               "market-signal-ashare-001",
-              "market-signal-oil-001"
+              "market-signal-001"
             ],
             "considered_domain_ids": [
               "domestic_regulatory_liquidity",
               "cross_asset_stress"
             ],
-            "dominant_driver": "A股T日液冷链板块广度已确认，但地缘推油价上行构成成本和风险偏好反向约束",
-            "confidence": "medium",
+            "dominant_driver": "T日数字媒体相对强势，但T后美股科技与风险偏好走弱形成反向约束",
+            "confidence": "low",
             "invalidators": [
-              "竞价触发计划中的高开放弃门禁，或液冷链开盘后相对收益迅速转负"
+              "数字媒体竞价无承接且相对宽基迅速转负"
             ],
             "source_refs": [
+              "toxic-source-ashare-signal",
               "toxic-source-market-signal",
-              "toxic-source-delta",
-              "toxic-source-ashare-signal"
+              "toxic-source-delta"
             ],
             "candidate_codes": [
-              "002050"
+              "000681"
             ],
             "shadow": true
           },
           {
-            "call_id": "sector-call-energy-cost-pressure",
+            "call_id": "sector-call-auto-pressure",
             "direction": "pressure",
-            "sector_name": "航空与能源成本敏感制造",
+            "sector_name": "乘用车与能源成本敏感制造",
             "sector_keys": [
               {
                 "taxonomy": "申万2021/主题",
                 "level": "主题",
-                "id": "THEME-ENERGY-COST",
-                "name": "航空与能源成本敏感制造"
+                "id": "THEME-AUTO-ENERGY-COST",
+                "name": "乘用车与能源成本敏感制造"
               }
             ],
             "industry_matches": [
-              "航空机场",
-              "化工制造",
-              "高耗能制造"
+              "乘用车",
+              "汽车零部件",
+              "能源成本敏感制造"
             ],
             "horizon": "opening_auction",
             "reasons": [
-              "霍尔木兹风险推动油价上行且美股宽基承压，航空和能源成本敏感制造面临成本与风险偏好双重约束。"
+              "霍尔木兹风险与油价急升、海外风险偏好转弱共同提高汽车链成本和估值压力。"
             ],
             "driver_signal_ids": [
-              "market-signal-001",
-              "market-signal-oil-001"
+              "market-signal-oil-001",
+              "market-signal-001"
             ],
             "opposing_signal_ids": [],
             "considered_signal_ids": [
-              "market-signal-001",
-              "market-signal-oil-001"
+              "market-signal-oil-001",
+              "market-signal-001"
             ],
             "considered_domain_ids": [
+              "external_geopolitics_trade",
               "cross_asset_stress"
             ],
-            "dominant_driver": "布油上行与海外宽基回落共同确认能源成本压力",
+            "dominant_driver": "T后油价与海外风险资产共同确认压力",
             "confidence": "medium",
             "invalidators": [
-              "油价快速回落且A股航空与成本敏感行业相对收益转强"
+              "官方确认风险降级、油价快速回吐且汽车板块相对收益转强"
             ],
             "source_refs": [
               "toxic-source-market-signal",
-              "toxic-source-delta"
+              "toxic-source-delta",
+              "src-hormuz-postt-ap"
             ],
-            "candidate_codes": [],
+            "candidate_codes": [
+              "601127"
+            ],
             "shadow": true
           }
         ],
@@ -3447,30 +4893,29 @@
             "signal_id": "market-signal-001",
             "disposition": "direct_mixed",
             "sector_call_ids": [
-              "sector-call-001",
-              "sector-call-energy-cost-pressure"
+              "sector-call-digital",
+              "sector-call-auto-pressure"
             ],
             "mediated_by_signal_ids": [],
-            "reason": "海外风险偏好既约束液冷链延续，也直接压制能源成本敏感行业。"
+            "reason": "海外科技与宽基走弱既是数字媒体的反向信号，也是汽车压力调用的直接驱动。"
           },
           {
             "signal_id": "market-signal-oil-001",
-            "disposition": "direct_mixed",
+            "disposition": "direct_driver",
             "sector_call_ids": [
-              "sector-call-001",
-              "sector-call-energy-cost-pressure"
+              "sector-call-auto-pressure"
             ],
             "mediated_by_signal_ids": [],
-            "reason": "油价上行既是液冷制造的反向约束，也是航空与高耗能制造的直接压力。"
+            "reason": "油价急升直接进入汽车成本压力调用。"
           },
           {
             "signal_id": "market-signal-ashare-001",
             "disposition": "direct_driver",
             "sector_call_ids": [
-              "sector-call-001"
+              "sector-call-digital"
             ],
             "mediated_by_signal_ids": [],
-            "reason": "A股T日液冷链行业广度直接进入次日延续观察。"
+            "reason": "A股T日数字媒体异动进入次日延续观察。"
           }
         ],
         "risk_item_disposition_ledger": [
@@ -3480,9 +4925,11 @@
             "domain_ids": [
               "external_geopolitics_trade"
             ],
-            "disposition": "neutral",
-            "sector_call_ids": [],
-            "reason": "市场级风险或未发布排期不直接生成候选板块方向。"
+            "disposition": "linked",
+            "sector_call_ids": [
+              "sector-call-auto-pressure"
+            ],
+            "reason": "活跃外部风险进入汽车成本压力调用。"
           },
           {
             "item_id": "tw-us-jobs",
@@ -3492,7 +4939,7 @@
             ],
             "disposition": "neutral",
             "sector_call_ids": [],
-            "reason": "市场级风险或未发布排期不直接生成候选板块方向。"
+            "reason": "未发布排期只保留预期基准，不直接生成板块方向。"
           },
           {
             "item_id": "tw-cn-cpi",
@@ -3502,7 +4949,7 @@
             ],
             "disposition": "neutral",
             "sector_call_ids": [],
-            "reason": "市场级风险或未发布排期不直接生成候选板块方向。"
+            "reason": "未发布排期只保留预期基准，不直接生成板块方向。"
           },
           {
             "item_id": "tw-cn-ppi",
@@ -3512,7 +4959,7 @@
             ],
             "disposition": "neutral",
             "sector_call_ids": [],
-            "reason": "市场级风险或未发布排期不直接生成候选板块方向。"
+            "reason": "未发布排期只保留预期基准，不直接生成板块方向。"
           },
           {
             "item_id": "tw-us-ppi",
@@ -3522,76 +4969,86 @@
             ],
             "disposition": "neutral",
             "sector_call_ids": [],
-            "reason": "市场级风险或未发布排期不直接生成候选板块方向。"
+            "reason": "未发布排期只保留预期基准，不直接生成板块方向。"
           },
           {
-            "item_id": "toxic-delta-001",
+            "item_id": "tw-us-cpi",
+            "item_kind": "warning",
+            "domain_ids": [
+              "scheduled_macro_policy"
+            ],
+            "disposition": "neutral",
+            "sector_call_ids": [],
+            "reason": "未发布排期只保留预期基准，不直接生成板块方向。"
+          },
+          {
+            "item_id": "tw-ecb",
+            "item_kind": "warning",
+            "domain_ids": [
+              "scheduled_macro_policy"
+            ],
+            "disposition": "neutral",
+            "sector_call_ids": [],
+            "reason": "未发布排期只保留预期基准，不直接生成板块方向。"
+          },
+          {
+            "item_id": "toxic-delta-hormuz-postt",
             "item_kind": "post_t_delta",
             "domain_ids": [
               "external_geopolitics_trade"
             ],
-            "disposition": "neutral",
-            "sector_call_ids": [],
-            "reason": "T后价格确认仅作为市场级执行安全增量。"
+            "disposition": "linked",
+            "sector_call_ids": [
+              "sector-call-auto-pressure"
+            ],
+            "reason": "T后风险增量仅进入开盘执行安全与行业压力映射。"
+          },
+          {
+            "item_id": "toxic-delta-market-postt",
+            "item_kind": "post_t_delta",
+            "domain_ids": [
+              "cross_asset_stress"
+            ],
+            "disposition": "linked",
+            "sector_call_ids": [
+              "sector-call-auto-pressure"
+            ],
+            "reason": "T后风险增量仅进入开盘执行安全与行业压力映射。"
           }
         ],
         "unmapped_signal_ids": [],
         "unmapped_risk_item_ids": [],
         "unmapped_domain_ids": [],
         "sector_beneficiaries": [
-          "液冷服务器与热管理（A股T日液冷服务器已经领涨且三花智控具备液冷产品矩阵；仅观察延续，严防高开兑现。）"
+          "数字媒体与版权内容（A股T日数字媒体相对宽基逆势，但已部分定价，只观察延续并防高开兑现。）"
         ],
         "sector_pressures": [
-          "航空与能源成本敏感制造（霍尔木兹风险推动油价上行且美股宽基承压，航空和能源成本敏感制造面临成本与风险偏好双重约束。）"
+          "乘用车与能源成本敏感制造（霍尔木兹风险与油价急升、海外风险偏好转弱共同提高汽车链成本和估值压力。）"
         ],
         "opening_triggers": [
-          "观察液冷链竞价广度而非单股高开",
-          "核对布油、美元与美债最新方向",
-          "若三花智控触发计划中的高开门禁则放弃"
+          "观察数字媒体竞价广度而非单股高开",
+          "核对布油、美元、美债和VIX方向",
+          "赛力斯与视觉中国均没有✓，不执行买入计划"
         ],
         "upside_conditions": [
-          "霍尔木兹风险降级且油价回落",
-          "液冷链开盘后保持板块广度",
-          "宏观实际值未引发利率上冲"
+          "霍尔木兹风险降级且油价回吐",
+          "成长板块广度修复",
+          "宏观实际值未推动全球利率上冲"
         ],
         "downside_conditions": [
-          "地缘升级并推升油价和美元",
-          "液冷链高开低走且广度迅速收缩",
-          "美国就业或PPI显著推高利率预期"
+          "地缘升级继续推升油价",
+          "美股科技弱势向亚洲传导",
+          "数字媒体T日强势高开低走"
         ],
         "invalidators": [
-          "开盘前官方信息反转霍尔木兹风险方向",
-          "液冷链竞价与开盘行业广度完全反向"
+          "官方信息反转霍尔木兹风险方向",
+          "油价快速回落且A股成长与汽车板块相对收益同步转强"
         ],
-        "plain_language_verdict": "A股更像指数震荡、板块分化；液冷链可观察延续，但不是追高窗口。",
+        "plain_language_verdict": "本轮没有可执行✓；A股下一交易日更像震荡偏弱与结构分化，数字媒体只观察、汽车链先防风险。",
         "inference_boundary": "以上仅为Agent③ shadow影子判断，不改分数、裁定、仓位或交易动作；所有T后信息与T日裁定隔离，不倒灌。"
       },
       "clear_reason": ""
     },
-    "price_verification_by_code": {
-      "002050": {
-        "as_of": "2026-08-31",
-        "sources": {
-          "东方财富": {
-            "date": null,
-            "price": null
-          },
-          "腾讯": {
-            "date": "2026-08-31",
-            "price": 36.3
-          },
-          "新浪": {
-            "date": "2026-08-31",
-            "price": 36.3
-          }
-        },
-        "usable_sources": {
-          "腾讯": 36.3,
-          "新浪": 36.3
-        },
-        "max_dev_pct": 0.0,
-        "status": "verified"
-      }
-    }
+    "price_verification_by_code": {}
   }
 }
