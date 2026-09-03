@@ -1,117 +1,505 @@
 {
-  "T": "2026-09-02",
+  "T": "2026-09-03",
   "alerts": [
-    {
-      "level": "high",
-      "text": "本轮引擎零候选：不执行买入计划；观察池不等于推荐池。"
-    },
     {
       "warning_id": "toxic-warning-001",
       "level": "high",
-      "text": "Agent③影子预警：国际海事组织确认霍尔木兹航运危机持续；截至T日冲突与通航受限仍令油价、航运、航空和全球风险偏好承压。 shadow，不改T日裁定。",
+      "text": "shadow影子：国际海事组织确认的霍尔木兹航运危机截至T日仍活跃；油价与物流风险对化工成本、出口运输和全球风险偏好构成约束。",
       "shadow": true,
       "post_t": false
     },
     {
       "warning_id": "tw-us-jobs",
       "level": "med",
-      "text": "Agent③影子排期：美国8月就业报告定于北京时间9月4日20:30发布，可能改变降息、美元与全球成长估值预期。 shadow，不改T日裁定。",
+      "text": "shadow影子：美国8月就业报告定于北京时间9月4日20:30发布，可能改变降息、美元与全球成长估值预期。",
       "shadow": true,
       "post_t": false
     },
     {
       "warning_id": "tw-cn-cpi",
       "level": "med",
-      "text": "Agent③影子排期：中国8月CPI由国家统计局排定发布，实际值可能改变增长、利率与周期行业预期。 shadow，不改T日裁定。",
+      "text": "shadow影子：中国8月CPI由国家统计局排定发布，实际值可能改变增长、利率与周期行业预期。",
       "shadow": true,
       "post_t": false
     },
     {
       "warning_id": "tw-cn-ppi",
       "level": "med",
-      "text": "Agent③影子排期：中国8月PPI由国家统计局排定发布，实际值可能改变增长、利率与周期行业预期。 shadow，不改T日裁定。",
+      "text": "shadow影子：中国8月PPI由国家统计局排定发布，实际值可能改变增长、利率与周期行业预期。",
       "shadow": true,
       "post_t": false
     },
     {
       "warning_id": "tw-us-ppi",
       "level": "med",
-      "text": "Agent③影子排期：美国8月PPI定于北京时间9月10日20:30发布，可能影响美债收益率和全球成长估值。 shadow，不改T日裁定。",
+      "text": "shadow影子：美国8月PPI定于北京时间9月10日20:30发布，可能影响美债收益率和全球成长估值。",
       "shadow": true,
       "post_t": false
     },
     {
       "warning_id": "tw-us-cpi",
       "level": "med",
-      "text": "Agent③影子排期：美国8月CPI定于北京时间9月11日20:30发布，可能改变美债、美元与全球成长估值。 shadow，不改T日裁定。",
+      "text": "shadow影子：美国8月CPI定于北京时间9月11日20:30发布，可能改变美债、美元与全球成长估值。",
       "shadow": true,
       "post_t": false
     },
     {
       "warning_id": "tw-ecb",
       "level": "med",
-      "text": "Agent③影子排期：欧洲央行9月货币政策会议排定于9月10日，能源冲击与数据依赖立场可能影响欧元、全球利率及出口链估值。 shadow，不改T日裁定。",
-      "shadow": true,
-      "post_t": false
-    },
-    {
-      "warning_id": "tw-ism-services",
-      "level": "med",
-      "text": "Agent③影子排期：美国8月ISM服务业PMI定于北京时间9月3日22:00发布，可能改变增长、通胀与全球利率预期。 shadow，不改T日裁定。",
+      "text": "shadow影子：欧洲央行9月货币政策会议排定于9月10日，能源冲击与数据依赖立场可能影响欧元、全球利率及出口链估值。",
       "shadow": true,
       "post_t": false
     },
     {
       "warning_id": "toxic-delta-hormuz-postt",
       "level": "med",
-      "text": "Agent③影子预警（T后）：T后霍尔木兹冲突与通航受限继续由独立报道确认，布油约95.63美元，能源与运输成本压力延续。 仅作执行安全约束。",
+      "text": "shadow影子T后：T后独立报道显示霍尔木兹冲突仍在延续，布伦特结算约95.52美元/桶，化工能源与物流成本压力未解除。",
       "shadow": true,
       "post_t": true
     },
     {
       "warning_id": "toxic-delta-market-postt",
       "level": "med",
-      "text": "Agent③影子预警（T后）：T后美股宽基反弹，但美国10年期国债收益率仍处4.79%高位，风险偏好改善与贴现率约束并存。 仅作执行安全约束。",
+      "text": "shadow影子T后：T后美股风险偏好改善，标普500约涨1.1%、纳指约涨1.4%；但美国10年期国债收益率官方日值仍为4.77%，贴现率约束与风险偏好修复并存。",
       "shadow": true,
       "post_t": true
     }
   ],
-  "rulings": {},
+  "rulings": {
+    "000519": {
+      "verdict": "?",
+      "why": "截至2026年9月3日，正式半年报显示中兵红箭上半年营收30.30亿元、同比增长38.15%，归母净利润3719.80万元且扣非4016.56万元，累计口径已扭亏；但经营现金流仍为-5.58亿元，存货较年末增加约55.85%，半年减值1009.69万元，且9月3日军工题材回吐。六维检索未见重大处罚或债务违约，但正面业绩与现金流、库存及资产质量风险明显冲突，无法确认是纯粹错杀，因此裁定?，只观察下一季回款、去库存与利润延续。",
+      "alerts": []
+    },
+    "600596": {
+      "verdict": "✓",
+      "why": "截至2026年9月3日，新安股份半年报显示营收85.63亿元、同比增长6.26%，归母净利润2.54亿元、同比增长268.03%，扣非净利润2.11亿元由负转正，经营现金流1.54亿元为正且二季度继续盈利。六维核查未见重大处罚、逾期债务或逾期担保；反方是存货减值对利润总额净影响1546.30万元、担保余额约23.96亿元、财务费用7802万元及化工周期回落风险，但这些尚未压倒正式财务修复证据，故保留✓，仍受次日高开不追、ATR止损和单票仓位上限约束。",
+      "alerts": [
+        {
+          "warning_id": "toxic-warning-001",
+          "level": "high",
+          "text": "shadow影子：霍尔木兹航运与能源风险对农化成本和出口物流形成约束。",
+          "shadow": true,
+          "post_t": false
+        },
+        {
+          "warning_id": "toxic-delta-hormuz-postt",
+          "level": "med",
+          "text": "shadow影子T后：冲突与约95.52美元布油确认成本压力仍在。",
+          "shadow": true,
+          "post_t": true
+        }
+      ]
+    }
+  },
   "codex_audit": {
     "version": "codex-trading-audit/v1",
     "skill": "bottom-fishing",
-    "evidence_cutoff_beijing": "2026-09-02 23:59:59+08:00",
-    "retrieved_on_beijing": "2026-09-03",
-    "facts": [],
+    "evidence_cutoff_beijing": "2026-09-03 23:59:59+08:00",
+    "retrieved_on_beijing": "2026-09-04",
+    "facts": [
+      {
+        "fact_id": "fact-ra-forecast",
+        "code": "000519",
+        "category": "performance_operations",
+        "fact": "7月14日业绩预告预计上半年归母净利润3000万至4500万元；8月21日半年报实际归母净利润3719.80万元，落在预告区间。",
+        "source_name": "理杏仁公告索引",
+        "source_url": "https://www.lixinger.com/equity/company/detail/sz/000519/519/announcement?type=all",
+        "published_at": "2026-07-14",
+        "published_time_precision": "date",
+        "retrieved_at_beijing": "2026-09-04",
+        "event_date": "2026-07-14",
+        "source_tier": "其他",
+        "f10_match": "confirmed",
+        "reasoning": "旧预告得到正式半年报确认，不能再把‘扭亏预告’单独当作新鲜催化。",
+        "rubric_delta": 0,
+        "counter_argument": "预告命中区间只能确认累计半年，不代表二季度环比改善。",
+        "conclusion": "采用",
+        "uncertainties": [],
+        "source_ref": "bs-ra-forecast",
+        "seed_refs": [
+          "000519:forecast"
+        ]
+      },
+      {
+        "fact_id": "fact-ra-h1",
+        "code": "000519",
+        "category": "performance_operations",
+        "fact": "2026年上半年营收30.30亿元、同比+38.15%，归母净利润3719.80万元、同比扭亏，扣非净利润4016.56万元、同比+199.38%。",
+        "source_name": "深圳证券交易所",
+        "source_url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-21/1a6960f3-c1aa-4a7f-8a2c-7272cb2e0bb3.PDF",
+        "published_at": "2026-08-21",
+        "published_time_precision": "date",
+        "retrieved_at_beijing": "2026-09-04",
+        "event_date": "2026-08-21",
+        "source_tier": "交易所",
+        "f10_match": "confirmed",
+        "reasoning": "累计半年业绩修复，构成底部修复的正面财务锚。",
+        "rubric_delta": 0,
+        "counter_argument": "利润绝对额和ROE仍低，且修复集中度需要后续季度确认。",
+        "conclusion": "采用",
+        "uncertainties": [],
+        "source_ref": "bs-ra-summary",
+        "seed_refs": [
+          "000519:notices:2"
+        ]
+      },
+      {
+        "fact_id": "fact-ra-fin",
+        "code": "000519",
+        "category": "financial_credit",
+        "fact": "半年末货币资金54.53亿元、短期借款3.29亿元；但经营现金流净额仍为-5.58亿元，存货37.02亿元、较年末增加约55.85%。",
+        "source_name": "新浪财经公告全文",
+        "source_url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12511999&stockid=000519",
+        "published_at": "2026-08-21",
+        "published_time_precision": "date",
+        "retrieved_at_beijing": "2026-09-04",
+        "event_date": null,
+        "source_tier": "主流媒体",
+        "f10_match": "not_applicable",
+        "reasoning": "现金覆盖尚可，但负经营现金流与存货跃升削弱利润修复质量，构成存疑核心。",
+        "rubric_delta": -1,
+        "counter_argument": "军工交付与备货节奏可能造成季节性占款，现金流同比已改善53.24%。",
+        "conclusion": "未确定",
+        "uncertainties": [],
+        "source_ref": "bs-ra-full",
+        "seed_refs": []
+      },
+      {
+        "fact_id": "fact-ra-gov",
+        "code": "000519",
+        "category": "governance_regulatory",
+        "fact": "半年报披露8项诉讼合计2676.04万元、未计提预计负债，7项未结；同时未披露重大处罚或诚信异常。",
+        "source_name": "新浪财经公告全文",
+        "source_url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12511999&stockid=000519",
+        "published_at": "2026-08-21",
+        "published_time_precision": "date",
+        "retrieved_at_beijing": "2026-09-04",
+        "event_date": null,
+        "source_tier": "主流媒体",
+        "f10_match": "not_applicable",
+        "reasoning": "诉讼金额相对资产不大但未决事项应持续观察，当前不足以单独否决。",
+        "rubric_delta": -1,
+        "counter_argument": "涉密军工披露天然有限，公开信息不能完全消除项目执行风险。",
+        "conclusion": "未确定",
+        "uncertainties": [],
+        "source_ref": "bs-ra-full",
+        "seed_refs": []
+      },
+      {
+        "fact_id": "fact-ra-impair",
+        "code": "000519",
+        "category": "corporate_events",
+        "fact": "董事会确认2026年半年度计提信用及资产减值损失合计1009.69万元，已反映于半年报。",
+        "source_name": "深圳证券交易所",
+        "source_url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-21/04514d10-0ef4-40d6-aec7-9247dc11cb07.PDF",
+        "published_at": "2026-08-21",
+        "published_time_precision": "date",
+        "retrieved_at_beijing": "2026-09-04",
+        "event_date": "2026-08-21",
+        "source_tier": "交易所",
+        "f10_match": "confirmed",
+        "reasoning": "减值金额约占同期归母利润27%，与存货上升共同提示资产质量压力。",
+        "rubric_delta": -1,
+        "counter_argument": "计提遵循谨慎性且金额未令半年累计转亏。",
+        "conclusion": "采用",
+        "uncertainties": [],
+        "source_ref": "bs-ra-impair",
+        "seed_refs": [
+          "000519:notices:3"
+        ]
+      },
+      {
+        "fact_id": "fact-ra-industry",
+        "code": "000519",
+        "category": "industry_policy_domestic",
+        "fact": "公司9月3日调研称培育钻石价格较5月未上涨、处于稳定状态；行业报道则显示工业金刚石年内提价和需求改善，细分景气分化。",
+        "source_name": "财闻网",
+        "source_url": "https://www.caiwennews.com/article/1582465.shtml",
+        "published_at": "2026-09-03",
+        "published_time_precision": "date",
+        "retrieved_at_beijing": "2026-09-04",
+        "event_date": "2026-09-03",
+        "source_tier": "主流媒体",
+        "f10_match": "not_applicable",
+        "reasoning": "工业钻石改善提供支撑，但培育钻石没有继续涨价，不能把概念热度等同基本面加速。",
+        "rubric_delta": -1,
+        "counter_argument": "调研为公司口径，终端需求与价格仍可能滞后变化。",
+        "conclusion": "未确定",
+        "uncertainties": [],
+        "source_ref": "bs-ra-ir",
+        "seed_refs": []
+      },
+      {
+        "fact_id": "fact-ra-external",
+        "code": "000519",
+        "category": "external_global_peer",
+        "fact": "半年报显示境外收入9978.91万元、占收入3.29%，同比下降5.95%；公司直接海外销售暴露有限但超硬材料受全球需求影响。",
+        "source_name": "新浪财经公告全文",
+        "source_url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12511999&stockid=000519",
+        "published_at": "2026-08-21",
+        "published_time_precision": "date",
+        "retrieved_at_beijing": "2026-09-04",
+        "event_date": null,
+        "source_tier": "主流媒体",
+        "f10_match": "not_applicable",
+        "reasoning": "直接出口占比低，外部贸易冲击不是当前主导矛盾。",
+        "rubric_delta": 0,
+        "counter_argument": "全球钻石与工业材料价格仍可能通过国内渠道间接传导。",
+        "conclusion": "采用",
+        "uncertainties": [],
+        "source_ref": "bs-ra-full",
+        "seed_refs": []
+      },
+      {
+        "fact_id": "fact-ra-drop",
+        "code": "000519",
+        "category": "industry_policy_domestic",
+        "fact": "9月3日收盘15.30元、单日-2.05%；当日军工板块回吐而培育钻石概念仍活跃，表明个股受前一日题材冲高后的兑现影响。",
+        "source_name": "Investing.com",
+        "source_url": "https://cn.investing.com/equities/red-arrow-a-historical-data",
+        "published_at": "2026-09-03",
+        "published_time_precision": "date",
+        "retrieved_at_beijing": "2026-09-04",
+        "event_date": "2026-09-03",
+        "source_tier": "主流媒体",
+        "f10_match": "not_applicable",
+        "reasoning": "跌因更像军工题材兑现与内部基本面分歧叠加，不能直接归为无因错杀。",
+        "rubric_delta": -1,
+        "counter_argument": "单日价格归因只能作为佐证，无法证明卖盘主体。",
+        "conclusion": "未确定",
+        "uncertainties": [],
+        "source_ref": "bs-ra-price",
+        "seed_refs": []
+      },
+      {
+        "fact_id": "fact-xa-h1",
+        "code": "600596",
+        "category": "performance_operations",
+        "fact": "2026年上半年营收85.63亿元、同比+6.26%，归母净利润2.54亿元、同比+268.03%，扣非净利润2.11亿元、由负转正；二季度归母净利润1.58亿元。",
+        "source_name": "上海证券交易所",
+        "source_url": "https://static.sse.com.cn/disclosure/listedinfo/announcement/c/new/2026-08-25/600596_20260825_JKJV.pdf",
+        "published_at": "2026-08-25",
+        "published_time_precision": "date",
+        "retrieved_at_beijing": "2026-09-04",
+        "event_date": "2026-08-25",
+        "source_tier": "交易所",
+        "f10_match": "confirmed",
+        "reasoning": "收入温和增长而利润与扣非显著修复，且二季度继续盈利，符合错杀修复的核心财务条件。",
+        "rubric_delta": 0,
+        "counter_argument": "化工品价格周期性强，单个半年不能证明盈利中枢永久上移。",
+        "conclusion": "采用",
+        "uncertainties": [],
+        "source_ref": "bs-xa-h1",
+        "seed_refs": [
+          "600596:notices:3"
+        ]
+      },
+      {
+        "fact_id": "fact-xa-fin",
+        "code": "600596",
+        "category": "financial_credit",
+        "fact": "半年报披露经营现金流净额1.54亿元为正，资产负债率约38.8%；财务费用7802万元，主要受汇兑损失和利息资本化变化影响。",
+        "source_name": "上海证券交易所",
+        "source_url": "https://static.sse.com.cn/disclosure/listedinfo/announcement/c/new/2026-08-25/600596_20260825_JKJV.pdf",
+        "published_at": "2026-08-25",
+        "published_time_precision": "date",
+        "retrieved_at_beijing": "2026-09-04",
+        "event_date": null,
+        "source_tier": "交易所",
+        "f10_match": "not_applicable",
+        "reasoning": "正经营现金流和中等杠杆降低流动性否决风险，但财务费用抬升需跟踪。",
+        "rubric_delta": 0,
+        "counter_argument": "汇率与海外物流变化可能令财务费用继续波动。",
+        "conclusion": "采用",
+        "uncertainties": [],
+        "source_ref": "bs-xa-h1",
+        "seed_refs": []
+      },
+      {
+        "fact_id": "fact-xa-gov",
+        "code": "600596",
+        "category": "governance_regulatory",
+        "fact": "半年报与财务公司风险持续评估未显示重大监管处罚、重大未决诉讼或逾期债务，公开治理风险未触发硬否决。",
+        "source_name": "上海证券交易所",
+        "source_url": "https://static.sse.com.cn/disclosure/listedinfo/announcement/c/new/2026-08-25/600596_20260825_JKJV.pdf",
+        "published_at": "2026-08-25",
+        "published_time_precision": "date",
+        "retrieved_at_beijing": "2026-09-04",
+        "event_date": null,
+        "source_tier": "交易所",
+        "f10_match": "not_applicable",
+        "reasoning": "截至T日公开披露未见能够否决底部修复的治理事件。",
+        "rubric_delta": 0,
+        "counter_argument": "未发现不等于不存在，仍受定期报告披露边界约束。",
+        "conclusion": "采用",
+        "uncertainties": [],
+        "source_ref": "bs-xa-h1",
+        "seed_refs": []
+      },
+      {
+        "fact_id": "fact-xa-impair",
+        "code": "600596",
+        "category": "corporate_events",
+        "fact": "公司上半年计提资产减值准备5457.51万元，主要为存货跌价4074.60万元；计提与转回合计使利润总额减少1546.30万元。",
+        "source_name": "上海证券交易所",
+        "source_url": "http://static.sse.com.cn/disclosure/listedinfo/announcement/c/new/2026-08-25/600596_20260825_H98A.pdf",
+        "published_at": "2026-08-25",
+        "published_time_precision": "date",
+        "retrieved_at_beijing": "2026-09-04",
+        "event_date": "2026-08-25",
+        "source_tier": "交易所",
+        "f10_match": "confirmed",
+        "reasoning": "存货减值提示周期品价格风险，但净影响约为同期归母利润的6%，不足以否决整体修复。",
+        "rubric_delta": -1,
+        "counter_argument": "若产品价格再次走弱，存货减值可能反复。",
+        "conclusion": "采用",
+        "uncertainties": [],
+        "source_ref": "bs-xa-impair",
+        "seed_refs": [
+          "600596:notices:1"
+        ]
+      },
+      {
+        "fact_id": "fact-xa-guarantee",
+        "code": "600596",
+        "category": "corporate_events",
+        "fact": "截至6月末公司及子公司担保余额约23.96亿元，均为对控股子公司担保，披露未发生逾期担保。",
+        "source_name": "上海证券交易所",
+        "source_url": "http://static.sse.com.cn/disclosure/listedinfo/announcement/c/new/2026-08-15/600596_20260815_P9FN.pdf",
+        "published_at": "2026-08-15",
+        "published_time_precision": "date",
+        "retrieved_at_beijing": "2026-09-04",
+        "event_date": "2026-08-15",
+        "source_tier": "交易所",
+        "f10_match": "not_applicable",
+        "reasoning": "担保规模构成中等级别事件风险，但无逾期且对象为并表子公司，未触发否决。",
+        "rubric_delta": -1,
+        "counter_argument": "若子公司景气恶化，担保仍可能向母公司传导。",
+        "conclusion": "未确定",
+        "uncertainties": [],
+        "source_ref": "bs-xa-guarantee",
+        "seed_refs": []
+      },
+      {
+        "fact_id": "fact-xa-industry",
+        "code": "600596",
+        "category": "industry_policy_domestic",
+        "fact": "行业研报显示上半年草甘膦均价同比约+18.6%、价差扩大；8月下旬DMC价格回到1.3万元/吨上方、库存压力缓和，但传统淡季和地缘物流仍是反方。",
+        "source_name": "新浪财经研报库",
+        "source_url": "https://stock.finance.sina.com.cn/stock/go.php/vReport_Show/kind/search/rptid/841670538717/index.phtml",
+        "published_at": "2026-09-02",
+        "published_time_precision": "date",
+        "retrieved_at_beijing": "2026-09-04",
+        "event_date": null,
+        "source_tier": "研报",
+        "f10_match": "not_applicable",
+        "reasoning": "草甘膦与有机硅价格边际修复解释利润改善，提供产业层支撑。",
+        "rubric_delta": 0,
+        "counter_argument": "行业价格反弹可能受供给扰动推动，需求强度仍需验证。",
+        "conclusion": "采用",
+        "uncertainties": [],
+        "source_ref": "bs-xa-industry",
+        "seed_refs": []
+      },
+      {
+        "fact_id": "fact-xa-external",
+        "code": "600596",
+        "category": "external_global_peer",
+        "fact": "公司公开回应称出口欧盟的有机硅产品符合REACH对D4/D5/D6含量不高于0.1%的要求，当前未见合规性否决证据。",
+        "source_name": "证券之星",
+        "source_url": "https://stock.stockstar.com/RB2026060800022589.shtml",
+        "published_at": "2026-06-08",
+        "published_time_precision": "date",
+        "retrieved_at_beijing": "2026-09-04",
+        "event_date": null,
+        "source_tier": "主流媒体",
+        "f10_match": "not_applicable",
+        "reasoning": "外销合规门槛已有公司回应，暂不构成硬否决。",
+        "rubric_delta": 0,
+        "counter_argument": "该信息为媒体转述公司互动，且贸易与物流风险仍可能变化。",
+        "conclusion": "未确定",
+        "uncertainties": [],
+        "source_ref": "bs-xa-eu",
+        "seed_refs": []
+      },
+      {
+        "fact_id": "fact-xa-drop",
+        "code": "600596",
+        "category": "industry_policy_domestic",
+        "fact": "9月3日新安股份收盘11.29元、上涨4.44%，而农化制品行业指数下跌约1.34%；本轮60日回撤后的T日表现属于公司相对修复而非行业同步反弹。",
+        "source_name": "东方财富",
+        "source_url": "https://finance.eastmoney.com/a/202609033863971732.html",
+        "published_at": "2026-09-03",
+        "published_time_precision": "date",
+        "retrieved_at_beijing": "2026-09-04",
+        "event_date": "2026-09-03",
+        "source_tier": "主流媒体",
+        "f10_match": "not_applicable",
+        "reasoning": "T日相对强势支持修复，但也提高次日追高与回吐风险。",
+        "rubric_delta": 0,
+        "counter_argument": "单日异动不证明中期趋势反转。",
+        "conclusion": "采用",
+        "uncertainties": [],
+        "source_ref": "bs-xa-price",
+        "seed_refs": []
+      },
+      {
+        "fact_id": "fact-market",
+        "code": "MARKET",
+        "category": "market_regime",
+        "fact": "9月3日创业板指+0.01%，但全市场仅1831只上涨、3505只下跌；港口航运+1.97%，农化制品-1.34%，市场呈指数平、个股偏弱的结构分化。",
+        "source_name": "同花顺财经",
+        "source_url": "https://news.10jqka.com.cn/20260903/c679563915.shtml",
+        "published_at": "2026-09-03",
+        "published_time_precision": "date",
+        "retrieved_at_beijing": "2026-09-04",
+        "event_date": "2026-09-03",
+        "source_tier": "主流媒体",
+        "f10_match": "not_applicable",
+        "reasoning": "宽基稳定但广度偏弱，底部票执行仍需小仓位、竞价确认和不追高。",
+        "rubric_delta": 0,
+        "counter_argument": "行业轮动快，收盘结构未必延续到次日。",
+        "conclusion": "采用",
+        "uncertainties": [],
+        "source_ref": "bs-market",
+        "seed_refs": []
+      }
+    ],
     "contrarian_challenge": {
       "completed": true,
       "arguments": [
-        "观察池个股虽处底部区，但高波动、冷却与趋势约束可能让反弹信号失真。",
-        "军工T日相对强势与T后海外反弹不等于个股已达到可执行门槛。"
+        "中兵红箭半年累计扭亏可能掩盖利润质量不足：经营现金流仍为-5.58亿元、存货较年末增约55.85%、减值1009.69万元，题材兑现可能不是单纯错杀。",
+        "新安股份的盈利修复可能只是草甘膦与有机硅价格反弹，财务费用上升、存货减值和23.96亿元担保余额可能在周期回落时重新放大风险。"
       ],
       "responses": [
-        "坚持ATR与5交易日冷却硬门槛，不因叙事放宽阈值。",
-        "本轮零候选，所有宏观和行业映射仅作shadow观察，不生成买入动作。"
+        "接受第一项反方并将000519降为?：累计半年正面与现金流、存货和减值反面冲突，等待下一季现金流/去库存确认。",
+        "第二项风险已纳入，但600596二季度持续盈利、扣非转正、经营现金流为正且无逾期担保，当前不足以否决；仍须按ATR止损和不追高纪律执行。"
       ]
     },
     "auditor_review": {
       "passed": true,
       "checks": [
-        "数据新鲜度：T日与T后证据按北京时间切分并记录检索时点。",
-        "跨源价格：指数、油价与美债使用独立媒体和官方来源交叉核验。",
-        "算术：候选数量、阈值、冷却和ATR gate与引擎输出一致。",
-        "rubric：零候选不放宽双路径推荐线，也不改机械裁定。",
-        "价位逻辑：无✓票，因此不生成入场、止损、目标位或仓位。",
-        "引用：采用来源均有可访问URL并与查询、事件和信号双向关联。"
+        "数据新鲜度",
+        "跨源价格",
+        "算术",
+        "rubric",
+        "价位逻辑",
+        "引用",
+        "六维检索与来源血缘闭合",
+        "F10 forecast/notices逐条对账",
+        "T日与T后证据隔离",
+        "正反决定事实与裁定一致",
+        "Agent③五域与板块映射闭合"
       ],
       "failed": [],
-      "notes": "独立复核确认本轮应保持空手；并行研究分支未回传，不计作独立证据。"
+      "notes": "000519因财务质量冲突保留?；600596通过但不改变引擎仓位、ATR和止损纪律。"
     },
     "bottom_search": {
       "version": "bottom-search-audit/v1",
-      "T": "2026-09-02",
-      "cutoff_beijing": "2026-09-02 23:59:59+08:00",
-      "retrieved_at_beijing": "2026-09-03 06:56:32+08:00",
+      "T": "2026-09-03",
+      "cutoff_beijing": "2026-09-03 23:59:59+08:00",
+      "retrieved_at_beijing": "2026-09-04 05:25:30+08:00",
       "required_categories": [
         "performance_operations",
         "financial_credit",
@@ -120,24 +508,954 @@
         "industry_policy_domestic",
         "external_global_peer"
       ],
-      "sources": [],
-      "queries": [],
-      "coverage_by_code": {},
-      "f10_seed_ledger": [],
-      "post_t_safety_by_code": {},
-      "empty_reason": "引擎本轮没有任何股票跨过推荐线；观察池仅保留ATR过高或冷却中的标的，故不执行候选层F10搜索与买入裁定。",
+      "sources": [
+        {
+          "source_ref": "bs-ra-summary",
+          "access_url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-21/1a6960f3-c1aa-4a7f-8a2c-7272cb2e0bb3.PDF",
+          "access_publisher": "深圳证券交易所",
+          "source_kind": "official_direct",
+          "origin_id": "szse-ra-h1-summary-20260821",
+          "canonical_url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-21/1a6960f3-c1aa-4a7f-8a2c-7272cb2e0bb3.PDF",
+          "canonical_publisher": "深圳证券交易所",
+          "document_id": "2026-50",
+          "match_basis": [
+            "title",
+            "published_at",
+            "document_id",
+            "full_text"
+          ]
+        },
+        {
+          "source_ref": "bs-ra-full",
+          "access_url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12511999&stockid=000519",
+          "access_publisher": "新浪财经",
+          "source_kind": "independent_media",
+          "origin_id": "sina-ra-h1-12511999",
+          "canonical_url": "",
+          "canonical_publisher": "",
+          "document_id": "",
+          "match_basis": []
+        },
+        {
+          "source_ref": "bs-ra-impair",
+          "access_url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-21/04514d10-0ef4-40d6-aec7-9247dc11cb07.PDF",
+          "access_publisher": "深圳证券交易所",
+          "source_kind": "official_direct",
+          "origin_id": "szse-ra-board-20260821",
+          "canonical_url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-21/04514d10-0ef4-40d6-aec7-9247dc11cb07.PDF",
+          "canonical_publisher": "深圳证券交易所",
+          "document_id": "2026-52",
+          "match_basis": [
+            "title",
+            "published_at",
+            "document_id",
+            "full_text"
+          ]
+        },
+        {
+          "source_ref": "bs-ra-forecast",
+          "access_url": "https://www.lixinger.com/equity/company/detail/sz/000519/519/announcement?type=all",
+          "access_publisher": "理杏仁公告索引",
+          "source_kind": "unverified_secondary",
+          "origin_id": "lixinger-ra-announcement-index",
+          "canonical_url": "",
+          "canonical_publisher": "",
+          "document_id": "",
+          "match_basis": []
+        },
+        {
+          "source_ref": "bs-ra-ir",
+          "access_url": "https://www.caiwennews.com/article/1582465.shtml",
+          "access_publisher": "财闻网",
+          "source_kind": "independent_media",
+          "origin_id": "caiwen-ra-ir-20260903",
+          "canonical_url": "",
+          "canonical_publisher": "",
+          "document_id": "",
+          "match_basis": []
+        },
+        {
+          "source_ref": "bs-ra-industry",
+          "access_url": "https://www.stcn.com/article/detail/3818871.html",
+          "access_publisher": "证券时报网",
+          "source_kind": "independent_media",
+          "origin_id": "stcn-superhard-2026",
+          "canonical_url": "",
+          "canonical_publisher": "",
+          "document_id": "",
+          "match_basis": []
+        },
+        {
+          "source_ref": "bs-ra-price",
+          "access_url": "https://cn.investing.com/equities/red-arrow-a-historical-data",
+          "access_publisher": "Investing.com",
+          "source_kind": "independent_media",
+          "origin_id": "investing-ra-price",
+          "canonical_url": "",
+          "canonical_publisher": "",
+          "document_id": "",
+          "match_basis": []
+        },
+        {
+          "source_ref": "bs-xa-h1",
+          "access_url": "https://static.sse.com.cn/disclosure/listedinfo/announcement/c/new/2026-08-25/600596_20260825_JKJV.pdf",
+          "access_publisher": "上海证券交易所",
+          "source_kind": "official_direct",
+          "origin_id": "sse-xa-h1-20260825",
+          "canonical_url": "https://static.sse.com.cn/disclosure/listedinfo/announcement/c/new/2026-08-25/600596_20260825_JKJV.pdf",
+          "canonical_publisher": "上海证券交易所",
+          "document_id": "600596_20260825_JKJV",
+          "match_basis": [
+            "title",
+            "published_at",
+            "document_id",
+            "full_text"
+          ]
+        },
+        {
+          "source_ref": "bs-xa-impair",
+          "access_url": "http://static.sse.com.cn/disclosure/listedinfo/announcement/c/new/2026-08-25/600596_20260825_H98A.pdf",
+          "access_publisher": "上海证券交易所",
+          "source_kind": "official_direct",
+          "origin_id": "sse-xa-impair-20260825",
+          "canonical_url": "http://static.sse.com.cn/disclosure/listedinfo/announcement/c/new/2026-08-25/600596_20260825_H98A.pdf",
+          "canonical_publisher": "上海证券交易所",
+          "document_id": "600596_20260825_H98A",
+          "match_basis": [
+            "title",
+            "published_at",
+            "document_id",
+            "full_text"
+          ]
+        },
+        {
+          "source_ref": "bs-xa-guarantee",
+          "access_url": "http://static.sse.com.cn/disclosure/listedinfo/announcement/c/new/2026-08-15/600596_20260815_P9FN.pdf",
+          "access_publisher": "上海证券交易所",
+          "source_kind": "official_direct",
+          "origin_id": "sse-xa-guarantee-20260815",
+          "canonical_url": "http://static.sse.com.cn/disclosure/listedinfo/announcement/c/new/2026-08-15/600596_20260815_P9FN.pdf",
+          "canonical_publisher": "上海证券交易所",
+          "document_id": "600596_20260815_P9FN",
+          "match_basis": [
+            "title",
+            "published_at",
+            "document_id",
+            "full_text"
+          ]
+        },
+        {
+          "source_ref": "bs-xa-industry",
+          "access_url": "https://stock.finance.sina.com.cn/stock/go.php/vReport_Show/kind/search/rptid/841670538717/index.phtml",
+          "access_publisher": "新浪财经研报库",
+          "source_kind": "independent_research",
+          "origin_id": "broker-xa-industry-20260902",
+          "canonical_url": "",
+          "canonical_publisher": "",
+          "document_id": "",
+          "match_basis": []
+        },
+        {
+          "source_ref": "bs-xa-eu",
+          "access_url": "https://stock.stockstar.com/RB2026060800022589.shtml",
+          "access_publisher": "证券之星",
+          "source_kind": "independent_media",
+          "origin_id": "stockstar-xa-eu-20260608",
+          "canonical_url": "",
+          "canonical_publisher": "",
+          "document_id": "",
+          "match_basis": []
+        },
+        {
+          "source_ref": "bs-xa-price",
+          "access_url": "https://finance.eastmoney.com/a/202609033863971732.html",
+          "access_publisher": "东方财富",
+          "source_kind": "independent_media",
+          "origin_id": "eastmoney-xa-price-20260903",
+          "canonical_url": "",
+          "canonical_publisher": "",
+          "document_id": "",
+          "match_basis": []
+        },
+        {
+          "source_ref": "bs-market",
+          "access_url": "https://news.10jqka.com.cn/20260903/c679563915.shtml",
+          "access_publisher": "同花顺财经",
+          "source_kind": "independent_media",
+          "origin_id": "ths-ashare-close-20260903",
+          "canonical_url": "",
+          "canonical_publisher": "",
+          "document_id": "",
+          "match_basis": []
+        }
+      ],
+      "queries": [
+        {
+          "query_id": "bs-q-ra-perf",
+          "code": "000519",
+          "category": "performance_operations",
+          "phase": "as_of_t",
+          "query_mode": "official",
+          "query_text": "中兵红箭 000519 半年报 业绩预告 官方 回扫",
+          "date_from": "2024-09-03",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-21/1a6960f3-c1aa-4a7f-8a2c-7272cb2e0bb3.PDF",
+            "https://www.lixinger.com/equity/company/detail/sz/000519/519/announcement?type=all"
+          ],
+          "selected_fact_ids": [
+            "fact-ra-h1",
+            "fact-ra-forecast"
+          ],
+          "selected_delta_ids": [],
+          "notes": ""
+        },
+        {
+          "query_id": "bs-q-ra-fin",
+          "code": "000519",
+          "category": "financial_credit",
+          "phase": "as_of_t",
+          "query_mode": "official",
+          "query_text": "中兵红箭 现金流 存货 借款 半年报 官方",
+          "date_from": "2024-09-03",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12511999&stockid=000519"
+          ],
+          "selected_fact_ids": [
+            "fact-ra-fin"
+          ],
+          "selected_delta_ids": [],
+          "notes": ""
+        },
+        {
+          "query_id": "bs-q-ra-gov",
+          "code": "000519",
+          "category": "governance_regulatory",
+          "phase": "as_of_t",
+          "query_mode": "regulator",
+          "query_text": "中兵红箭 诉讼 处罚 监管 问询 2024-2026",
+          "date_from": "2024-09-03",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12511999&stockid=000519"
+          ],
+          "selected_fact_ids": [
+            "fact-ra-gov"
+          ],
+          "selected_delta_ids": [],
+          "notes": ""
+        },
+        {
+          "query_id": "bs-q-ra-event",
+          "code": "000519",
+          "category": "corporate_events",
+          "phase": "as_of_t",
+          "query_mode": "exact_title",
+          "query_text": "中兵红箭 关于2026年半年度计提信用及资产减值损失 公告",
+          "date_from": "2024-09-03",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-21/04514d10-0ef4-40d6-aec7-9247dc11cb07.PDF"
+          ],
+          "selected_fact_ids": [
+            "fact-ra-impair"
+          ],
+          "selected_delta_ids": [],
+          "notes": ""
+        },
+        {
+          "query_id": "bs-q-ra-ind",
+          "code": "000519",
+          "category": "industry_policy_domestic",
+          "phase": "as_of_t",
+          "query_mode": "industry",
+          "query_text": "中兵红箭 工业金刚石 培育钻石 军工 行业 2026",
+          "date_from": "2024-09-03",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://www.caiwennews.com/article/1582465.shtml",
+            "https://www.stcn.com/article/detail/3818871.html"
+          ],
+          "selected_fact_ids": [
+            "fact-ra-industry"
+          ],
+          "selected_delta_ids": [],
+          "notes": ""
+        },
+        {
+          "query_id": "bs-q-ra-ext",
+          "code": "000519",
+          "category": "external_global_peer",
+          "phase": "as_of_t",
+          "query_mode": "overseas",
+          "query_text": "中兵红箭 海外收入 全球超硬材料 同业 风险",
+          "date_from": "2024-09-03",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12511999&stockid=000519"
+          ],
+          "selected_fact_ids": [
+            "fact-ra-external"
+          ],
+          "selected_delta_ids": [],
+          "notes": ""
+        },
+        {
+          "query_id": "bs-q-ra-drop",
+          "code": "000519",
+          "category": "industry_policy_domestic",
+          "phase": "as_of_t",
+          "query_mode": "drop_cause",
+          "query_text": "000519 2026年9月3日 下跌 原因 军工 培育钻石",
+          "date_from": "2024-09-03",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://cn.investing.com/equities/red-arrow-a-historical-data",
+            "https://news.10jqka.com.cn/20260903/c679563915.shtml"
+          ],
+          "selected_fact_ids": [
+            "fact-ra-drop"
+          ],
+          "selected_delta_ids": [],
+          "notes": ""
+        },
+        {
+          "query_id": "bs-q-ra-fresh",
+          "code": "000519",
+          "category": "corporate_events",
+          "phase": "post_t_safety",
+          "query_mode": "freshness_delta",
+          "query_text": "000519 2026年9月4日 最新公告 负面风险",
+          "date_from": "2026-09-04",
+          "date_to": "2026-09-04",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
+          "outcome": "no_relevant_hit",
+          "reviewed_urls": [
+            "https://www.caiwennews.com/article/1582465.shtml"
+          ],
+          "selected_fact_ids": [],
+          "selected_delta_ids": [],
+          "notes": "检索至北京时间运行时点，未发现T后已核实重大公司增量。"
+        },
+        {
+          "query_id": "bs-q-xa-perf",
+          "code": "600596",
+          "category": "performance_operations",
+          "phase": "as_of_t",
+          "query_mode": "official",
+          "query_text": "新安股份 600596 2026年半年度报告 官方 业绩",
+          "date_from": "2024-09-03",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://static.sse.com.cn/disclosure/listedinfo/announcement/c/new/2026-08-25/600596_20260825_JKJV.pdf"
+          ],
+          "selected_fact_ids": [
+            "fact-xa-h1"
+          ],
+          "selected_delta_ids": [],
+          "notes": ""
+        },
+        {
+          "query_id": "bs-q-xa-fin",
+          "code": "600596",
+          "category": "financial_credit",
+          "phase": "as_of_t",
+          "query_mode": "official",
+          "query_text": "新安股份 现金流 负债 财务费用 半年报 官方",
+          "date_from": "2024-09-03",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://static.sse.com.cn/disclosure/listedinfo/announcement/c/new/2026-08-25/600596_20260825_JKJV.pdf"
+          ],
+          "selected_fact_ids": [
+            "fact-xa-fin"
+          ],
+          "selected_delta_ids": [],
+          "notes": ""
+        },
+        {
+          "query_id": "bs-q-xa-gov",
+          "code": "600596",
+          "category": "governance_regulatory",
+          "phase": "as_of_t",
+          "query_mode": "regulator",
+          "query_text": "新安股份 诉讼 处罚 监管 问询 财务公司 风险",
+          "date_from": "2024-09-03",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://static.sse.com.cn/disclosure/listedinfo/announcement/c/new/2026-08-25/600596_20260825_JKJV.pdf"
+          ],
+          "selected_fact_ids": [
+            "fact-xa-gov"
+          ],
+          "selected_delta_ids": [],
+          "notes": ""
+        },
+        {
+          "query_id": "bs-q-xa-event",
+          "code": "600596",
+          "category": "corporate_events",
+          "phase": "as_of_t",
+          "query_mode": "exact_title",
+          "query_text": "新安股份 半年度资产减值 对外担保 公告 2026",
+          "date_from": "2024-09-03",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "http://static.sse.com.cn/disclosure/listedinfo/announcement/c/new/2026-08-25/600596_20260825_H98A.pdf",
+            "http://static.sse.com.cn/disclosure/listedinfo/announcement/c/new/2026-08-15/600596_20260815_P9FN.pdf"
+          ],
+          "selected_fact_ids": [
+            "fact-xa-impair",
+            "fact-xa-guarantee"
+          ],
+          "selected_delta_ids": [],
+          "notes": ""
+        },
+        {
+          "query_id": "bs-q-xa-ind",
+          "code": "600596",
+          "category": "industry_policy_domestic",
+          "phase": "as_of_t",
+          "query_mode": "industry",
+          "query_text": "新安股份 草甘膦 有机硅 DMC 行业价格 2026",
+          "date_from": "2024-09-03",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://stock.finance.sina.com.cn/stock/go.php/vReport_Show/kind/search/rptid/841670538717/index.phtml"
+          ],
+          "selected_fact_ids": [
+            "fact-xa-industry"
+          ],
+          "selected_delta_ids": [],
+          "notes": ""
+        },
+        {
+          "query_id": "bs-q-xa-ext",
+          "code": "600596",
+          "category": "external_global_peer",
+          "phase": "as_of_t",
+          "query_mode": "overseas",
+          "query_text": "新安股份 欧盟 REACH 出口 合规 风险 2026",
+          "date_from": "2024-09-03",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://stock.stockstar.com/RB2026060800022589.shtml"
+          ],
+          "selected_fact_ids": [
+            "fact-xa-external"
+          ],
+          "selected_delta_ids": [],
+          "notes": ""
+        },
+        {
+          "query_id": "bs-q-xa-drop",
+          "code": "600596",
+          "category": "industry_policy_domestic",
+          "phase": "as_of_t",
+          "query_mode": "drop_cause",
+          "query_text": "600596 2026年9月3日 涨跌 原因 农化 有机硅",
+          "date_from": "2024-09-03",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://finance.eastmoney.com/a/202609033863971732.html",
+            "https://news.10jqka.com.cn/20260903/c679563915.shtml"
+          ],
+          "selected_fact_ids": [
+            "fact-xa-drop"
+          ],
+          "selected_delta_ids": [],
+          "notes": ""
+        },
+        {
+          "query_id": "bs-q-xa-fresh",
+          "code": "600596",
+          "category": "corporate_events",
+          "phase": "post_t_safety",
+          "query_mode": "freshness_delta",
+          "query_text": "600596 2026年9月4日 最新公告 负面风险",
+          "date_from": "2026-09-04",
+          "date_to": "2026-09-04",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
+          "outcome": "no_relevant_hit",
+          "reviewed_urls": [
+            "https://finance.eastmoney.com/a/202609033863971732.html"
+          ],
+          "selected_fact_ids": [],
+          "selected_delta_ids": [],
+          "notes": "检索至北京时间运行时点，未发现T后已核实重大公司增量。"
+        },
+        {
+          "query_id": "bs-q-market",
+          "code": "MARKET",
+          "category": "market_regime",
+          "phase": "as_of_t",
+          "query_mode": "broad_web",
+          "query_text": "A股2026年9月3日行业涨跌 广度 军工 农化",
+          "date_from": "2024-09-03",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
+          "outcome": "selected",
+          "reviewed_urls": [
+            "https://news.10jqka.com.cn/20260903/c679563915.shtml"
+          ],
+          "selected_fact_ids": [
+            "fact-market"
+          ],
+          "selected_delta_ids": [],
+          "notes": ""
+        }
+      ],
+      "coverage_by_code": {
+        "000519": {
+          "aliases": [
+            "中兵红箭股份有限公司",
+            "中兵红箭"
+          ],
+          "profile_tags": [
+            "军工",
+            "超硬材料",
+            "周期"
+          ],
+          "categories": {
+            "performance_operations": {
+              "status": "hit",
+              "query_ids": [
+                "bs-q-ra-perf"
+              ],
+              "fact_ids": [
+                "fact-ra-forecast",
+                "fact-ra-h1"
+              ],
+              "reason": "已取得可回溯来源并纳入正反证据；结论按事实强弱而非搜索命中数量形成。"
+            },
+            "financial_credit": {
+              "status": "hit",
+              "query_ids": [
+                "bs-q-ra-fin"
+              ],
+              "fact_ids": [
+                "fact-ra-fin"
+              ],
+              "reason": "已取得可回溯来源并纳入正反证据；结论按事实强弱而非搜索命中数量形成。"
+            },
+            "governance_regulatory": {
+              "status": "hit",
+              "query_ids": [
+                "bs-q-ra-gov"
+              ],
+              "fact_ids": [
+                "fact-ra-gov"
+              ],
+              "reason": "已取得可回溯来源并纳入正反证据；结论按事实强弱而非搜索命中数量形成。"
+            },
+            "corporate_events": {
+              "status": "hit",
+              "query_ids": [
+                "bs-q-ra-event"
+              ],
+              "fact_ids": [
+                "fact-ra-impair"
+              ],
+              "reason": "已取得可回溯来源并纳入正反证据；结论按事实强弱而非搜索命中数量形成。"
+            },
+            "industry_policy_domestic": {
+              "status": "hit",
+              "query_ids": [
+                "bs-q-ra-ind",
+                "bs-q-ra-drop"
+              ],
+              "fact_ids": [
+                "fact-ra-industry",
+                "fact-ra-drop"
+              ],
+              "reason": "已取得可回溯来源并纳入正反证据；结论按事实强弱而非搜索命中数量形成。"
+            },
+            "external_global_peer": {
+              "status": "hit",
+              "query_ids": [
+                "bs-q-ra-ext"
+              ],
+              "fact_ids": [
+                "fact-ra-external"
+              ],
+              "reason": "已取得可回溯来源并纳入正反证据；结论按事实强弱而非搜索命中数量形成。"
+            }
+          },
+          "official_latest_check": {
+            "query_ids": [
+              "bs-q-ra-perf",
+              "bs-q-ra-fin"
+            ],
+            "checked_sources": [
+              "深圳证券交易所",
+              "巨潮资讯"
+            ],
+            "latest_pre_t": "2026-09-03"
+          },
+          "ruling_evidence": {
+            "supporting_fact_ids": [
+              "fact-ra-forecast",
+              "fact-ra-h1",
+              "fact-ra-external"
+            ],
+            "adverse_fact_ids": [
+              "fact-ra-fin",
+              "fact-ra-gov",
+              "fact-ra-impair",
+              "fact-ra-industry",
+              "fact-ra-drop"
+            ],
+            "decision_fact_ids": [
+              "fact-ra-h1",
+              "fact-ra-fin",
+              "fact-ra-impair",
+              "fact-ra-industry"
+            ],
+            "unresolved_query_ids": []
+          }
+        },
+        "600596": {
+          "aliases": [
+            "浙江新安化工集团股份有限公司",
+            "新安股份"
+          ],
+          "profile_tags": [
+            "农化",
+            "有机硅",
+            "出口",
+            "周期"
+          ],
+          "categories": {
+            "performance_operations": {
+              "status": "hit",
+              "query_ids": [
+                "bs-q-xa-perf"
+              ],
+              "fact_ids": [
+                "fact-xa-h1"
+              ],
+              "reason": "已取得可回溯来源并纳入正反证据；结论按事实强弱而非搜索命中数量形成。"
+            },
+            "financial_credit": {
+              "status": "hit",
+              "query_ids": [
+                "bs-q-xa-fin"
+              ],
+              "fact_ids": [
+                "fact-xa-fin"
+              ],
+              "reason": "已取得可回溯来源并纳入正反证据；结论按事实强弱而非搜索命中数量形成。"
+            },
+            "governance_regulatory": {
+              "status": "hit",
+              "query_ids": [
+                "bs-q-xa-gov"
+              ],
+              "fact_ids": [
+                "fact-xa-gov"
+              ],
+              "reason": "已取得可回溯来源并纳入正反证据；结论按事实强弱而非搜索命中数量形成。"
+            },
+            "corporate_events": {
+              "status": "hit",
+              "query_ids": [
+                "bs-q-xa-event"
+              ],
+              "fact_ids": [
+                "fact-xa-impair",
+                "fact-xa-guarantee"
+              ],
+              "reason": "已取得可回溯来源并纳入正反证据；结论按事实强弱而非搜索命中数量形成。"
+            },
+            "industry_policy_domestic": {
+              "status": "hit",
+              "query_ids": [
+                "bs-q-xa-ind",
+                "bs-q-xa-drop"
+              ],
+              "fact_ids": [
+                "fact-xa-industry",
+                "fact-xa-drop"
+              ],
+              "reason": "已取得可回溯来源并纳入正反证据；结论按事实强弱而非搜索命中数量形成。"
+            },
+            "external_global_peer": {
+              "status": "hit",
+              "query_ids": [
+                "bs-q-xa-ext"
+              ],
+              "fact_ids": [
+                "fact-xa-external"
+              ],
+              "reason": "已取得可回溯来源并纳入正反证据；结论按事实强弱而非搜索命中数量形成。"
+            }
+          },
+          "official_latest_check": {
+            "query_ids": [
+              "bs-q-xa-perf",
+              "bs-q-xa-fin"
+            ],
+            "checked_sources": [
+              "上海证券交易所",
+              "公司公告"
+            ],
+            "latest_pre_t": "2026-08-25"
+          },
+          "ruling_evidence": {
+            "supporting_fact_ids": [
+              "fact-xa-h1",
+              "fact-xa-fin",
+              "fact-xa-gov",
+              "fact-xa-industry",
+              "fact-xa-external",
+              "fact-xa-drop"
+            ],
+            "adverse_fact_ids": [
+              "fact-xa-impair",
+              "fact-xa-guarantee"
+            ],
+            "decision_fact_ids": [
+              "fact-xa-h1",
+              "fact-xa-fin",
+              "fact-xa-impair",
+              "fact-xa-guarantee"
+            ],
+            "unresolved_query_ids": []
+          }
+        }
+      },
+      "f10_seed_ledger": [
+        {
+          "seed_key": "000519:forecast",
+          "code": "000519",
+          "kind": "forecast",
+          "raw_index": null,
+          "seed_text": "2026-07-14 扭亏 预计2026年1-6月归属于上市公司股东的净利润盈利:3,000万元至4,500万元。",
+          "raw_date": "2026-07-14",
+          "timing": "pre_t",
+          "disposition": "adjudicated_pre_t",
+          "query_ids": [
+            "bs-q-ra-perf"
+          ],
+          "fact_ids": [
+            "fact-ra-forecast"
+          ],
+          "delta_ids": [],
+          "reason": "旧扭亏预告由正式半年报确认，并作为预告对账而非新鲜催化。"
+        },
+        {
+          "seed_key": "000519:notices:0",
+          "code": "000519",
+          "kind": "notice",
+          "raw_index": 0,
+          "seed_text": "2026-09-03 中兵红箭:2026年9月3日投资者关系活动记录表",
+          "raw_date": "2026-09-03",
+          "timing": "pre_t",
+          "disposition": "logged_routine_pre_t",
+          "query_ids": [
+            "bs-q-ra-perf"
+          ],
+          "fact_ids": [],
+          "delta_ids": [],
+          "reason": "该条为例行或已被正式报告覆盖的公告种子，已逐条核对并留痕。"
+        },
+        {
+          "seed_key": "000519:notices:1",
+          "code": "000519",
+          "kind": "notice",
+          "raw_index": 1,
+          "seed_text": "2026-08-21 中兵红箭:关于办公地址变更的公告",
+          "raw_date": "2026-08-21",
+          "timing": "pre_t",
+          "disposition": "logged_routine_pre_t",
+          "query_ids": [
+            "bs-q-ra-perf"
+          ],
+          "fact_ids": [],
+          "delta_ids": [],
+          "reason": "该条为例行或已被正式报告覆盖的公告种子，已逐条核对并留痕。"
+        },
+        {
+          "seed_key": "000519:notices:2",
+          "code": "000519",
+          "kind": "notice",
+          "raw_index": 2,
+          "seed_text": "2026-08-21 中兵红箭:2026年半年度报告",
+          "raw_date": "2026-08-21",
+          "timing": "pre_t",
+          "disposition": "adjudicated_pre_t",
+          "query_ids": [
+            "bs-q-ra-perf"
+          ],
+          "fact_ids": [
+            "fact-ra-h1"
+          ],
+          "delta_ids": [],
+          "reason": "正式半年报作为累计业绩决定事实逐条纳入。"
+        },
+        {
+          "seed_key": "000519:notices:3",
+          "code": "000519",
+          "kind": "notice",
+          "raw_index": 3,
+          "seed_text": "2026-08-21 中兵红箭:关于2026年半年度计提信用及资产减值损失的公",
+          "raw_date": "2026-08-21",
+          "timing": "pre_t",
+          "disposition": "adjudicated_pre_t",
+          "query_ids": [
+            "bs-q-ra-event"
+          ],
+          "fact_ids": [
+            "fact-ra-impair"
+          ],
+          "delta_ids": [],
+          "reason": "减值为机械实质公告，逐条纳入反方事实。"
+        },
+        {
+          "seed_key": "600596:forecast",
+          "code": "600596",
+          "kind": "forecast",
+          "raw_index": null,
+          "seed_text": "2026-07-10 预增 预计2026年1-6月归属于上市公司股东的净利润盈利:24,000万元至26,000万元,同比上年增长:247.46%至276.41%。",
+          "raw_date": "2026-07-10",
+          "timing": "pre_t",
+          "disposition": "logged_routine_pre_t",
+          "query_ids": [
+            "bs-q-xa-perf"
+          ],
+          "fact_ids": [],
+          "delta_ids": [],
+          "reason": "预增预告已被8月25日正式半年报覆盖，机械口径为非新鲜正面种子，留痕但不重复计分。"
+        },
+        {
+          "seed_key": "600596:notices:0",
+          "code": "600596",
+          "kind": "notice",
+          "raw_index": 0,
+          "seed_text": "2026-08-25 新安股份:新安股份2026年第二季度主要经营数据公告",
+          "raw_date": "2026-08-25",
+          "timing": "pre_t",
+          "disposition": "logged_routine_pre_t",
+          "query_ids": [
+            "bs-q-xa-perf"
+          ],
+          "fact_ids": [],
+          "delta_ids": [],
+          "reason": "该条为例行或已被正式报告覆盖的公告种子，已逐条核对并留痕。"
+        },
+        {
+          "seed_key": "600596:notices:1",
+          "code": "600596",
+          "kind": "notice",
+          "raw_index": 1,
+          "seed_text": "2026-08-25 新安股份:新安股份关于2026年半年度计提资产减值准备的",
+          "raw_date": "2026-08-25",
+          "timing": "pre_t",
+          "disposition": "adjudicated_pre_t",
+          "query_ids": [
+            "bs-q-xa-event"
+          ],
+          "fact_ids": [
+            "fact-xa-impair"
+          ],
+          "delta_ids": [],
+          "reason": "资产减值为机械实质公告，逐条纳入反方事实。"
+        },
+        {
+          "seed_key": "600596:notices:2",
+          "code": "600596",
+          "kind": "notice",
+          "raw_index": 2,
+          "seed_text": "2026-08-25 新安股份:新安股份第十二届董事会第二次会议决议公告",
+          "raw_date": "2026-08-25",
+          "timing": "pre_t",
+          "disposition": "logged_routine_pre_t",
+          "query_ids": [
+            "bs-q-xa-perf"
+          ],
+          "fact_ids": [],
+          "delta_ids": [],
+          "reason": "该条为例行或已被正式报告覆盖的公告种子，已逐条核对并留痕。"
+        },
+        {
+          "seed_key": "600596:notices:3",
+          "code": "600596",
+          "kind": "notice",
+          "raw_index": 3,
+          "seed_text": "2026-08-25 新安股份:新安股份2026年半年度报告",
+          "raw_date": "2026-08-25",
+          "timing": "pre_t",
+          "disposition": "adjudicated_pre_t",
+          "query_ids": [
+            "bs-q-xa-perf"
+          ],
+          "fact_ids": [
+            "fact-xa-h1"
+          ],
+          "delta_ids": [],
+          "reason": "正式半年报作为决定性财务事实逐条纳入。"
+        }
+      ],
+      "post_t_safety_by_code": {
+        "000519": {
+          "checked_through_beijing": "2026-09-04 05:25:30+08:00",
+          "base_verdict_asof_t": "?",
+          "effective_verdict": "?",
+          "items": []
+        },
+        "600596": {
+          "checked_through_beijing": "2026-09-04 05:25:30+08:00",
+          "base_verdict_asof_t": "✓",
+          "effective_verdict": "✓",
+          "items": []
+        }
+      },
+      "empty_reason": "",
       "market_coverage": {
-        "status": "no_relevant_hit",
-        "query_ids": [],
-        "fact_ids": [],
-        "reason": "零候选时不构造个股市场覆盖；全市场与宏观风险由Agent③独立审计。"
+        "status": "hit",
+        "query_ids": [
+          "bs-q-market"
+        ],
+        "fact_ids": [
+          "fact-market"
+        ],
+        "reason": "T日指数近乎持平但个股广度偏弱，已作为执行环境而非个股分数处理。"
       }
     },
     "toxic_risk_warning": {
       "version": "bottom-toxic-risk-warning/v4",
-      "T": "2026-09-02",
-      "cutoff_beijing": "2026-09-02 23:59:59+08:00",
-      "retrieved_at_beijing": "2026-09-03 06:56:32+08:00",
+      "T": "2026-09-03",
+      "cutoff_beijing": "2026-09-03 23:59:59+08:00",
+      "retrieved_at_beijing": "2026-09-04 05:25:30+08:00",
       "mode": "shadow",
       "overall_status": "elevated",
       "required_domains": [
@@ -180,22 +1498,22 @@
         },
         {
           "source_ref": "toxic-source-market-signal",
-          "access_url": "https://apnews.com/article/wall-street-stocks-dow-nasdaq-7cb0aefedfd933d048b8b3e5843449f8",
+          "access_url": "https://apnews.com/article/stocks-markets-oil-trump-iran-war-7e1bffd68c53b54806be950f01181994",
           "publisher": "Associated Press",
           "source_kind": "independent_media",
-          "origin_id": "ap-us-close-20260902",
-          "published_at": "2026-09-03",
-          "published_at_beijing": "2026-09-03 04:34:00+08:00",
+          "origin_id": "ap-us-close-20260903",
+          "published_at": "2026-09-04",
+          "published_at_beijing": "2026-09-04 04:45:00+08:00",
           "phase": "post_t_safety"
         },
         {
           "source_ref": "toxic-source-ashare-signal",
-          "access_url": "https://finance.eastmoney.com/a/202609023862725182.html",
-          "publisher": "东方财富/财联社",
+          "access_url": "https://news.10jqka.com.cn/20260903/c679563915.shtml",
+          "publisher": "同花顺财经",
           "source_kind": "independent_media",
-          "origin_id": "cls-ashare-close-20260902",
-          "published_at": "2026-09-02",
-          "published_at_beijing": "2026-09-02 15:01:00+08:00",
+          "origin_id": "ths-ashare-close-20260903",
+          "published_at": "2026-09-03",
+          "published_at_beijing": "2026-09-03 15:30:00+08:00",
           "phase": "as_of_t"
         },
         {
@@ -203,9 +1521,9 @@
           "access_url": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?field_tdr_date_value=2026&type=daily_treasury_yield_curve",
           "publisher": "U.S. Department of the Treasury",
           "source_kind": "official_direct",
-          "origin_id": "ust-daily-curve-20260902",
-          "published_at": "2026-09-03",
-          "published_at_beijing": "2026-09-03 05:00:00+08:00",
+          "origin_id": "ust-curve-20260903",
+          "published_at": "2026-09-04",
+          "published_at_beijing": "2026-09-04 05:00:00+08:00",
           "phase": "post_t_safety"
         },
         {
@@ -260,22 +1578,22 @@
         },
         {
           "source_ref": "src-hormuz-postt-ap",
-          "access_url": "https://apnews.com/article/iran-us-strikes-hormuz-trump-september-2-2026-cc891e22860d7a53bf7ade9a3d74c0ae",
+          "access_url": "https://apnews.com/article/stocks-markets-oil-trump-iran-war-7e1bffd68c53b54806be950f01181994",
           "publisher": "Associated Press",
           "source_kind": "independent_media",
-          "origin_id": "ap-hormuz-20260902-postt",
-          "published_at": "2026-09-03",
-          "published_at_beijing": "2026-09-03 02:30:00+08:00",
+          "origin_id": "ap-us-close-20260903",
+          "published_at": "2026-09-04",
+          "published_at_beijing": "2026-09-04 04:45:00+08:00",
           "phase": "post_t_safety"
         },
         {
           "source_ref": "src-hormuz-postt-axios",
-          "access_url": "https://apnews.com/article/stocks-markets-iran-oil-bonds-27b78c349725ac744c96a6b8b8167bae",
-          "publisher": "Associated Press",
+          "access_url": "https://www.axios.com/2026/09/03/oil-bonds-stocks-iran",
+          "publisher": "Axios",
           "source_kind": "independent_media",
-          "origin_id": "ap-markets-20260902",
-          "published_at": "2026-09-03",
-          "published_at_beijing": "2026-09-03 04:34:00+08:00",
+          "origin_id": "axios-oil-bonds-20260903",
+          "published_at": "2026-09-04",
+          "published_at_beijing": "2026-09-04 04:05:00+08:00",
           "phase": "post_t_safety"
         },
         {
@@ -309,23 +1627,13 @@
           "phase": "as_of_t"
         },
         {
-          "source_ref": "src-ism-calendar",
-          "access_url": "https://www.ismworld.org/supply-management-news-and-reports/reports/ism-pmi-reports/services/july/",
+          "source_ref": "src-ism-result",
+          "access_url": "https://www.ismworld.org/supply-management-news-and-reports/news-publications/inside-supply-management-magazine/blog/2026/2026-09/ism-pmi-reports-roundup-august-2026-services/",
           "publisher": "Institute for Supply Management",
           "source_kind": "official_direct",
-          "origin_id": "ism-services-calendar-20260903",
-          "published_at": "2026-08-05",
-          "published_at_beijing": "2026-08-05 22:00:00+08:00",
-          "phase": "as_of_t"
-        },
-        {
-          "source_ref": "src-ism-preview",
-          "access_url": "https://continuumeconomics.com/a/4f06671a/preview-due-september-3-us-august-ism-services-slightly-firmer-within-a-tight-range",
-          "publisher": "Continuum Economics",
-          "source_kind": "independent_research",
-          "origin_id": "continuum-ism-services-20260902",
-          "published_at": "2026-09-02",
-          "published_at_beijing": "2026-09-02 09:05:00+08:00",
+          "origin_id": "ism-services-202608",
+          "published_at": "2026-09-03",
+          "published_at_beijing": "2026-09-03 22:00:00+08:00",
           "phase": "as_of_t"
         }
       ],
@@ -336,8 +1644,8 @@
           "phase": "as_of_t",
           "query_text": "美国8月非农 Reuters poll consensus",
           "date_from": "2026-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://www.stockopedia.com/share-prices/nvidia-NSQ%3ANVDA/news/wall-st-week-ahead-jobs-report-broadcom-results-pose-next-hurdles-for-stock-market-rally-01a04a10-da51-7a86-86f6-713b431003c3/"
@@ -359,8 +1667,8 @@
           "phase": "as_of_t",
           "query_text": "美国8月就业报告 BLS calendar forecast previous",
           "date_from": "2026-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://www.bls.gov/schedule/2026/09_sched_list.htm"
@@ -382,8 +1690,8 @@
           "phase": "as_of_t",
           "query_text": "美国8月就业报告机构预览工资预测",
           "date_from": "2026-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://continuumeconomics.com/a/1dde4f03/preview-due-september-4-us-august-employment-non-farm-payrolls-corrections-from-recent-payroll-weakness-and-unemployment-declines"
@@ -405,8 +1713,8 @@
           "phase": "as_of_t",
           "query_text": "截至2026年9月2日证监会监管与流动性官方扫描",
           "date_from": "2025-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
             "https://www.csrc.gov.cn/",
@@ -427,8 +1735,8 @@
           "phase": "as_of_t",
           "query_text": "截至2026年9月2日交易所监管与市场流动性官方复核",
           "date_from": "2025-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
             "https://www.sse.com.cn/",
@@ -449,8 +1757,8 @@
           "phase": "as_of_t",
           "query_text": "霍尔木兹海峡航运与军事冲突截至2026年9月2日",
           "date_from": "2026-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://www.imo.org/zh/mediacentre/pressbriefings/pages/statement-on-the-ongoing-crisis-in-the-strait-of-hormuz.aspx",
@@ -474,8 +1782,8 @@
           "phase": "as_of_t",
           "query_text": "截至9月2日全球行业重大异动与A股映射价格优先扫描",
           "date_from": "2025-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
             "https://finance.eastmoney.com/a/202609023862725182.html",
@@ -502,8 +1810,8 @@
           "phase": "as_of_t",
           "query_text": "截至9月2日全球事件优先与跨资产压力复核",
           "date_from": "2025-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
             "https://www.csrc.gov.cn/",
@@ -530,8 +1838,8 @@
           "phase": "as_of_t",
           "query_text": "2026年9月3日起2026年9月3日起2026年9月3日起2026年9月3日起未来十日A股休市安排和信息缺口扫描 变体1",
           "date_from": "2025-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
             "https://www.sse.com.cn/disclosure/dealinstruc/closed/",
@@ -552,8 +1860,8 @@
           "phase": "as_of_t",
           "query_text": "2026年9月3日起2026年9月3日起2026年9月3日起2026年9月3日起未来十日A股休市安排和信息缺口扫描 变体2",
           "date_from": "2025-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
             "https://www.sse.com.cn/disclosure/dealinstruc/closed/",
@@ -573,9 +1881,9 @@
           "domain": "scheduled_macro_policy",
           "phase": "post_t_safety",
           "query_text": "2026年9月3日未来十日重大宏观排期官方末端复核一",
-          "date_from": "2026-09-03",
-          "date_to": "2026-09-03",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_from": "2026-09-04",
+          "date_to": "2026-09-04",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
             "https://www.bls.gov/schedule/2026/09_sched_list.htm",
@@ -585,7 +1893,7 @@
           "selected_warning_ids": [],
           "selected_delta_ids": [],
           "selected_signal_ids": [],
-          "notes": "T后末端扫描已执行，未发现另一项达到重大性阈值的新信息。",
+          "notes": "已完成截至北京时间运行时点的末端复核，除另列已采用增量外未见新的独立重大风险。",
           "selected_mover_ids": [],
           "selected_event_ids": [],
           "discovery_lanes": [],
@@ -596,9 +1904,9 @@
           "domain": "scheduled_macro_policy",
           "phase": "post_t_safety",
           "query_text": "2026年9月3日未来十日重大宏观排期官方末端复核二",
-          "date_from": "2026-09-03",
-          "date_to": "2026-09-03",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_from": "2026-09-04",
+          "date_to": "2026-09-04",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
             "https://www.stats.gov.cn/xw/tjxw/tzgg/202512/t20251224_1962137.html",
@@ -607,7 +1915,7 @@
           "selected_warning_ids": [],
           "selected_delta_ids": [],
           "selected_signal_ids": [],
-          "notes": "T后末端扫描已执行，未发现另一项达到重大性阈值的新信息。",
+          "notes": "已完成截至北京时间运行时点的末端复核，除另列已采用增量外未见新的独立重大风险。",
           "discovery_families": [],
           "selected_mover_ids": [],
           "selected_event_ids": [],
@@ -618,9 +1926,9 @@
           "domain": "domestic_regulatory_liquidity",
           "phase": "post_t_safety",
           "query_text": "2026年9月3日证监会与交易所监管流动性最新扫描一",
-          "date_from": "2026-09-03",
-          "date_to": "2026-09-03",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_from": "2026-09-04",
+          "date_to": "2026-09-04",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
             "https://www.csrc.gov.cn/",
@@ -629,7 +1937,7 @@
           "selected_warning_ids": [],
           "selected_delta_ids": [],
           "selected_signal_ids": [],
-          "notes": "T后末端扫描已执行，未发现另一项达到重大性阈值的新信息。",
+          "notes": "已完成截至北京时间运行时点的末端复核，除另列已采用增量外未见新的独立重大风险。",
           "selected_mover_ids": [],
           "selected_event_ids": [],
           "discovery_lanes": [],
@@ -640,9 +1948,9 @@
           "domain": "domestic_regulatory_liquidity",
           "phase": "post_t_safety",
           "query_text": "2026年9月3日交易所监管与流动性最新扫描二",
-          "date_from": "2026-09-03",
-          "date_to": "2026-09-03",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_from": "2026-09-04",
+          "date_to": "2026-09-04",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
             "https://www.sse.com.cn/",
@@ -651,7 +1959,7 @@
           "selected_warning_ids": [],
           "selected_delta_ids": [],
           "selected_signal_ids": [],
-          "notes": "T后末端扫描已执行，未发现另一项达到重大性阈值的新信息。",
+          "notes": "已完成截至北京时间运行时点的末端复核，除另列已采用增量外未见新的独立重大风险。",
           "selected_mover_ids": [],
           "selected_event_ids": [],
           "discovery_lanes": [],
@@ -662,20 +1970,20 @@
           "domain": "external_geopolitics_trade",
           "phase": "post_t_safety",
           "query_text": "2026年9月3日霍尔木兹军事航运T后增量复核",
-          "date_from": "2026-09-03",
-          "date_to": "2026-09-03",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_from": "2026-09-04",
+          "date_to": "2026-09-04",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "selected",
           "reviewed_urls": [
-            "https://apnews.com/article/iran-us-strikes-hormuz-trump-september-2-2026-cc891e22860d7a53bf7ade9a3d74c0ae",
-            "https://apnews.com/article/stocks-markets-iran-oil-bonds-27b78c349725ac744c96a6b8b8167bae"
+            "https://apnews.com/article/stocks-markets-oil-trump-iran-war-7e1bffd68c53b54806be950f01181994",
+            "https://www.axios.com/2026/09/03/oil-bonds-stocks-iran"
           ],
           "selected_warning_ids": [],
           "selected_delta_ids": [
             "toxic-delta-hormuz-postt"
           ],
           "selected_signal_ids": [],
-          "notes": "采用T后美股与油价价格确认，严格与T日裁定隔离。",
+          "notes": "采用来源已进入结构化风险、信号或事件台账。",
           "selected_mover_ids": [],
           "selected_event_ids": [
             "material-event-hormuz"
@@ -695,9 +2003,9 @@
           "domain": "external_geopolitics_trade",
           "phase": "post_t_safety",
           "query_text": "2026年9月3日IMO与独立媒体霍尔木兹末端状态复核",
-          "date_from": "2026-09-03",
-          "date_to": "2026-09-03",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_from": "2026-09-04",
+          "date_to": "2026-09-04",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
             "https://www.imo.org/zh/mediacentre/pressbriefings/pages/statement-on-the-ongoing-crisis-in-the-strait-of-hormuz.aspx",
@@ -706,7 +2014,7 @@
           "selected_warning_ids": [],
           "selected_delta_ids": [],
           "selected_signal_ids": [],
-          "notes": "T后末端扫描已执行，未发现另一项达到重大性阈值的新信息。",
+          "notes": "已完成截至北京时间运行时点的末端复核，除另列已采用增量外未见新的独立重大风险。",
           "selected_mover_ids": [],
           "selected_event_ids": [],
           "discovery_lanes": [],
@@ -717,15 +2025,14 @@
           "domain": "cross_asset_stress",
           "phase": "post_t_safety",
           "query_text": "2026年9月2日美股收盘科技原油与美债收益率",
-          "date_from": "2026-09-03",
-          "date_to": "2026-09-03",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_from": "2026-09-04",
+          "date_to": "2026-09-04",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "selected",
           "reviewed_urls": [
-            "https://apnews.com/article/wall-street-stocks-dow-nasdaq-7cb0aefedfd933d048b8b3e5843449f8",
-            "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?field_tdr_date_value=2026&type=daily_treasury_yield_curve",
-            "https://apnews.com/article/iran-us-strikes-hormuz-trump-september-2-2026-cc891e22860d7a53bf7ade9a3d74c0ae",
-            "https://apnews.com/article/stocks-markets-iran-oil-bonds-27b78c349725ac744c96a6b8b8167bae"
+            "https://apnews.com/article/stocks-markets-oil-trump-iran-war-7e1bffd68c53b54806be950f01181994",
+            "https://www.axios.com/2026/09/03/oil-bonds-stocks-iran",
+            "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?field_tdr_date_value=2026&type=daily_treasury_yield_curve"
           ],
           "selected_warning_ids": [],
           "selected_delta_ids": [
@@ -734,7 +2041,7 @@
           "selected_signal_ids": [
             "market-signal-oil-001"
           ],
-          "notes": "T后末端扫描已执行，未发现另一项达到重大性阈值的新信息。",
+          "notes": "采用来源已进入结构化风险、信号或事件台账。",
           "discovery_families": [
             "energy_materials",
             "technology_media_telecom"
@@ -756,9 +2063,9 @@
           "domain": "cross_asset_stress",
           "phase": "post_t_safety",
           "query_text": "2026年9月3日亚洲开盘前美元美债及中国相关资产复核",
-          "date_from": "2026-09-03",
-          "date_to": "2026-09-03",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_from": "2026-09-04",
+          "date_to": "2026-09-04",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
             "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?field_tdr_date_value=2026&type=daily_treasury_yield_curve",
@@ -767,7 +2074,7 @@
           "selected_warning_ids": [],
           "selected_delta_ids": [],
           "selected_signal_ids": [],
-          "notes": "T后末端扫描已执行，未发现另一项达到重大性阈值的新信息。",
+          "notes": "已完成截至北京时间运行时点的末端复核，除另列已采用增量外未见新的独立重大风险。",
           "discovery_lanes": [
             "asia_sector_tape"
           ],
@@ -780,9 +2087,9 @@
           "domain": "holiday_information_gap",
           "phase": "post_t_safety",
           "query_text": "未来十日A股休市与海外信息累积窗口复核一",
-          "date_from": "2026-09-03",
-          "date_to": "2026-09-03",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_from": "2026-09-04",
+          "date_to": "2026-09-04",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
             "https://www.sse.com.cn/disclosure/dealinstruc/closed/",
@@ -791,7 +2098,7 @@
           "selected_warning_ids": [],
           "selected_delta_ids": [],
           "selected_signal_ids": [],
-          "notes": "T后末端扫描已执行，未发现另一项达到重大性阈值的新信息。",
+          "notes": "已完成截至北京时间运行时点的末端复核，除另列已采用增量外未见新的独立重大风险。",
           "selected_mover_ids": [],
           "selected_event_ids": [],
           "discovery_lanes": [],
@@ -802,9 +2109,9 @@
           "domain": "holiday_information_gap",
           "phase": "post_t_safety",
           "query_text": "未来十日A股休市与海外信息累积窗口复核二",
-          "date_from": "2026-09-03",
-          "date_to": "2026-09-03",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_from": "2026-09-04",
+          "date_to": "2026-09-04",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "no_relevant_hit",
           "reviewed_urls": [
             "https://www.sse.com.cn/disclosure/dealinstruc/closed/",
@@ -813,7 +2120,7 @@
           "selected_warning_ids": [],
           "selected_delta_ids": [],
           "selected_signal_ids": [],
-          "notes": "T后末端扫描已执行，未发现另一项达到重大性阈值的新信息。",
+          "notes": "已完成截至北京时间运行时点的末端复核，除另列已采用增量外未见新的独立重大风险。",
           "selected_mover_ids": [],
           "selected_event_ids": [],
           "discovery_lanes": [],
@@ -824,15 +2131,13 @@
           "domain": "cross_asset_stress",
           "phase": "post_t_safety",
           "query_text": "美股2026年9月2日收盘科技行业宽基能源与油价",
-          "date_from": "2026-09-03",
-          "date_to": "2026-09-03",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_from": "2026-09-04",
+          "date_to": "2026-09-04",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "selected",
           "reviewed_urls": [
-            "https://apnews.com/article/wall-street-stocks-dow-nasdaq-7cb0aefedfd933d048b8b3e5843449f8",
-            "https://apnews.com/article/iran-us-strikes-hormuz-trump-september-2-2026-cc891e22860d7a53bf7ade9a3d74c0ae",
-            "https://apnews.com/article/stocks-markets-iran-oil-bonds-27b78c349725ac744c96a6b8b8167bae",
-            "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?field_tdr_date_value=2026&type=daily_treasury_yield_curve"
+            "https://apnews.com/article/stocks-markets-oil-trump-iran-war-7e1bffd68c53b54806be950f01181994",
+            "https://www.axios.com/2026/09/03/oil-bonds-stocks-iran"
           ],
           "selected_warning_ids": [],
           "selected_delta_ids": [],
@@ -844,10 +2149,8 @@
             "mover-us-tech",
             "mover-oil"
           ],
-          "selected_event_ids": [
-            "material-event-hormuz"
-          ],
-          "notes": "T后末端扫描已执行，未发现另一项达到重大性阈值的新信息。",
+          "selected_event_ids": [],
+          "notes": "采用来源已进入结构化风险、信号或事件台账。",
           "discovery_lanes": [
             "us_sector_tape",
             "global_movers",
@@ -864,11 +2167,11 @@
           "phase": "as_of_t",
           "query_text": "A股2026年9月2日行业涨跌广度军工与防御轮动",
           "date_from": "2026-09-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "selected",
           "reviewed_urls": [
-            "https://finance.eastmoney.com/a/202609023862725182.html"
+            "https://news.10jqka.com.cn/20260903/c679563915.shtml"
           ],
           "selected_warning_ids": [],
           "selected_delta_ids": [],
@@ -881,7 +2184,7 @@
           "selected_event_ids": [
             "material-event-ashare-digital"
           ],
-          "notes": "采用A股T日行业异动并核对首次反应与定价状态",
+          "notes": "采用来源已进入结构化风险、信号或事件台账。",
           "discovery_lanes": [
             "ashare_t_day_sector_tape",
             "event_first_scan"
@@ -896,8 +2199,8 @@
           "phase": "as_of_t",
           "query_text": "中国8月CPI 调查一致预期 survey consensus",
           "date_from": "2026-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://www.reuters.com/markets/asia/china-august-cpi-poll-2026-09-01/"
@@ -919,8 +2222,8 @@
           "phase": "as_of_t",
           "query_text": "中国8月CPI economic calendar forecast previous",
           "date_from": "2026-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://tradingeconomics.com/china/calendar",
@@ -943,8 +2246,8 @@
           "phase": "as_of_t",
           "query_text": "中国8月CPI institution preview forecast",
           "date_from": "2026-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://ca.investing.com/economic-calendar/chinese-cpi-743"
@@ -966,8 +2269,8 @@
           "phase": "as_of_t",
           "query_text": "中国8月PPI 调查一致预期 survey consensus",
           "date_from": "2026-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://www.reuters.com/markets/asia/china-august-ppi-poll-2026-09-01/"
@@ -989,8 +2292,8 @@
           "phase": "as_of_t",
           "query_text": "中国8月PPI economic calendar forecast previous",
           "date_from": "2026-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://tradingeconomics.com/china/calendar",
@@ -1013,8 +2316,8 @@
           "phase": "as_of_t",
           "query_text": "中国8月PPI institution preview forecast",
           "date_from": "2026-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://www.investing.com/economic-calendar/chinese-ppi-464"
@@ -1036,8 +2339,8 @@
           "phase": "as_of_t",
           "query_text": "美国8月PPI survey consensus",
           "date_from": "2026-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://www.forexfactory.com/calendar/87-us-core-ppi-mm"
@@ -1059,8 +2362,8 @@
           "phase": "as_of_t",
           "query_text": "美国8月PPI economic calendar forecast",
           "date_from": "2026-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://tradingeconomics.com/united-states/calendar%26importance%3D3",
@@ -1083,8 +2386,8 @@
           "phase": "as_of_t",
           "query_text": "美国8月PPI机构预览最终需求",
           "date_from": "2026-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://continuumeconomics.com/a/bdfe3a4e/preview-due-september-10-us-august-ppi-inflationary-pressure-still-significant"
@@ -1106,8 +2409,8 @@
           "phase": "as_of_t",
           "query_text": "美国8月CPI survey consensus",
           "date_from": "2026-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://www.kiplinger.com/economic-forecasts/inflation"
@@ -1129,8 +2432,8 @@
           "phase": "as_of_t",
           "query_text": "美国8月CPI economic calendar forecast previous",
           "date_from": "2026-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://www.bls.gov/schedule/2026/09_sched_list.htm",
@@ -1153,8 +2456,8 @@
           "phase": "as_of_t",
           "query_text": "美国8月CPI机构预览环比预测",
           "date_from": "2026-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://continuumeconomics.com/a/698c9403/preview-due-september-11-us-august-cpi-firmer-on-energy-and-lodging-away-from-home"
@@ -1176,8 +2479,8 @@
           "phase": "as_of_t",
           "query_text": "ECB 2026年9月会议 survey consensus",
           "date_from": "2026-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://apnews.com/article/b89a1bcf29374108fb0f15621e33c788"
@@ -1199,8 +2502,8 @@
           "phase": "as_of_t",
           "query_text": "ECB 2026年9月会议 official calendar",
           "date_from": "2026-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://www.ecb.europa.eu/press/calendars/mgcgc/html/index.fi.html?gsid=1d532827-2896-448c-bc87-78ef3aa3dd30"
@@ -1222,8 +2525,8 @@
           "phase": "as_of_t",
           "query_text": "ECB September 2026 policy decision institution preview",
           "date_from": "2026-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "selected",
           "reviewed_urls": [
             "https://apnews.com/article/b89a1bcf29374108fb0f15621e33c788"
@@ -1240,73 +2543,27 @@
           "notes": "重大排期机构预览路径已审阅。"
         },
         {
-          "query_id": "q-ism-survey",
+          "query_id": "q-ism-result",
           "domain": "scheduled_macro_policy",
           "phase": "as_of_t",
-          "query_text": "美国8月ISM服务业PMI调查一致预期",
-          "date_from": "2026-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
+          "query_text": "美国2026年8月ISM服务业PMI官方实际值与分项",
+          "date_from": "2026-09-03",
+          "date_to": "2026-09-03",
+          "executed_at_beijing": "2026-09-04 05:25:30+08:00",
           "outcome": "selected",
           "reviewed_urls": [
-            "https://www.myfxbook.com/forex-economic-calendar/united-states/ism-services-pmi"
+            "https://www.ismworld.org/supply-management-news-and-reports/news-publications/inside-supply-management-magazine/blog/2026/2026-09/ism-pmi-reports-roundup-august-2026-services/"
           ],
-          "selected_warning_ids": [
-            "tw-ism-services"
-          ],
+          "selected_warning_ids": [],
           "selected_delta_ids": [],
-          "selected_signal_ids": [],
-          "notes": "美国8月ISM服务业三路预期与官方排期核验。",
+          "selected_signal_ids": [
+            "market-signal-ism-001"
+          ],
           "selected_mover_ids": [],
           "selected_event_ids": [],
           "discovery_lanes": [],
-          "discovery_families": []
-        },
-        {
-          "query_id": "q-ism-calendar",
-          "domain": "scheduled_macro_policy",
-          "phase": "as_of_t",
-          "query_text": "美国8月ISM服务业PMI官方发布时间日历",
-          "date_from": "2026-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
-          "outcome": "selected",
-          "reviewed_urls": [
-            "https://www.ismworld.org/supply-management-news-and-reports/reports/ism-pmi-reports/services/july/"
-          ],
-          "selected_warning_ids": [
-            "tw-ism-services"
-          ],
-          "selected_delta_ids": [],
-          "selected_signal_ids": [],
-          "notes": "美国8月ISM服务业三路预期与官方排期核验。",
-          "selected_mover_ids": [],
-          "selected_event_ids": [],
-          "discovery_lanes": [],
-          "discovery_families": []
-        },
-        {
-          "query_id": "q-ism-preview",
-          "domain": "scheduled_macro_policy",
-          "phase": "as_of_t",
-          "query_text": "美国8月ISM服务业PMI机构预览",
-          "date_from": "2026-01-01",
-          "date_to": "2026-09-02",
-          "executed_at_beijing": "2026-09-03 06:56:32+08:00",
-          "outcome": "selected",
-          "reviewed_urls": [
-            "https://continuumeconomics.com/a/4f06671a/preview-due-september-3-us-august-ism-services-slightly-firmer-within-a-tight-range"
-          ],
-          "selected_warning_ids": [
-            "tw-ism-services"
-          ],
-          "selected_delta_ids": [],
-          "selected_signal_ids": [],
-          "notes": "美国8月ISM服务业三路预期与官方排期核验。",
-          "selected_mover_ids": [],
-          "selected_event_ids": [],
-          "discovery_lanes": [],
-          "discovery_families": []
+          "discovery_families": [],
+          "notes": "ISM服务业PMI已在T日北京时间22:00发布，登记为as-of-T宏观实际信号。"
         }
       ],
       "coverage": {
@@ -1330,10 +2587,7 @@
             "q-us-cpi-preview",
             "q-ecb-survey",
             "q-ecb-calendar",
-            "q-ecb-preview",
-            "q-ism-survey",
-            "q-ism-calendar",
-            "q-ism-preview"
+            "q-ecb-preview"
           ],
           "warning_ids": [
             "tw-us-jobs",
@@ -1341,10 +2595,9 @@
             "tw-cn-ppi",
             "tw-us-ppi",
             "tw-us-cpi",
-            "tw-ecb",
-            "tw-ism-services"
+            "tw-ecb"
           ],
-          "reason": "未来十日ISM、美国就业、中美通胀、美国PPI与欧洲央行会议均完成三路预期检索。"
+          "reason": "美国就业、中美通胀、美国PPI与欧洲央行会议均完成三路预期检索；T日ISM实际值另列为宏观信号。"
         },
         "domestic_regulatory_liquidity": {
           "status": "no_relevant_hit",
@@ -1396,7 +2649,7 @@
           "event_start": "2026-08-28",
           "event_end": null,
           "direction_certainty": "negative",
-          "why": "国际海事组织确认霍尔木兹航运危机持续；截至T日冲突与通航受限仍令油价、航运、航空和全球风险偏好承压。",
+          "why": "国际海事组织确认的霍尔木兹航运危机截至T日仍活跃；油价与物流风险对化工成本、出口运输和全球风险偏好构成约束。",
           "affected_industries": [
             "石油天然气",
             "航运",
@@ -1404,7 +2657,9 @@
             "化工",
             "制造业"
           ],
-          "codes": [],
+          "codes": [
+            "600596"
+          ],
           "source_refs": [
             "toxic-source-001",
             "src-hormuz-ap-t",
@@ -1726,57 +2981,6 @@
               "src-ecb-preview-ap"
             ],
             "base_case": "欧洲央行9月会议排期与定性预期的基准情景是保持结构性观察，等待后续官方结果或价格确认。",
-            "confidence": "medium",
-            "upside_scenario": "若压力变量缓和且风险资产广度改善，相关风险溢价可能回落。",
-            "downside_scenario": "若压力变量强化并跨市场共振，A股相关行业波动可能上升。",
-            "transmission_paths": [
-              "事实变化→预期差→风险偏好与行业相对强弱"
-            ],
-            "watch_variables": [
-              "官方后续公告",
-              "关键资产价格与市场广度"
-            ],
-            "invalidators": [
-              "官方信息否定当前事实基础",
-              "关键价格持续反向确认"
-            ],
-            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作。"
-          },
-          "shadow": true
-        },
-        {
-          "warning_id": "tw-ism-services",
-          "level": "med",
-          "risk_family": "macro_calendar",
-          "status": "scheduled",
-          "scope": "market",
-          "first_public_at": "2026-08-05",
-          "event_start": "2026-09-03",
-          "event_end": "2026-09-03",
-          "direction_certainty": "uncertain",
-          "why": "美国8月ISM服务业PMI定于北京时间9月3日22:00发布，可能改变增长、通胀与全球利率预期。",
-          "affected_industries": [
-            "高估值成长",
-            "出口制造",
-            "有色金属"
-          ],
-          "codes": [],
-          "source_refs": [
-            "src-ism-calendar",
-            "src-ism-preview"
-          ],
-          "query_ids": [
-            "q-ism-survey",
-            "q-ism-calendar",
-            "q-ism-preview"
-          ],
-          "evaluation": {
-            "fact_basis": "美国8月ISM服务业排期与机构预览已按官方来源、独立来源与市场价格核验事实边界。",
-            "consensus": "采用所列来源形成基准判断；不作来源之外的数值外推。",
-            "consensus_source_refs": [
-              "src-ism-preview"
-            ],
-            "base_case": "美国8月ISM服务业排期与机构预览的基准情景是保持结构性观察，等待后续官方结果或价格确认。",
             "confidence": "medium",
             "upside_scenario": "若压力变量缓和且风险资产广度改善，相关风险溢价可能回落。",
             "downside_scenario": "若压力变量强化并跨市场共振，A股相关行业波动可能上升。",
@@ -2464,98 +3668,13 @@
             "核对利率决定与政策声明措辞",
             "观察欧元、全球利率和A股出口链反应"
           ]
-        },
-        {
-          "event_id": "event-ism-services",
-          "warning_id": "tw-ism-services",
-          "event_name": "美国8月ISM服务业PMI",
-          "event_class": "pmi",
-          "scheduled_for": "2026-09-03 22:00:00+08:00",
-          "time_precision": "datetime",
-          "official_source_refs": [
-            "src-ism-calendar"
-          ],
-          "consensus_status": "forecast_available",
-          "consensus_source_refs": [
-            "src-ism-preview"
-          ],
-          "consensus_query_ids": [
-            "q-ism-survey",
-            "q-ism-calendar",
-            "q-ism-preview"
-          ],
-          "expectation_search_coverage": {
-            "survey_consensus": {
-              "status": "no_relevant_hit",
-              "query_ids": [
-                "q-ism-survey"
-              ],
-              "source_refs": [],
-              "reason": "审阅调查页面但未采用其滚动值。"
-            },
-            "economic_calendar": {
-              "status": "no_relevant_hit",
-              "query_ids": [
-                "q-ism-calendar"
-              ],
-              "source_refs": [],
-              "reason": "官方页面仅用于确认排期。"
-            },
-            "institution_preview": {
-              "status": "hit",
-              "query_ids": [
-                "q-ism-preview"
-              ],
-              "source_refs": [
-                "src-ism-preview"
-              ],
-              "reason": "独立机构预览给出54.5预测。"
-            }
-          },
-          "required_metric_ids": [
-            "headline_index"
-          ],
-          "metrics": [
-            {
-              "metric_id": "headline_index",
-              "label": "ISM服务业PMI",
-              "consensus": "54.5",
-              "previous": "54.1",
-              "unit": "指数点",
-              "estimate_kind": "institution_forecast",
-              "metric_definition": "美国ISM服务业采购经理指数",
-              "source_refs": [
-                "src-ism-preview"
-              ]
-            }
-          ],
-          "metric_search_ledger": [
-            {
-              "metric_id": "headline_index",
-              "status": "available",
-              "query_ids": [
-                "q-ism-preview"
-              ],
-              "source_refs": [
-                "src-ism-preview"
-              ],
-              "reason": "独立机构预览可用。"
-            }
-          ],
-          "qualitative_expectation": "服务业活动或小幅走强，但价格分项仍可能偏高。",
-          "consensus_note": "采用机构预测，不冒充调查一致预期。",
-          "display_summary": "美国8月ISM服务业PMI：机构预测54.5，前值54.1。",
-          "watch_after_release": [
-            "核对总指数与价格、就业分项",
-            "观察美债和全球成长风格反应"
-          ]
         }
       ],
       "scheduled_event_reconciliations": [
         {
           "event_id": "event-us-jobs",
           "status": "pending",
-          "checked_at_beijing": "2026-09-03 06:56:32+08:00",
+          "checked_at_beijing": "2026-09-04 05:25:30+08:00",
           "actual_released_at_beijing": null,
           "actual_summary": "截至运行时点尚未到美国8月就业报告官方发布时间。",
           "actual_metrics": [],
@@ -2570,7 +3689,7 @@
         {
           "event_id": "event-cn-cpi",
           "status": "pending",
-          "checked_at_beijing": "2026-09-03 06:56:32+08:00",
+          "checked_at_beijing": "2026-09-04 05:25:30+08:00",
           "actual_released_at_beijing": null,
           "actual_summary": "截至运行时点尚未到中国8月CPI官方发布时间。",
           "actual_metrics": [],
@@ -2585,7 +3704,7 @@
         {
           "event_id": "event-cn-ppi",
           "status": "pending",
-          "checked_at_beijing": "2026-09-03 06:56:32+08:00",
+          "checked_at_beijing": "2026-09-04 05:25:30+08:00",
           "actual_released_at_beijing": null,
           "actual_summary": "截至运行时点尚未到中国8月PPI官方发布时间。",
           "actual_metrics": [],
@@ -2600,7 +3719,7 @@
         {
           "event_id": "event-us-ppi",
           "status": "pending",
-          "checked_at_beijing": "2026-09-03 06:56:32+08:00",
+          "checked_at_beijing": "2026-09-04 05:25:30+08:00",
           "actual_released_at_beijing": null,
           "actual_summary": "截至运行时点尚未到美国8月PPI官方发布时间。",
           "actual_metrics": [],
@@ -2615,7 +3734,7 @@
         {
           "event_id": "event-us-cpi",
           "status": "pending",
-          "checked_at_beijing": "2026-09-03 06:56:32+08:00",
+          "checked_at_beijing": "2026-09-04 05:25:30+08:00",
           "actual_released_at_beijing": null,
           "actual_summary": "截至运行时点尚未到美国8月CPI官方发布时间。",
           "actual_metrics": [],
@@ -2630,7 +3749,7 @@
         {
           "event_id": "event-ecb",
           "status": "pending",
-          "checked_at_beijing": "2026-09-03 06:56:32+08:00",
+          "checked_at_beijing": "2026-09-04 05:25:30+08:00",
           "actual_released_at_beijing": null,
           "actual_summary": "截至运行时点尚未到欧洲央行9月货币政策会议官方发布时间。",
           "actual_metrics": [],
@@ -2641,21 +3760,6 @@
           "query_ids": [],
           "sector_call_ids": [],
           "inference_boundary": "pending状态仅作shadow排期留痕，与T日裁定隔离且不倒灌。"
-        },
-        {
-          "event_id": "event-ism-services",
-          "status": "pending",
-          "checked_at_beijing": "2026-09-03 06:56:32+08:00",
-          "actual_released_at_beijing": null,
-          "actual_summary": "截至运行时点尚未到美国8月ISM服务业PMI官方发布时间。",
-          "actual_metrics": [],
-          "surprise_assessment": "尚未发布，实际相对预期不适用。",
-          "delta_ids": [],
-          "signal_ids": [],
-          "source_refs": [],
-          "query_ids": [],
-          "sector_call_ids": [],
-          "inference_boundary": "pending状态仅作shadow影子排期留痕，与T日裁定隔离且不倒灌。"
         }
       ],
       "market_signals": [
@@ -2664,13 +3768,13 @@
           "coverage_category": "us_equity_sectors",
           "family": "overseas_equity_sector",
           "phase": "post_t_safety",
-          "observed_at_beijing": "2026-09-03 04:34:00+08:00",
-          "market_session_date": "2026-09-02",
-          "instrument": "美国宽基与科技股",
+          "observed_at_beijing": "2026-09-04 04:45:00+08:00",
+          "market_session_date": "2026-09-03",
+          "instrument": "美国科技股与宽基",
           "direction": "positive",
-          "value_text": "标普500约涨0.5%、道指约涨0.6%、纳指约涨0.5%；英伟达约涨3.2%、美光约涨2.4%",
-          "benchmark": "美国9月2日完整交易时段",
-          "surprise": "科技与AI需求线索带动风险资产反弹",
+          "value_text": "标普500约涨1.1%、道指约涨1.2%、纳指约涨1.4%；微软约涨2.7%、Meta约涨3%",
+          "benchmark": "美国9月3日完整交易时段",
+          "surprise": "大型科技股与风险资产同步反弹",
           "shock_type": "demand",
           "horizons": [
             "opening_auction",
@@ -2684,20 +3788,20 @@
             "toxic-q-us-equity-sector-signal"
           ],
           "freshness": "fresh",
-          "summary": "T后美股科技反弹，对A股成长仅提供风险偏好对照，不改变空手裁定。"
+          "summary": "T后美股科技反弹改善A股开盘风险偏好，但不能倒灌T日个股裁定。"
         },
         {
           "signal_id": "market-signal-oil-001",
           "coverage_category": "commodities_freight",
           "family": "commodity_freight",
           "phase": "post_t_safety",
-          "observed_at_beijing": "2026-09-03 04:34:00+08:00",
-          "market_session_date": "2026-09-02",
-          "instrument": "布伦特原油",
-          "direction": "positive",
-          "value_text": "布伦特原油约涨1.0%至95.63美元/桶",
-          "benchmark": "9月2日国际原油交易时段",
-          "surprise": "霍尔木兹通航受限维持供给风险溢价",
+          "observed_at_beijing": "2026-09-04 04:45:00+08:00",
+          "market_session_date": "2026-09-03",
+          "instrument": "布伦特原油与霍尔木兹运输风险",
+          "direction": "negative",
+          "value_text": "布伦特约95.52美元/桶，绝对价格仍处高位",
+          "benchmark": "9月3日国际原油完整交易时段",
+          "surprise": "油价未随风险资产反弹明显回落，成本压力延续",
           "shock_type": "supply",
           "horizons": [
             "opening_auction",
@@ -2712,20 +3816,20 @@
             "toxic-q-us-equity-sector-signal"
           ],
           "freshness": "fresh",
-          "summary": "油价高位对A股油气形成相对支撑，对航空与成本敏感制造构成压力。"
+          "summary": "高油价对油气上游相对有利，但对农化、航空及物流成本敏感行业形成压力。"
         },
         {
           "signal_id": "market-signal-ashare-001",
           "coverage_category": "domestic_policy_industry",
           "family": "domestic_policy_industry",
           "phase": "as_of_t",
-          "observed_at_beijing": "2026-09-02 15:01:00+08:00",
-          "market_session_date": "2026-09-02",
-          "instrument": "A股军工与宽基",
+          "observed_at_beijing": "2026-09-03 15:30:00+08:00",
+          "market_session_date": "2026-09-03",
+          "instrument": "A股宽基、广度与行业轮动",
           "direction": "mixed",
-          "value_text": "沪指跌0.97%、深成指跌1.88%、创业板指跌2.39%，逾3900股下跌；军工逆势领涨",
-          "benchmark": "A股9月2日收盘与全市场广度",
-          "surprise": "风险偏好转弱时军工呈现防御性相对收益",
+          "value_text": "创业板指+0.01%，1831股上涨、3505股下跌；港口航运+1.97%，农化制品-1.34%",
+          "benchmark": "A股9月3日收盘与全市场广度",
+          "surprise": "指数持平但个股广度偏弱，港口航运相对走强",
           "shock_type": "risk_aversion",
           "horizons": [
             "opening_auction",
@@ -2738,7 +3842,33 @@
             "toxic-q-ashare-t-sector-signal"
           ],
           "freshness": "fresh",
-          "summary": "T日宽基和广度偏弱，军工已出现价格反应，次日只能观察延续与兑现。"
+          "summary": "T日呈窄幅震荡和结构分化，次日不宜把宽基稳定误读为普涨环境。"
+        },
+        {
+          "signal_id": "market-signal-ism-001",
+          "coverage_category": "macro_surprises",
+          "family": "macro_surprise",
+          "phase": "as_of_t",
+          "observed_at_beijing": "2026-09-03 22:10:00+08:00",
+          "market_session_date": "2026-09-03",
+          "instrument": "美国8月ISM服务业PMI",
+          "direction": "mixed",
+          "value_text": "服务业PMI 55.4，高于7月54.1和市场预期约54.2；就业分项47.8，价格分项处近四年高位",
+          "benchmark": "调查预期与前值",
+          "surprise": "需求强于预期，但就业收缩与价格压力并存",
+          "shock_type": "mixed",
+          "horizons": [
+            "opening_auction",
+            "next_1_5_sessions"
+          ],
+          "source_refs": [
+            "src-ism-result"
+          ],
+          "query_ids": [
+            "q-ism-result"
+          ],
+          "freshness": "fresh",
+          "summary": "增长韧性利于风险偏好，但价格压力强化高利率约束，净影响偏混合。"
         }
       ],
       "predictive_input_coverage": {
@@ -2750,8 +3880,8 @@
           "query_ids": [
             "toxic-q-us-equity-sector-signal"
           ],
-          "as_of_beijing": "2026-09-03 06:56:32+08:00",
-          "reason": "已取得最新完整美股宽基与科技信号。"
+          "as_of_beijing": "2026-09-04 05:25:30+08:00",
+          "reason": "已取得最新完成美股时段的科技行业相对信号。"
         },
         "global_peer_events": {
           "status": "no_relevant_hit",
@@ -2759,7 +3889,7 @@
           "query_ids": [
             "toxic-q-cross-asset-stress-delta-2"
           ],
-          "as_of_beijing": "2026-09-03 06:56:32+08:00",
+          "as_of_beijing": "2026-09-04 05:25:30+08:00",
           "reason": "未采用可独立映射为A股方向的全球同业公司事件。"
         },
         "asia_equity_peers": {
@@ -2768,7 +3898,7 @@
           "query_ids": [
             "toxic-q-cross-asset-stress-delta-2"
           ],
-          "as_of_beijing": "2026-09-03 06:56:32+08:00",
+          "as_of_beijing": "2026-09-04 05:25:30+08:00",
           "reason": "评估时点亚洲9月3日现货市场尚未开盘。"
         },
         "china_linked_assets": {
@@ -2777,7 +3907,7 @@
           "query_ids": [
             "toxic-q-cross-asset-stress-delta-2"
           ],
-          "as_of_beijing": "2026-09-03 06:56:32+08:00",
+          "as_of_beijing": "2026-09-04 05:25:30+08:00",
           "reason": "完成离岸中国相关资产复核，未采用独立方向信号。"
         },
         "rates_fx_volatility": {
@@ -2786,7 +3916,7 @@
           "query_ids": [
             "toxic-q-cross-asset-stress-delta"
           ],
-          "as_of_beijing": "2026-09-03 06:56:32+08:00",
+          "as_of_beijing": "2026-09-04 05:25:30+08:00",
           "reason": "美债收益率只作跨资产约束佐证，未重复生成方向信号。"
         },
         "commodities_freight": {
@@ -2798,17 +3928,21 @@
             "toxic-q-cross-asset-stress-delta",
             "toxic-q-us-equity-sector-signal"
           ],
-          "as_of_beijing": "2026-09-03 06:56:32+08:00",
-          "reason": "布伦特油价确认供给风险溢价。"
+          "as_of_beijing": "2026-09-04 05:25:30+08:00",
+          "reason": "布伦特高位与霍尔木兹运输风险完成核验。"
         },
         "macro_surprises": {
-          "status": "no_relevant_hit",
-          "signal_ids": [],
-          "query_ids": [
-            "toxic-q-scheduled-macro-policy-delta"
+          "status": "hit",
+          "signal_ids": [
+            "market-signal-ism-001"
           ],
-          "as_of_beijing": "2026-09-03 06:56:32+08:00",
-          "reason": "截至检索时点没有排期事件已发布实际值。"
+          "query_ids": [
+            "q-ism-result",
+            "toxic-q-scheduled-macro-policy-delta",
+            "toxic-q-scheduled-macro-policy-delta-2"
+          ],
+          "as_of_beijing": "2026-09-04 05:25:30+08:00",
+          "reason": "T日ISM服务业实际值已发布并登记为混合宏观信号，T后两路末端扫描已覆盖至运行时点。"
         },
         "domestic_policy_industry": {
           "status": "hit",
@@ -2819,13 +3953,13 @@
             "toxic-q-ashare-t-sector-signal",
             "toxic-q-domestic-regulatory-liquidity-delta"
           ],
-          "as_of_beijing": "2026-09-03 06:56:32+08:00",
-          "reason": "A股T日宽基、广度与军工轮动已登记。"
+          "as_of_beijing": "2026-09-04 05:25:30+08:00",
+          "reason": "A股T日宽基、广度与行业轮动已登记。"
         }
       },
       "market_discovery": {
         "version": "agent3-market-discovery/v1",
-        "evaluated_at_beijing": "2026-09-03 06:56:32+08:00",
+        "evaluated_at_beijing": "2026-09-04 05:25:30+08:00",
         "lanes": {
           "us_sector_tape": {
             "status": "hit",
@@ -2835,10 +3969,8 @@
             "mover_ids": [
               "mover-us-tech"
             ],
-            "event_ids": [
-              "material-event-hormuz"
-            ],
-            "as_of_beijing": "2026-09-03 06:56:32+08:00",
+            "event_ids": [],
+            "as_of_beijing": "2026-09-04 05:25:30+08:00",
             "reason": "美股宽基与科技相对表现完成比较。"
           },
           "global_movers": {
@@ -2853,7 +3985,7 @@
             "event_ids": [
               "material-event-hormuz"
             ],
-            "as_of_beijing": "2026-09-03 06:56:32+08:00",
+            "as_of_beijing": "2026-09-04 05:25:30+08:00",
             "reason": "原油高位与地缘归因已登记。"
           },
           "ashare_t_day_sector_tape": {
@@ -2867,7 +3999,7 @@
             "event_ids": [
               "material-event-ashare-digital"
             ],
-            "as_of_beijing": "2026-09-03 06:56:32+08:00",
+            "as_of_beijing": "2026-09-04 05:25:30+08:00",
             "reason": "A股T日军工逆势与宽基广度已登记。"
           },
           "asia_sector_tape": {
@@ -2877,7 +4009,7 @@
             ],
             "mover_ids": [],
             "event_ids": [],
-            "as_of_beijing": "2026-09-03 06:56:32+08:00",
+            "as_of_beijing": "2026-09-04 05:25:30+08:00",
             "reason": "评估时点亚洲9月3日现货市场尚未开盘。"
           },
           "event_first_scan": {
@@ -2891,7 +4023,7 @@
               "material-event-ashare-digital",
               "material-event-hormuz"
             ],
-            "as_of_beijing": "2026-09-03 06:56:32+08:00",
+            "as_of_beijing": "2026-09-04 05:25:30+08:00",
             "reason": "境内军工轮动与T后霍尔木兹事件均完成归因。"
           }
         },
@@ -2904,7 +4036,7 @@
             ],
             "mover_ids": [],
             "event_ids": [],
-            "as_of_beijing": "2026-09-03 06:56:32+08:00",
+            "as_of_beijing": "2026-09-04 05:25:30+08:00",
             "reason": "完成价格优先与事件优先双路径扫描，未发现达到重大性阈值的新增异动。"
           },
           "consumer": {
@@ -2915,7 +4047,7 @@
             ],
             "mover_ids": [],
             "event_ids": [],
-            "as_of_beijing": "2026-09-03 06:56:32+08:00",
+            "as_of_beijing": "2026-09-04 05:25:30+08:00",
             "reason": "完成价格优先与事件优先双路径扫描，未发现达到重大性阈值的新增异动。"
           },
           "financial_real_estate": {
@@ -2926,7 +4058,7 @@
             ],
             "mover_ids": [],
             "event_ids": [],
-            "as_of_beijing": "2026-09-03 06:56:32+08:00",
+            "as_of_beijing": "2026-09-04 05:25:30+08:00",
             "reason": "完成价格优先与事件优先双路径扫描，未发现达到重大性阈值的新增异动。"
           },
           "industrials_transport_defense": {
@@ -2940,7 +4072,7 @@
             "event_ids": [
               "material-event-ashare-digital"
             ],
-            "as_of_beijing": "2026-09-03 06:56:32+08:00",
+            "as_of_beijing": "2026-09-04 05:25:30+08:00",
             "reason": "A股T日军工逆势异动达到重大性阈值。"
           },
           "utilities_clean_energy": {
@@ -2951,7 +4083,7 @@
             ],
             "mover_ids": [],
             "event_ids": [],
-            "as_of_beijing": "2026-09-03 06:56:32+08:00",
+            "as_of_beijing": "2026-09-04 05:25:30+08:00",
             "reason": "完成价格优先与事件优先双路径扫描，未发现达到重大性阈值的新增异动。"
           },
           "broad_market_style": {
@@ -2962,7 +4094,7 @@
             ],
             "mover_ids": [],
             "event_ids": [],
-            "as_of_beijing": "2026-09-03 06:56:32+08:00",
+            "as_of_beijing": "2026-09-04 05:25:30+08:00",
             "reason": "完成价格优先与事件优先双路径扫描，未发现达到重大性阈值的新增异动。"
           },
           "technology_media_telecom": {
@@ -2973,10 +4105,8 @@
             "mover_ids": [
               "mover-us-tech"
             ],
-            "event_ids": [
-              "material-event-hormuz"
-            ],
-            "as_of_beijing": "2026-09-03 06:56:32+08:00",
+            "event_ids": [],
+            "as_of_beijing": "2026-09-04 05:25:30+08:00",
             "reason": "美股科技与半导体反弹达到跨市场观察阈值。"
           },
           "energy_materials": {
@@ -2991,7 +4121,7 @@
             "event_ids": [
               "material-event-hormuz"
             ],
-            "as_of_beijing": "2026-09-03 06:56:32+08:00",
+            "as_of_beijing": "2026-09-04 05:25:30+08:00",
             "reason": "原油高位与霍尔木兹供给风险相互确认。"
           }
         },
@@ -3000,44 +4130,41 @@
             "mover_id": "mover-us-tech",
             "lane": "us_sector_tape",
             "market": "US",
-            "market_session_date": "2026-09-02",
-            "observed_at_beijing": "2026-09-03 04:34:00+08:00",
-            "instrument": "美国科技与半导体",
+            "market_session_date": "2026-09-03",
+            "observed_at_beijing": "2026-09-04 04:45:00+08:00",
+            "instrument": "美国大型科技股",
             "sector_family": "technology_media_telecom",
-            "sector_name": "科技与半导体",
+            "sector_name": "科技与软件",
             "direction": "positive",
-            "performance_text": "纳指约涨0.5%，英伟达约涨3.2%、美光约涨2.4%",
-            "benchmark": "标普500约涨0.5%",
-            "breadth_text": "科技龙头与小盘风险资产同步反弹",
-            "catalyst_status": "multi_factor",
-            "event_ids": [
-              "material-event-hormuz"
-            ],
+            "performance_text": "微软约涨2.7%、Meta约涨3%、英伟达约涨1.8%",
+            "benchmark": "标普500约涨1.1%",
+            "breadth_text": "多只大型科技股同步上涨，但博通约跌2.7%",
+            "catalyst_status": "unresolved",
+            "event_ids": [],
             "signal_ids": [
               "market-signal-001"
             ],
             "source_refs": [
-              "toxic-source-market-signal",
-              "src-hormuz-postt-axios"
+              "toxic-source-market-signal"
             ],
             "query_ids": [
               "toxic-q-us-equity-sector-signal"
             ],
-            "materiality_reason": "科技龙头与宽基同向修复，但高利率仍构成反向约束。"
+            "materiality_reason": "科技龙头相对强于宽基，但财报分化使归因不足以形成单一A股催化。"
           },
           {
             "mover_id": "mover-oil",
             "lane": "global_movers",
             "market": "GLOBAL",
-            "market_session_date": "2026-09-02",
-            "observed_at_beijing": "2026-09-03 04:34:00+08:00",
+            "market_session_date": "2026-09-03",
+            "observed_at_beijing": "2026-09-04 04:45:00+08:00",
             "instrument": "布伦特原油",
             "sector_family": "energy_materials",
             "sector_name": "能源与油气",
-            "direction": "positive",
-            "performance_text": "布伦特约涨1.0%至95.63美元/桶",
-            "benchmark": "9月2日国际商品交易时段",
-            "breadth_text": "能源供给风险溢价维持高位",
+            "direction": "negative",
+            "performance_text": "布伦特约95.52美元/桶，日内近乎持平但绝对价格高",
+            "benchmark": "9月3日国际商品完整交易时段",
+            "breadth_text": "霍尔木兹供给风险溢价未明显消退",
             "catalyst_status": "attributed",
             "event_ids": [
               "material-event-hormuz"
@@ -3046,27 +4173,28 @@
               "market-signal-oil-001"
             ],
             "source_refs": [
+              "src-hormuz-postt-ap",
               "src-hormuz-postt-axios"
             ],
             "query_ids": [
               "toxic-q-cross-asset-stress-delta",
               "toxic-q-us-equity-sector-signal"
             ],
-            "materiality_reason": "绝对涨幅有限但95美元上方高位对成本敏感行业具有执行重要性。"
+            "materiality_reason": "涨幅不大但95美元上方油价对化工、航空与运输成本具有执行重要性。"
           },
           {
             "mover_id": "mover-ashare-digital",
             "lane": "ashare_t_day_sector_tape",
             "market": "CN",
-            "market_session_date": "2026-09-02",
-            "observed_at_beijing": "2026-09-02 15:01:00+08:00",
-            "instrument": "A股国防军工",
+            "market_session_date": "2026-09-03",
+            "observed_at_beijing": "2026-09-03 15:30:00+08:00",
+            "instrument": "A股港口航运",
             "sector_family": "industrials_transport_defense",
-            "sector_name": "国防军工",
+            "sector_name": "港口航运",
             "direction": "positive",
-            "performance_text": "军工板块逆势领涨，多只个股涨停或大涨",
-            "benchmark": "沪指跌0.97%、创业板指跌2.39%",
-            "breadth_text": "逾3900股下跌时军工保持相对强势",
+            "performance_text": "港口航运行业约涨1.97%",
+            "benchmark": "创业板指+0.01%、全市场上涨家数仅1831只",
+            "breadth_text": "行业在个股普遍偏弱环境中取得明显相对收益",
             "catalyst_status": "multi_factor",
             "event_ids": [
               "material-event-ashare-digital"
@@ -3080,17 +4208,17 @@
             "query_ids": [
               "toxic-q-ashare-t-sector-signal"
             ],
-            "materiality_reason": "宽基和全市场广度显著走弱时军工逆势，达到T日行业异动阈值。"
+            "materiality_reason": "T日行业相对收益与全市场弱广度形成显著反差。"
           }
         ],
         "event_clusters": [
           {
             "event_id": "material-event-ashare-digital",
-            "event_name": "A股军工T日逆势轮动",
+            "event_name": "A股港口航运T日相对走强",
             "event_type": "market_structure",
             "phase": "as_of_t",
-            "first_public_at_beijing": "2026-09-02 15:01:00+08:00",
-            "summary": "宽基与市场广度走弱时军工逆势领涨，T日价格已反映防御与地缘叙事。",
+            "first_public_at_beijing": "2026-09-03 15:00:00+08:00",
+            "summary": "T日指数近乎持平、个股广度偏弱时港口航运约涨1.97%，属于已在A股现货体现的结构性强势。",
             "discovery_lanes": [
               "ashare_t_day_sector_tape",
               "event_first_scan"
@@ -3111,19 +4239,18 @@
             "query_ids": [
               "toxic-q-ashare-t-sector-signal"
             ],
-            "ashare_theme": "国防军工",
+            "ashare_theme": "港口航运仅作延续观察",
             "transmission_chain": [
-              "宽基与广度走弱→防御偏好上升",
-              "军工T日逆势→次日只检验承接与兑现"
+              "航运风险溢价与行业轮动→港口航运T日相对走强",
+              "已在T日定价→次日只观察承接并防回吐"
             ],
             "mapping_tiers": [
               {
                 "tier": "direct",
                 "ashare_sectors": [
-                  "国防军工",
-                  "军工电子"
+                  "港口航运"
                 ],
-                "reason": "T日异动直接发生在军工行业。"
+                "reason": "A股行业涨幅直接确认。"
               }
             ],
             "horizons": [
@@ -3132,10 +4259,10 @@
             ],
             "confidence": "low",
             "counter_evidence": [
-              "T日逆势可能已部分透支，且大盘广度仍弱"
+              "全市场广度偏弱，行业强势可能是短期防御轮动"
             ],
             "invalidators": [
-              "竞价无承接且军工相对收益迅速转负"
+              "港口航运竞价无承接且行业相对收益转负"
             ],
             "disposition": "linked",
             "sector_call_ids": [
@@ -3145,41 +4272,37 @@
             "freshness_reason": "行业异动发生在当前T日。",
             "ashare_absorption": {
               "status": "priced_on_t",
-              "first_reaction_date": "2026-09-02",
-              "latest_confirmation_date": "2026-09-02",
-              "evidence": "军工T日已逆势领涨，境内价格反应充分可见。",
+              "first_reaction_date": "2026-09-03",
+              "latest_confirmation_date": "2026-09-03",
+              "evidence": "港口航运T日约涨1.97%，境内价格反应已充分可见。",
               "source_refs": [
                 "toxic-source-ashare-signal"
               ],
               "query_ids": [
                 "toxic-q-ashare-t-sector-signal"
               ],
-              "decision": "不得视为全新催化，仅保留低置信度延续观察并防高开兑现。"
+              "decision": "不得作为全新催化，只保留低置信延续观察并防追高。"
             },
             "tradability_flag": "continuation_watch"
           },
           {
             "event_id": "material-event-hormuz",
-            "event_name": "T后霍尔木兹冲突与油价高位确认",
+            "event_name": "T后霍尔木兹风险与高油价再确认",
             "event_type": "supply_disruption",
             "phase": "post_t_safety",
-            "first_public_at_beijing": "2026-09-03 02:30:00+08:00",
-            "summary": "T后冲突增量与布油高位共同确认能源供给和运输成本压力，仅用于下一交易日执行安全。",
+            "first_public_at_beijing": "2026-09-04 04:05:00+08:00",
+            "summary": "T后冲突和高油价再确认能源供给、物流及化工成本压力，仅用于下一交易日执行安全。",
             "discovery_lanes": [
-              "us_sector_tape",
               "global_movers",
               "event_first_scan"
             ],
             "sector_families": [
-              "technology_media_telecom",
               "energy_materials"
             ],
             "mover_ids": [
-              "mover-us-tech",
               "mover-oil"
             ],
             "signal_ids": [
-              "market-signal-001",
               "market-signal-oil-001"
             ],
             "primary_source_refs": [
@@ -3190,22 +4313,22 @@
             ],
             "query_ids": [
               "toxic-q-external-geopolitics-trade-delta",
-              "toxic-q-us-equity-sector-signal",
               "toxic-q-cross-asset-stress-delta"
             ],
-            "ashare_theme": "油气相对受益与航空成本压力",
+            "ashare_theme": "油气相对受益、农化与能源成本敏感行业承压",
             "transmission_chain": [
-              "霍尔木兹通航受限→原油供给风险溢价",
-              "油价高位→A股油气相对受益、航空成本承压"
+              "霍尔木兹通航风险→原油供给风险溢价",
+              "高油价与运输风险→A股化工成本及出口物流承压"
             ],
             "mapping_tiers": [
               {
                 "tier": "supply_chain",
                 "ashare_sectors": [
+                  "农化制品",
                   "石油石化",
                   "航空运输"
                 ],
-                "reason": "油价分别影响上游收入与航空燃油成本。"
+                "reason": "原油与物流分别影响化工投入、上游收入和航空燃油成本。"
               }
             ],
             "horizons": [
@@ -3215,10 +4338,10 @@
             ],
             "confidence": "medium",
             "counter_evidence": [
-              "美股风险偏好反弹，油价也可能因冲突缓和快速回吐"
+              "布油当日近乎持平，美股风险偏好反弹"
             ],
             "invalidators": [
-              "官方确认通航恢复且油价回吐大部分风险溢价"
+              "官方确认通航恢复且油价快速回吐风险溢价"
             ],
             "disposition": "linked",
             "sector_call_ids": [
@@ -3230,26 +4353,65 @@
               "status": "new_unpriced",
               "first_reaction_date": null,
               "latest_confirmation_date": null,
-              "evidence": "T后增量发生在A股收盘后，尚无9月3日A股现货反应。",
+              "evidence": "T后增量发生在A股收盘后，尚无9月4日A股现货反应。",
               "source_refs": [],
               "query_ids": [],
-              "decision": "仅作开盘执行安全约束，等待竞价和行业广度确认。"
+              "decision": "只作开盘执行安全约束，等待竞价和行业广度确认。"
             },
             "tradability_flag": "fresh_catalyst"
           }
         ],
-        "unresolved_material_mover_ids": [],
+        "unresolved_material_mover_ids": [
+          "mover-us-tech"
+        ],
         "unmapped_material_event_ids": []
       },
-      "by_code": {},
+      "by_code": {
+        "000519": {
+          "exposure": "none",
+          "warning_ids": [],
+          "post_t_delta_ids": [],
+          "reason": "未与Agent③高/中等级市场风险项形成直接代码映射；军工板块回吐已在Agent②个股证据中处理。",
+          "sector_context": []
+        },
+        "600596": {
+          "exposure": "high",
+          "warning_ids": [
+            "toxic-warning-001"
+          ],
+          "post_t_delta_ids": [
+            "toxic-delta-hormuz-postt"
+          ],
+          "reason": "农化制品对能源与出口物流成本敏感，关联T日高等级霍尔木兹风险及T后延续增量；仅作shadow执行提示。",
+          "sector_context": [
+            {
+              "call_id": "sector-call-auto-pressure",
+              "relation": "direct_sector",
+              "direction": "pressure",
+              "relevance": "direct",
+              "reason": "候选行业精确命中农化制品，高油价与运输风险可能压缩成本端修复。",
+              "source_refs": [
+                "src-hormuz-postt-ap",
+                "src-hormuz-postt-axios",
+                "toxic-source-market-signal"
+              ],
+              "invalidators": [
+                "官方确认通航恢复、油价快速回吐且农化行业相对收益转强"
+              ]
+            }
+          ]
+        }
+      },
       "post_t_safety_items": [
         {
           "delta_id": "toxic-delta-hormuz-postt",
           "level": "med",
           "risk_family": "war_energy",
-          "published_at": "2026-09-03",
-          "why": "T后霍尔木兹冲突与通航受限继续由独立报道确认，布油约95.63美元，能源与运输成本压力延续。",
-          "codes": [],
+          "published_at": "2026-09-04",
+          "why": "T后独立报道显示霍尔木兹冲突仍在延续，布伦特结算约95.52美元/桶，化工能源与物流成本压力未解除。",
+          "codes": [
+            "600596"
+          ],
           "source_refs": [
             "src-hormuz-postt-ap",
             "src-hormuz-postt-axios"
@@ -3258,28 +4420,28 @@
             "toxic-q-external-geopolitics-trade-delta"
           ],
           "evaluation": {
-            "fact_basis": "T后霍尔木兹与油价增量已按官方来源、独立来源与市场价格核验事实边界。",
-            "consensus": "采用所列来源形成基准判断；不作来源之外的数值外推。",
+            "fact_basis": "T后冲突进展与油价由AP、Axios分别核验。",
+            "consensus": "采用所列官方、独立媒体与市场价格形成基准判断；不作来源之外的数值外推。",
             "consensus_source_refs": [
               "src-hormuz-postt-ap",
               "src-hormuz-postt-axios"
             ],
-            "base_case": "T后霍尔木兹与油价增量的基准情景是保持结构性观察，等待后续官方结果或价格确认。",
+            "base_case": "基准情景是油价风险溢价仍高，化工与运输成本敏感行业保持压力观察。",
             "confidence": "medium",
-            "upside_scenario": "若压力变量缓和且风险资产广度改善，相关风险溢价可能回落。",
+            "upside_scenario": "若压力变量缓和且市场广度改善，相关风险溢价可能回落。",
             "downside_scenario": "若压力变量强化并跨市场共振，A股相关行业波动可能上升。",
             "transmission_paths": [
               "事实变化→预期差→风险偏好与行业相对强弱"
             ],
             "watch_variables": [
               "官方后续公告",
-              "关键资产价格与市场广度"
+              "关键资产价格与A股行业广度"
             ],
             "invalidators": [
               "官方信息否定当前事实基础",
               "关键价格持续反向确认"
             ],
-            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作。运行时点信息与T日裁定隔离，不倒灌。"
+            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作；运行时点信息与T日裁定隔离，不倒灌。"
           },
           "used_in_asof_t_warning": false,
           "shadow": true
@@ -3288,8 +4450,8 @@
           "delta_id": "toxic-delta-market-postt",
           "level": "med",
           "risk_family": "cross_asset",
-          "published_at": "2026-09-03",
-          "why": "T后美股宽基反弹，但美国10年期国债收益率仍处4.79%高位，风险偏好改善与贴现率约束并存。",
+          "published_at": "2026-09-04",
+          "why": "T后美股风险偏好改善，标普500约涨1.1%、纳指约涨1.4%；但美国10年期国债收益率官方日值仍为4.77%，贴现率约束与风险偏好修复并存。",
           "codes": [],
           "source_refs": [
             "toxic-source-market-signal",
@@ -3299,28 +4461,28 @@
             "toxic-q-cross-asset-stress-delta"
           ],
           "evaluation": {
-            "fact_basis": "T后美股与美债增量已按官方来源、独立来源与市场价格核验事实边界。",
-            "consensus": "采用所列来源形成基准判断；不作来源之外的数值外推。",
+            "fact_basis": "T后美股收盘由AP核验，美债期限结构采用美国财政部官方日值。",
+            "consensus": "采用所列官方、独立媒体与市场价格形成基准判断；不作来源之外的数值外推。",
             "consensus_source_refs": [
               "toxic-source-market-signal",
               "toxic-source-delta"
             ],
-            "base_case": "T后美股与美债增量的基准情景是保持结构性观察，等待后续官方结果或价格确认。",
+            "base_case": "基准情景是A股成长情绪获支撑但高利率限制估值扩张，表现仍以结构分化为主。",
             "confidence": "medium",
-            "upside_scenario": "若压力变量缓和且风险资产广度改善，相关风险溢价可能回落。",
+            "upside_scenario": "若压力变量缓和且市场广度改善，相关风险溢价可能回落。",
             "downside_scenario": "若压力变量强化并跨市场共振，A股相关行业波动可能上升。",
             "transmission_paths": [
               "事实变化→预期差→风险偏好与行业相对强弱"
             ],
             "watch_variables": [
               "官方后续公告",
-              "关键资产价格与市场广度"
+              "关键资产价格与A股行业广度"
             ],
             "invalidators": [
               "官方信息否定当前事实基础",
               "关键价格持续反向确认"
             ],
-            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作。运行时点信息与T日裁定隔离，不倒灌。"
+            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作；运行时点信息与T日裁定隔离，不倒灌。"
           },
           "used_in_asof_t_warning": false,
           "shadow": true
@@ -3329,8 +4491,8 @@
       "runtime_evaluation": {
         "scheduled_macro_policy": {
           "status": "hit",
-          "evaluated_at_beijing": "2026-09-03 06:56:32+08:00",
-          "latest_source_published_at": "2026-09-02",
+          "evaluated_at_beijing": "2026-09-04 05:25:30+08:00",
+          "latest_source_published_at": "2026-09-03",
           "query_ids": [
             "toxic-q-scheduled-macro-policy-survey",
             "toxic-q-scheduled-macro-policy-calendar",
@@ -3352,9 +4514,7 @@
             "q-ecb-survey",
             "q-ecb-calendar",
             "q-ecb-preview",
-            "q-ism-survey",
-            "q-ism-calendar",
-            "q-ism-preview"
+            "q-ism-result"
           ],
           "warning_ids": [
             "tw-us-jobs",
@@ -3362,11 +4522,12 @@
             "tw-cn-ppi",
             "tw-us-ppi",
             "tw-us-cpi",
-            "tw-ecb",
-            "tw-ism-services"
+            "tw-ecb"
           ],
           "delta_ids": [],
-          "signal_ids": [],
+          "signal_ids": [
+            "market-signal-ism-001"
+          ],
           "source_refs": [
             "toxic-source-scheduled",
             "toxic-source-scheduled-consensus",
@@ -3376,12 +4537,11 @@
             "src-continuum-cpi",
             "src-ecb-calendar",
             "src-ecb-preview-ap",
-            "src-ism-calendar",
-            "src-ism-preview"
+            "src-ism-result"
           ],
           "evaluation": {
-            "fact_basis": "scheduled_macro_policy运行时点已按官方来源、独立来源与市场价格核验事实边界。",
-            "consensus": "采用所列来源形成基准判断；不作来源之外的数值外推。",
+            "fact_basis": "scheduled_macro_policy已按官方来源、独立来源与市场价格核验事实边界。",
+            "consensus": "采用所列官方、独立媒体与市场价格形成基准判断；不作来源之外的数值外推。",
             "consensus_source_refs": [
               "toxic-source-scheduled",
               "toxic-source-scheduled-consensus",
@@ -3391,31 +4551,30 @@
               "src-continuum-cpi",
               "src-ecb-calendar",
               "src-ecb-preview-ap",
-              "src-ism-calendar",
-              "src-ism-preview"
+              "src-ism-result"
             ],
-            "base_case": "scheduled_macro_policy运行时点的基准情景是保持结构性观察，等待后续官方结果或价格确认。",
+            "base_case": "T日ISM显示需求强但价格压力仍高，未来就业、通胀与欧洲央行排期密集，基准为震荡分化。",
             "confidence": "medium",
-            "upside_scenario": "若压力变量缓和且风险资产广度改善，相关风险溢价可能回落。",
+            "upside_scenario": "若压力变量缓和且市场广度改善，相关风险溢价可能回落。",
             "downside_scenario": "若压力变量强化并跨市场共振，A股相关行业波动可能上升。",
             "transmission_paths": [
               "事实变化→预期差→风险偏好与行业相对强弱"
             ],
             "watch_variables": [
               "官方后续公告",
-              "关键资产价格与市场广度"
+              "关键资产价格与A股行业广度"
             ],
             "invalidators": [
               "官方信息否定当前事实基础",
               "关键价格持续反向确认"
             ],
-            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作。运行时点信息与T日裁定隔离，不倒灌。"
+            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作；运行时点信息与T日裁定隔离，不倒灌。"
           }
         },
         "domestic_regulatory_liquidity": {
           "status": "hit",
-          "evaluated_at_beijing": "2026-09-03 06:56:32+08:00",
-          "latest_source_published_at": "2026-09-02",
+          "evaluated_at_beijing": "2026-09-04 05:25:30+08:00",
+          "latest_source_published_at": "2026-09-03",
           "query_ids": [
             "toxic-q-domestic-regulatory-liquidity-1",
             "toxic-q-domestic-regulatory-liquidity-2",
@@ -3432,33 +4591,33 @@
             "toxic-source-ashare-signal"
           ],
           "evaluation": {
-            "fact_basis": "domestic_regulatory_liquidity运行时点已按官方来源、独立来源与市场价格核验事实边界。",
-            "consensus": "采用所列来源形成基准判断；不作来源之外的数值外推。",
+            "fact_basis": "domestic_regulatory_liquidity已按官方来源、独立来源与市场价格核验事实边界。",
+            "consensus": "采用所列官方、独立媒体与市场价格形成基准判断；不作来源之外的数值外推。",
             "consensus_source_refs": [
               "toxic-source-ashare-signal"
             ],
-            "base_case": "domestic_regulatory_liquidity运行时点的基准情景是保持结构性观察，等待后续官方结果或价格确认。",
+            "base_case": "A股指数近乎持平但个股广度偏弱，港口航运相对强，基准为结构轮动。",
             "confidence": "medium",
-            "upside_scenario": "若压力变量缓和且风险资产广度改善，相关风险溢价可能回落。",
+            "upside_scenario": "若压力变量缓和且市场广度改善，相关风险溢价可能回落。",
             "downside_scenario": "若压力变量强化并跨市场共振，A股相关行业波动可能上升。",
             "transmission_paths": [
               "事实变化→预期差→风险偏好与行业相对强弱"
             ],
             "watch_variables": [
               "官方后续公告",
-              "关键资产价格与市场广度"
+              "关键资产价格与A股行业广度"
             ],
             "invalidators": [
               "官方信息否定当前事实基础",
               "关键价格持续反向确认"
             ],
-            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作。运行时点信息与T日裁定隔离，不倒灌。"
+            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作；运行时点信息与T日裁定隔离，不倒灌。"
           }
         },
         "external_geopolitics_trade": {
           "status": "hit",
-          "evaluated_at_beijing": "2026-09-03 06:56:32+08:00",
-          "latest_source_published_at": "2026-09-03",
+          "evaluated_at_beijing": "2026-09-04 05:25:30+08:00",
+          "latest_source_published_at": "2026-09-04",
           "query_ids": [
             "toxic-q-external-1",
             "toxic-q-external-geopolitics-trade-delta",
@@ -3479,8 +4638,8 @@
             "src-hormuz-postt-axios"
           ],
           "evaluation": {
-            "fact_basis": "external_geopolitics_trade运行时点已按官方来源、独立来源与市场价格核验事实边界。",
-            "consensus": "采用所列来源形成基准判断；不作来源之外的数值外推。",
+            "fact_basis": "external_geopolitics_trade已按官方来源、独立来源与市场价格核验事实边界。",
+            "consensus": "采用所列官方、独立媒体与市场价格形成基准判断；不作来源之外的数值外推。",
             "consensus_source_refs": [
               "toxic-source-001",
               "src-hormuz-ap-t",
@@ -3488,28 +4647,28 @@
               "src-hormuz-postt-ap",
               "src-hormuz-postt-axios"
             ],
-            "base_case": "external_geopolitics_trade运行时点的基准情景是保持结构性观察，等待后续官方结果或价格确认。",
+            "base_case": "霍尔木兹风险继续推高能源与物流成本，化工等成本敏感行业承压。",
             "confidence": "medium",
-            "upside_scenario": "若压力变量缓和且风险资产广度改善，相关风险溢价可能回落。",
+            "upside_scenario": "若压力变量缓和且市场广度改善，相关风险溢价可能回落。",
             "downside_scenario": "若压力变量强化并跨市场共振，A股相关行业波动可能上升。",
             "transmission_paths": [
               "事实变化→预期差→风险偏好与行业相对强弱"
             ],
             "watch_variables": [
               "官方后续公告",
-              "关键资产价格与市场广度"
+              "关键资产价格与A股行业广度"
             ],
             "invalidators": [
               "官方信息否定当前事实基础",
               "关键价格持续反向确认"
             ],
-            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作。运行时点信息与T日裁定隔离，不倒灌。"
+            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作；运行时点信息与T日裁定隔离，不倒灌。"
           }
         },
         "cross_asset_stress": {
           "status": "hit",
-          "evaluated_at_beijing": "2026-09-03 06:56:32+08:00",
-          "latest_source_published_at": "2026-09-03",
+          "evaluated_at_beijing": "2026-09-04 05:25:30+08:00",
+          "latest_source_published_at": "2026-09-04",
           "query_ids": [
             "toxic-q-cross-asset-stress-1",
             "toxic-q-cross-asset-stress-2",
@@ -3522,8 +4681,8 @@
             "toxic-delta-market-postt"
           ],
           "signal_ids": [
-            "market-signal-001",
-            "market-signal-oil-001"
+            "market-signal-oil-001",
+            "market-signal-001"
           ],
           "source_refs": [
             "toxic-source-market-signal",
@@ -3532,35 +4691,35 @@
             "src-hormuz-postt-axios"
           ],
           "evaluation": {
-            "fact_basis": "cross_asset_stress运行时点已按官方来源、独立来源与市场价格核验事实边界。",
-            "consensus": "采用所列来源形成基准判断；不作来源之外的数值外推。",
+            "fact_basis": "cross_asset_stress已按官方来源、独立来源与市场价格核验事实边界。",
+            "consensus": "采用所列官方、独立媒体与市场价格形成基准判断；不作来源之外的数值外推。",
             "consensus_source_refs": [
               "toxic-source-market-signal",
               "toxic-source-delta",
               "src-hormuz-postt-ap",
               "src-hormuz-postt-axios"
             ],
-            "base_case": "cross_asset_stress运行时点的基准情景是保持结构性观察，等待后续官方结果或价格确认。",
+            "base_case": "T后美股科技反弹但美债收益率仍高，风险偏好修复与贴现率约束并存。",
             "confidence": "medium",
-            "upside_scenario": "若压力变量缓和且风险资产广度改善，相关风险溢价可能回落。",
+            "upside_scenario": "若压力变量缓和且市场广度改善，相关风险溢价可能回落。",
             "downside_scenario": "若压力变量强化并跨市场共振，A股相关行业波动可能上升。",
             "transmission_paths": [
               "事实变化→预期差→风险偏好与行业相对强弱"
             ],
             "watch_variables": [
               "官方后续公告",
-              "关键资产价格与市场广度"
+              "关键资产价格与A股行业广度"
             ],
             "invalidators": [
               "官方信息否定当前事实基础",
               "关键价格持续反向确认"
             ],
-            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作。运行时点信息与T日裁定隔离，不倒灌。"
+            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作；运行时点信息与T日裁定隔离，不倒灌。"
           }
         },
         "holiday_information_gap": {
           "status": "no_relevant_hit",
-          "evaluated_at_beijing": "2026-09-03 06:56:32+08:00",
+          "evaluated_at_beijing": "2026-09-04 05:25:30+08:00",
           "latest_source_published_at": null,
           "query_ids": [
             "toxic-q-holiday-information-gap-1",
@@ -3573,30 +4732,30 @@
           "signal_ids": [],
           "source_refs": [],
           "evaluation": {
-            "fact_basis": "holiday_information_gap运行时点已按官方来源、独立来源与市场价格核验事实边界。",
+            "fact_basis": "holiday_information_gap已按官方来源、独立来源与市场价格核验事实边界。",
             "consensus": "未找到可靠共识，不把单一叙事冒充一致预期。",
             "consensus_source_refs": [],
-            "base_case": "holiday_information_gap运行时点的基准情景是保持结构性观察，等待后续官方结果或价格确认。",
+            "base_case": "未来十日A股无长假闭市形成的异常信息累积，基准为无额外假期缺口。",
             "confidence": "low",
-            "upside_scenario": "若压力变量缓和且风险资产广度改善，相关风险溢价可能回落。",
+            "upside_scenario": "若压力变量缓和且市场广度改善，相关风险溢价可能回落。",
             "downside_scenario": "若压力变量强化并跨市场共振，A股相关行业波动可能上升。",
             "transmission_paths": [
               "事实变化→预期差→风险偏好与行业相对强弱"
             ],
             "watch_variables": [
               "官方后续公告",
-              "关键资产价格与市场广度"
+              "关键资产价格与A股行业广度"
             ],
             "invalidators": [
               "官方信息否定当前事实基础",
               "关键价格持续反向确认"
             ],
-            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作。运行时点信息与T日裁定隔离，不倒灌。"
+            "inference_boundary": "仅作shadow影子推断，不改分数、裁定、仓位或交易动作；运行时点信息与T日裁定隔离，不倒灌。"
           }
         }
       },
       "ashare_runtime_outlook": {
-        "evaluated_at_beijing": "2026-09-03 06:56:32+08:00",
+        "evaluated_at_beijing": "2026-09-04 05:25:30+08:00",
         "basis_domains": [
           "scheduled_macro_policy",
           "domestic_regulatory_liquidity",
@@ -3613,8 +4772,7 @@
           "src-continuum-cpi",
           "src-ecb-calendar",
           "src-ecb-preview-ap",
-          "src-ism-calendar",
-          "src-ism-preview",
+          "src-ism-result",
           "toxic-source-ashare-signal",
           "toxic-source-001",
           "src-hormuz-ap-t",
@@ -3627,40 +4785,39 @@
         "domain_impacts": {
           "scheduled_macro_policy": {
             "direction": "mixed",
-            "mechanism": "未来十日ISM、就业、通胀与欧洲央行排期密集，发布前A股更可能震荡分化且不预支方向。",
+            "mechanism": "T日ISM需求强于预期但就业与价格分项分化，未来就业、通胀和欧洲央行排期密集，使A股风险偏好与成长估值更易震荡。",
             "sector_disposition": "neutral",
             "sector_call_ids": [],
-            "sector_reason": "排期未发布，只保留预期基准。",
+            "sector_reason": "已发布ISM为混合信号，未发布事件只保留预期基准。",
             "considered_warning_ids": [
               "tw-us-jobs",
               "tw-cn-cpi",
               "tw-cn-ppi",
               "tw-us-ppi",
               "tw-us-cpi",
-              "tw-ecb",
-              "tw-ism-services"
+              "tw-ecb"
             ],
             "considered_delta_ids": []
           },
           "domestic_regulatory_liquidity": {
             "direction": "mixed",
-            "mechanism": "A股T日宽基与广度走弱但军工局部逆势，防御风格相对占优。",
+            "mechanism": "A股T日指数近乎持平但个股广度偏弱，港口航运相对走强。",
             "sector_disposition": "linked",
             "sector_call_ids": [
               "sector-call-digital"
             ],
-            "sector_reason": "T日军工价格信号只进入延续观察。",
+            "sector_reason": "T日港口航运价格信号只进入延续观察。",
             "considered_warning_ids": [],
             "considered_delta_ids": []
           },
           "external_geopolitics_trade": {
             "direction": "negative",
-            "mechanism": "霍尔木兹风险令A股航空与成本敏感行业承压，同时支持上游油气相对收益。",
+            "mechanism": "霍尔木兹风险令A股农化与能源、物流成本敏感行业承压。",
             "sector_disposition": "linked",
             "sector_call_ids": [
               "sector-call-auto-pressure"
             ],
-            "sector_reason": "油气与航空通过油价形成方向相反的产业链映射。",
+            "sector_reason": "油价与运输风险通过投入品和出口物流映射到农化制品。",
             "considered_warning_ids": [
               "toxic-warning-001"
             ],
@@ -3670,12 +4827,12 @@
           },
           "cross_asset_stress": {
             "direction": "mixed",
-            "mechanism": "美股风险偏好反弹，但长债收益率与油价仍高，A股开盘约束分化。",
+            "mechanism": "美股科技反弹改善A股开盘风险偏好，但美债收益率与油价仍高，A股成长与成本敏感板块仍会分化。",
             "sector_disposition": "linked",
             "sector_call_ids": [
               "sector-call-auto-pressure"
             ],
-            "sector_reason": "美股反弹构成反证，油价高位仍直接约束航空。",
+            "sector_reason": "美股反弹构成反证，高油价仍直接约束农化成本。",
             "considered_warning_ids": [],
             "considered_delta_ids": [
               "toxic-delta-market-postt"
@@ -3692,49 +4849,48 @@
           }
         },
         "next_session": {
-          "bias": "neutral_negative",
-          "path": "A股更可能弱势震荡与结构分化，军工防御需防T日强势兑现，航空仍受高油价约束。",
+          "bias": "mixed",
+          "path": "A股更可能窄幅震荡与结构分化，宽基稳定不等于普涨，周期修复票仍需防高开兑现。",
           "confidence": "medium"
         },
         "opening_auction": {
           "bias": "mixed",
-          "path": "A股开盘更可能分化：军工只观察相对承接，油气与航空先核对布油及竞价广度。",
+          "path": "A股开盘先核对美股风险偏好、布油与行业广度；港口仅看承接，农化先看成本压力。",
           "confidence": "medium"
         },
         "intraday_followthrough": {
           "bias": "mixed",
-          "path": "A股盘中若宽基广度不修复，整体更可能震荡偏弱，局部防御题材易高开回吐。",
+          "path": "若上涨家数和成交广度不修复，A股盘中更可能震荡偏弱，并以结构轮动和个股分化为主。",
           "confidence": "low"
         },
         "next_1_5_sessions": {
           "bias": "range_bound",
-          "path": "A股未来一至五个交易日更可能震荡反复，受就业、通胀、欧洲央行与霍尔木兹风险共同影响。",
+          "path": "A股未来一至五个交易日更可能震荡反复，受美国就业、通胀、欧洲央行与霍尔木兹风险共同影响。",
           "confidence": "medium"
         },
         "index_style_implications": [
-          "宽基偏震荡，防御相对成长占优但不追高",
-          "油价高位提高航空与成本敏感行业约束"
+          "宽基偏震荡，个股广度弱于指数",
+          "高油价约束农化、航空与成本敏感制造，科技风险偏好获美股反弹边际支撑"
         ],
         "sector_calls": [
           {
             "call_id": "sector-call-digital",
             "direction": "beneficiary",
-            "sector_name": "国防军工（仅延续观察）",
+            "sector_name": "港口航运（仅延续观察）",
             "sector_keys": [
               {
                 "taxonomy": "申万2021/主题",
                 "level": "一级/主题",
-                "id": "SW-DEFENSE",
-                "name": "国防军工"
+                "id": "SW-TRANSPORT-PORT",
+                "name": "港口航运"
               }
             ],
             "industry_matches": [
-              "国防军工",
-              "军工电子"
+              "港口航运"
             ],
             "horizon": "opening_auction",
             "reasons": [
-              "T日军工在宽基与广度走弱时逆势，但已定价，只观察延续并防高开兑现。"
+              "T日港口航运约涨1.97%且已定价，次日只观察相对承接并防高开回吐。"
             ],
             "driver_signal_ids": [
               "market-signal-ashare-001"
@@ -3746,10 +4902,10 @@
             "considered_domain_ids": [
               "domestic_regulatory_liquidity"
             ],
-            "dominant_driver": "T日军工相对强势但已形成境内价格反应",
+            "dominant_driver": "T日港口航运相对强势但已形成境内价格反应",
             "confidence": "low",
             "invalidators": [
-              "军工竞价无承接且相对宽基迅速转负"
+              "港口航运竞价无承接且相对宽基迅速转负"
             ],
             "source_refs": [
               "toxic-source-ashare-signal"
@@ -3760,23 +4916,21 @@
           {
             "call_id": "sector-call-auto-pressure",
             "direction": "pressure",
-            "sector_name": "航空运输与能源成本敏感行业",
+            "sector_name": "农化制品及能源物流成本敏感化工",
             "sector_keys": [
               {
                 "taxonomy": "申万2021/主题",
-                "level": "一级/主题",
-                "id": "SW-AIR-ENERGY-COST",
-                "name": "航空运输与能源成本敏感行业"
+                "level": "二级/主题",
+                "id": "SW-AGROCHEM-ENERGY-COST",
+                "name": "农化制品及能源物流成本敏感化工"
               }
             ],
             "industry_matches": [
-              "航空运输",
-              "化工",
-              "成本敏感制造"
+              "农化制品"
             ],
             "horizon": "opening_auction",
             "reasons": [
-              "霍尔木兹通航受限与布油约95.63美元共同提高燃油及物流成本；美股反弹仅构成部分反证。"
+              "霍尔木兹风险与布油约95.52美元抬高能源和物流成本，且T日农化制品行业约跌1.34%；T后美股反弹仅构成部分反证。"
             ],
             "driver_signal_ids": [
               "market-signal-oil-001"
@@ -3792,17 +4946,19 @@
               "external_geopolitics_trade",
               "cross_asset_stress"
             ],
-            "dominant_driver": "T后油价高位的成本传导强于宽基风险偏好修复",
+            "dominant_driver": "高油价与物流风险对成本端的约束强于宽基风险偏好修复",
             "confidence": "medium",
             "invalidators": [
-              "官方确认通航恢复、油价快速回吐且航空板块相对收益转强"
+              "官方确认通航恢复、油价快速回吐且农化行业相对收益转强"
             ],
             "source_refs": [
               "src-hormuz-postt-ap",
               "src-hormuz-postt-axios",
               "toxic-source-market-signal"
             ],
-            "candidate_codes": [],
+            "candidate_codes": [
+              "600596"
+            ],
             "shadow": true
           }
         ],
@@ -3814,7 +4970,7 @@
               "sector-call-auto-pressure"
             ],
             "mediated_by_signal_ids": [],
-            "reason": "美股风险偏好反弹是航空压力调用的反向证据。"
+            "reason": "T后美股科技反弹是成本压力调用的反向风险偏好证据。"
           },
           {
             "signal_id": "market-signal-oil-001",
@@ -3823,7 +4979,7 @@
               "sector-call-auto-pressure"
             ],
             "mediated_by_signal_ids": [],
-            "reason": "油价高位直接进入航空燃油成本压力调用。"
+            "reason": "高油价直接进入农化与能源物流成本压力调用。"
           },
           {
             "signal_id": "market-signal-ashare-001",
@@ -3832,7 +4988,14 @@
               "sector-call-digital"
             ],
             "mediated_by_signal_ids": [],
-            "reason": "A股T日军工逆势只进入次日延续观察。"
+            "reason": "A股T日港口航运相对强势只进入次日延续观察。"
+          },
+          {
+            "signal_id": "market-signal-ism-001",
+            "disposition": "neutral",
+            "sector_call_ids": [],
+            "mediated_by_signal_ids": [],
+            "reason": "需求强、就业弱与价格高并存，缺少单一A股行业方向，保留为中性宏观背景。"
           }
         ],
         "risk_item_disposition_ledger": [
@@ -3846,7 +5009,7 @@
             "sector_call_ids": [
               "sector-call-auto-pressure"
             ],
-            "reason": "活跃外部能源风险进入航空成本压力调用。"
+            "reason": "活跃能源与航运风险进入农化成本压力调用。"
           },
           {
             "item_id": "tw-us-jobs",
@@ -3909,16 +5072,6 @@
             "reason": "未发布排期只保留预期基准，不直接生成板块方向。"
           },
           {
-            "item_id": "tw-ism-services",
-            "item_kind": "warning",
-            "domain_ids": [
-              "scheduled_macro_policy"
-            ],
-            "disposition": "neutral",
-            "sector_call_ids": [],
-            "reason": "未发布排期只保留预期基准，不直接生成板块方向。"
-          },
-          {
             "item_id": "toxic-delta-hormuz-postt",
             "item_kind": "post_t_delta",
             "domain_ids": [
@@ -3928,7 +5081,7 @@
             "sector_call_ids": [
               "sector-call-auto-pressure"
             ],
-            "reason": "T后能源与航运增量只进入开盘执行安全和行业压力映射。"
+            "reason": "T后能源与航运增量只进入开盘执行安全和农化压力映射。"
           },
           {
             "item_id": "toxic-delta-market-postt",
@@ -3947,35 +5100,58 @@
         "unmapped_risk_item_ids": [],
         "unmapped_domain_ids": [],
         "sector_beneficiaries": [
-          "国防军工（仅延续观察）（T日军工在宽基与广度走弱时逆势，但已定价，只观察延续并防高开兑现。）"
+          "港口航运（仅延续观察）（T日港口航运约涨1.97%且已定价，次日只观察相对承接并防高开回吐。）"
         ],
         "sector_pressures": [
-          "航空运输与能源成本敏感行业（霍尔木兹通航受限与布油约95.63美元共同提高燃油及物流成本；美股反弹仅构成部分反证。）"
+          "农化制品及能源物流成本敏感化工（霍尔木兹风险与布油约95.52美元抬高能源和物流成本，且T日农化制品行业约跌1.34%；T后美股反弹仅构成部分反证。）"
         ],
         "opening_triggers": [
-          "观察军工竞价广度而非追单股高开",
-          "核对布油、美债与市场广度",
-          "本轮没有✓，不执行买入计划"
+          "港口航运相对宽基继续走强且非单一权重拉动",
+          "布油明显回落或农化行业竞价转强",
+          "全市场上涨家数和成交广度修复"
         ],
         "upside_conditions": [
-          "霍尔木兹风险降级且油价回吐",
-          "A股宽基与成长广度修复",
-          "宏观实际值未推动全球利率上冲"
+          "美股风险偏好外溢且A股广度同步改善",
+          "油价风险溢价回落、成本敏感行业止跌"
         ],
         "downside_conditions": [
-          "地缘升级继续推升油价",
-          "A股广度继续恶化",
-          "军工T日强势高开低走"
+          "霍尔木兹冲突升级并推升油价",
+          "美国就业或通胀使长端利率再上行",
+          "指数稳定但个股广度继续恶化"
         ],
         "invalidators": [
-          "官方信息反转霍尔木兹风险方向",
-          "油价快速回落且A股宽基广度同步修复"
+          "A股行业广度与上述映射持续反向",
+          "官方信息否定霍尔木兹或排期事实基础"
         ],
-        "plain_language_verdict": "本轮没有可执行✓；A股下一交易日更像震荡偏弱与结构分化，军工只观察延续，航空先防高油价。",
+        "plain_language_verdict": "A股下一交易日更像震荡分化：指数未必弱，但普涨基础不足；港口防兑现，农化修复仍受高油价约束。",
         "inference_boundary": "以上仅为Agent③ shadow影子判断，不改分数、裁定、仓位或交易动作；所有T后信息与T日裁定隔离，不倒灌。"
       },
-      "clear_reason": "引擎零候选且无✓票；外部与宏观风险仅作shadow预警，不能改写机械空手结论。"
+      "clear_reason": ""
     },
-    "price_verification_by_code": {}
+    "price_verification_by_code": {
+      "600596": {
+        "as_of": "2026-09-03",
+        "sources": {
+          "东方财富": {
+            "date": null,
+            "price": null
+          },
+          "腾讯": {
+            "date": "2026-09-03",
+            "price": 11.29
+          },
+          "新浪": {
+            "date": "2026-09-03",
+            "price": 11.29
+          }
+        },
+        "usable_sources": {
+          "腾讯": 11.29,
+          "新浪": 11.29
+        },
+        "max_dev_pct": 0.0,
+        "status": "verified"
+      }
+    }
   }
 }
