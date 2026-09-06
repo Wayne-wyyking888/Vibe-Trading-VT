@@ -89,7 +89,7 @@
 {"T": "2026-08-06", "code": "000060", "name": "中金岭南", "close": 6.59, "score": 22.0, "atr": 3.74, "def_days": 26, "idx_rsv": 66.6, "volx": 1.84, "dd250": -28.1, "cooldown": false, "outcome": "win", "judge": "?", "days": 1, "entry": 6.63}
 {"T": "2026-08-06", "code": "000617", "name": "中油资本", "close": 7.18, "score": 22.0, "atr": 3.09, "def_days": 26, "idx_rsv": 66.6, "volx": 1.34, "dd250": -47.2, "cooldown": false, "outcome": "win", "judge": "✓", "days": 12, "entry": 7.17}
 {"T": "2026-08-06", "code": "300124", "name": "汇川技术", "close": 63.39, "score": 18.3, "atr": 3.43, "def_days": 26, "idx_rsv": 66.6, "volx": 0.9, "dd250": -30.0, "cooldown": false, "outcome": "stop", "judge": "✗", "days": 10, "entry": 63.38}
-{"T": "2026-08-06", "code": "002340", "name": "格林美", "close": 6.75, "score": 18.3, "atr": 2.62, "def_days": 26, "idx_rsv": 66.6, "volx": 1.54, "dd250": -33.1, "cooldown": false, "outcome": null, "judge": "✓"}
+{"T": "2026-08-06", "code": "002340", "name": "格林美", "close": 6.75, "score": 18.3, "atr": 2.62, "def_days": 26, "idx_rsv": 66.6, "volx": 1.54, "dd250": -33.1, "cooldown": false, "outcome": "timeout", "judge": "✓", "days": 20, "entry": 6.93}
 {"T": "2026-08-06", "code": "600893", "name": "航发动力", "close": 35.91, "score": 25.7, "atr": 3.22, "def_days": 26, "idx_rsv": 66.6, "volx": 1.07, "dd250": -43.6, "cooldown": true, "outcome": "win", "days": 5, "entry": 35.75}
 {"T": "2026-08-06", "code": "300207", "name": "欣旺达", "close": 18.51, "score": 22.0, "atr": 4.14, "def_days": 26, "idx_rsv": 66.6, "volx": 1.11, "dd250": -51.0, "cooldown": true, "outcome": "stop", "days": 18, "entry": 18.4}
 {"T": "2026-08-06", "code": "002179", "name": "中航光电", "close": 34.67, "score": 22.0, "atr": 3.11, "def_days": 26, "idx_rsv": 66.6, "volx": 0.91, "dd250": -26.6, "cooldown": true, "outcome": "win", "days": 5, "entry": 34.61}
@@ -111,7 +111,7 @@
 {"T": "2026-08-19", "code": "000066", "name": "中国长城", "close": 14.28, "score": 20.7, "atr": 4.06, "def_days": 1, "idx_rsv": 41.3, "volx": 0.98, "dd250": -44.5, "cooldown": true, "outcome": null}
 {"T": "2026-08-20", "code": "000066", "name": "中国长城", "close": 14.15, "score": 20.7, "atr": 3.84, "def_days": 2, "idx_rsv": 46.0, "volx": 0.56, "dd250": -45.0, "cooldown": true, "outcome": null}
 {"T": "2026-08-24", "code": "600888", "name": "新疆众和", "close": 10.53, "score": 25.7, "atr": 3.9, "def_days": 4, "idx_rsv": 15.9, "volx": 1.48, "dd250": -39.1, "cooldown": false, "outcome": null, "judge": "✓"}
-{"T": "2026-08-24", "code": "600909", "name": "华安证券", "close": 8.19, "score": 20.5, "atr": 3.45, "def_days": 4, "idx_rsv": 15.9, "volx": 0.82, "dd250": -36.2, "cooldown": false, "outcome": null, "judge": "✓"}
+{"T": "2026-08-24", "code": "600909", "name": "华安证券", "close": 8.19, "score": 20.5, "atr": 3.45, "def_days": 4, "idx_rsv": 15.9, "volx": 0.82, "dd250": -36.2, "cooldown": false, "outcome": "win", "judge": "✓", "days": 8, "entry": 8.09}
 {"T": "2026-08-25", "code": "002466", "name": "天齐锂业", "close": 47.01, "score": 20.7, "atr": 3.64, "def_days": 5, "idx_rsv": 9.7, "volx": 1.14, "dd250": -43.0, "cooldown": true, "outcome": "win", "days": 2, "entry": 46.55}
 {"T": "2026-08-26", "code": "300124", "name": "汇川技术", "close": 61.9, "score": 22.0, "atr": 2.83, "def_days": 6, "idx_rsv": 14.2, "volx": 0.97, "dd250": -31.6, "cooldown": false, "outcome": null, "judge": "✓"}
 {"T": "2026-08-26", "code": "002600", "name": "领益智造", "close": 12.25, "score": 19.9, "atr": 3.15, "def_days": 6, "idx_rsv": 14.2, "volx": 0.66, "dd250": -34.9, "cooldown": false, "outcome": "win", "judge": "✗", "days": 5, "entry": 12.28}
@@ -123,8 +123,8 @@
 {"T": "2026-08-27", "code": "002179", "name": "中航光电", "close": 35.5, "score": 22.0, "atr": 3.29, "def_days": 7, "idx_rsv": 29.3, "volx": 1.81, "dd250": -24.8, "cooldown": false, "outcome": null, "judge": "✗"}
 {"T": "2026-08-27", "code": "002600", "name": "领益智造", "close": 12.5, "score": 25.7, "atr": 3.07, "def_days": 7, "idx_rsv": 29.3, "volx": 0.94, "dd250": -33.5, "cooldown": true, "outcome": null}
 {"T": "2026-08-27", "code": "000066", "name": "中国长城", "close": 14.36, "score": 24.4, "atr": 3.42, "def_days": 7, "idx_rsv": 29.3, "volx": 0.59, "dd250": -44.2, "cooldown": true, "outcome": null}
-{"T": "2026-08-28", "code": "002171", "name": "楚江新材", "close": 10.32, "score": 25.7, "atr": 3.33, "def_days": 8, "idx_rsv": 16.7, "volx": 1.81, "dd250": -37.3, "cooldown": false, "outcome": null, "judge": "✗"}
-{"T": "2026-08-28", "code": "002709", "name": "天赐材料", "close": 37.15, "score": 24.4, "atr": 3.98, "def_days": 8, "idx_rsv": 16.7, "volx": 0.76, "dd250": -42.8, "cooldown": false, "outcome": null, "judge": "✓"}
+{"T": "2026-08-28", "code": "002171", "name": "楚江新材", "close": 10.32, "score": 25.7, "atr": 3.33, "def_days": 8, "idx_rsv": 16.7, "volx": 1.81, "dd250": -37.3, "cooldown": false, "outcome": "win", "judge": "✗", "days": 4, "entry": 10.1}
+{"T": "2026-08-28", "code": "002709", "name": "天赐材料", "close": 37.15, "score": 24.4, "atr": 3.98, "def_days": 8, "idx_rsv": 16.7, "volx": 0.76, "dd250": -42.8, "cooldown": false, "outcome": "stop", "judge": "✓", "days": 4, "entry": 36.96}
 {"T": "2026-08-28", "code": "000063", "name": "中兴通讯", "close": 33.63, "score": 20.7, "atr": 2.54, "def_days": 8, "idx_rsv": 16.7, "volx": 0.47, "dd250": -39.3, "cooldown": false, "outcome": null, "judge": "✗"}
 {"T": "2026-08-28", "code": "600111", "name": "北方稀土", "close": 40.62, "score": 20.7, "atr": 3.09, "def_days": 8, "idx_rsv": 16.7, "volx": 0.61, "dd250": -36.0, "cooldown": false, "outcome": null, "judge": "✓"}
 {"T": "2026-08-28", "code": "603799", "name": "华友钴业", "close": 39.99, "score": 20.7, "atr": 3.77, "def_days": 8, "idx_rsv": 16.7, "volx": 0.53, "dd250": -51.0, "cooldown": false, "outcome": null, "judge": "?"}
@@ -162,3 +162,10 @@
 {"T": "2026-09-03", "code": "002171", "name": "楚江新材", "close": 10.5, "score": 25.7, "atr": 3.7, "def_days": 12, "idx_rsv": 5.9, "volx": 2.3, "dd250": -36.2, "cooldown": true, "outcome": null}
 {"T": "2026-09-03", "code": "000066", "name": "中国长城", "close": 14.52, "score": 25.7, "atr": 3.03, "def_days": 12, "idx_rsv": 5.9, "volx": 0.75, "dd250": -43.6, "cooldown": true, "outcome": null}
 {"T": "2026-09-03", "code": "601689", "name": "拓普集团", "close": 47.83, "score": 22.0, "atr": 3.29, "def_days": 12, "idx_rsv": 5.9, "volx": 1.39, "dd250": -44.6, "cooldown": true, "outcome": null}
+{"T": "2026-09-04", "code": "002472", "name": "双环传动", "close": 38.05, "score": 22.0, "atr": 3.35, "def_days": 13, "idx_rsv": 4.1, "volx": 3.88, "dd250": -28.3, "cooldown": false, "outcome": null, "judge": "✓"}
+{"T": "2026-09-04", "code": "002625", "name": "光启技术", "close": 28.39, "score": 22.0, "atr": 3.26, "def_days": 13, "idx_rsv": 4.1, "volx": 1.41, "dd250": -51.0, "cooldown": false, "outcome": null, "judge": "✗"}
+{"T": "2026-09-04", "code": "600909", "name": "华安证券", "close": 8.25, "score": 21.2, "atr": 3.25, "def_days": 13, "idx_rsv": 4.1, "volx": 1.63, "dd250": -35.7, "cooldown": false, "outcome": null, "judge": "✓"}
+{"T": "2026-09-04", "code": "002171", "name": "楚江新材", "close": 10.3, "score": 25.7, "atr": 3.79, "def_days": 13, "idx_rsv": 4.1, "volx": 1.56, "dd250": -37.5, "cooldown": true, "outcome": null}
+{"T": "2026-09-04", "code": "002600", "name": "领益智造", "close": 12.63, "score": 22.0, "atr": 3.43, "def_days": 13, "idx_rsv": 4.1, "volx": 1.11, "dd250": -32.9, "cooldown": true, "outcome": null}
+{"T": "2026-09-04", "code": "000681", "name": "视觉中国", "close": 17.2, "score": 22.0, "atr": 4.07, "def_days": 13, "idx_rsv": 4.1, "volx": 1.81, "dd250": -51.0, "cooldown": true, "outcome": null}
+{"T": "2026-09-04", "code": "000066", "name": "中国长城", "close": 14.23, "score": 20.7, "atr": 3.12, "def_days": 13, "idx_rsv": 4.1, "volx": 0.86, "dd250": -44.7, "cooldown": true, "outcome": null}
