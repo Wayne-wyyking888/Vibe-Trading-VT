@@ -169,3 +169,12 @@
 {"T": "2026-09-04", "code": "002600", "name": "领益智造", "close": 12.63, "score": 22.0, "atr": 3.43, "def_days": 13, "idx_rsv": 4.1, "volx": 1.11, "dd250": -32.9, "cooldown": true, "outcome": null}
 {"T": "2026-09-04", "code": "000681", "name": "视觉中国", "close": 17.2, "score": 22.0, "atr": 4.07, "def_days": 13, "idx_rsv": 4.1, "volx": 1.81, "dd250": -51.0, "cooldown": true, "outcome": null}
 {"T": "2026-09-04", "code": "000066", "name": "中国长城", "close": 14.23, "score": 20.7, "atr": 3.12, "def_days": 13, "idx_rsv": 4.1, "volx": 0.86, "dd250": -44.7, "cooldown": true, "outcome": null}
+{"T": "2026-09-07", "code": "300442", "name": "润泽科技", "close": 63.99, "score": 22.0, "atr": 3.78, "def_days": 14, "idx_rsv": 37.1, "volx": 0.54, "dd250": -42.2, "cooldown": false, "outcome": null, "judge": "✓"}
+{"T": "2026-09-07", "code": "002850", "name": "科达利", "close": 178.83, "score": 22.0, "atr": 3.99, "def_days": 14, "idx_rsv": 37.1, "volx": 1.22, "dd250": -24.8, "cooldown": false, "outcome": null, "judge": "✓"}
+{"T": "2026-09-07", "code": "002050", "name": "三花智控", "close": 36.5, "score": 25.9, "atr": 3.36, "def_days": 14, "idx_rsv": 37.1, "volx": 1.13, "dd250": -39.7, "cooldown": true, "outcome": null}
+{"T": "2026-09-07", "code": "601689", "name": "拓普集团", "close": 47.06, "score": 25.9, "atr": 3.71, "def_days": 14, "idx_rsv": 37.1, "volx": 1.1, "dd250": -45.5, "cooldown": true, "outcome": null}
+{"T": "2026-09-07", "code": "002472", "name": "双环传动", "close": 37.62, "score": 22.0, "atr": 3.41, "def_days": 14, "idx_rsv": 37.1, "volx": 2.3, "dd250": -29.1, "cooldown": true, "outcome": null}
+{"T": "2026-09-07", "code": "000066", "name": "中国长城", "close": 14.79, "score": 22.0, "atr": 3.0, "def_days": 14, "idx_rsv": 37.1, "volx": 1.34, "dd250": -42.5, "cooldown": true, "outcome": null}
+{"T": "2026-09-07", "code": "002600", "name": "领益智造", "close": 12.65, "score": 22.0, "atr": 3.31, "def_days": 14, "idx_rsv": 37.1, "volx": 0.71, "dd250": -32.7, "cooldown": true, "outcome": null}
+{"T": "2026-09-07", "code": "002261", "name": "拓维信息", "close": 25.88, "score": 22.0, "atr": 2.69, "def_days": 14, "idx_rsv": 37.1, "volx": 0.74, "dd250": -43.0, "cooldown": true, "outcome": null}
+{"T": "2026-09-07", "code": "600909", "name": "华安证券", "close": 8.1, "score": 20.7, "atr": 3.32, "def_days": 14, "idx_rsv": 37.1, "volx": 1.1, "dd250": -36.9, "cooldown": true, "outcome": null}
