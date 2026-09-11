@@ -25,9 +25,9 @@
   `PRE_REGISTRATION.md` 冻结候选族、时间隔离和 shadow 门槛，`research.py` 负责同源 qfq 分段补历史、
   N=5 旋转门、1000候选搜索和2026 holdout，`verify.py` 独立复算五条 A/B 结果。大数据、报告、冻结文件、
   验收结果和 hash manifest 留在 `C:\Trading_analysis\research\bottom_board30_split_study\`。
-- `scripts/research/agent15_book_filter_study/`：引擎与 Agent②/③之间的 Agent 1.5 书籍启发型 F1—F5
-  价量否决层研究；保存 v0.1 预注册、v0.2 shadow 网格和 v0.3 已知五雷优先校准/逆时间验证协议、源码、结果与
-  独立验收。大网格、逐行审计和结构化结果留在
+- `scripts/research/agent15_book_filter_study/`：引擎与 Agent②/③之间的 Agent 1.5 书籍启发型过滤研究；
+  保存 v0.1 预注册、v0.2 shadow 网格、v0.3 已知五雷优先校准，以及 v0.4 基于《庄家的破绽》公开章节
+  重新翻译的 B1—B6/E1—E2 小候选、purge、空模型回退、源码、结果与独立验收。大网格、逐行审计和结构化结果留在
   `C:\Trading_analysis\research\bottom_agent15_book_filter\`；本模块目前只属研究，不是生产流程组件。
 - 大样本数据不随 skill 复制，保留在 `C:\Trading_analysis\research\bottom_ml\`。运行前必须先核对 manifest；
   `board30_split_study` 的大样本另保留在上述独立目录。运行前必须先核对对应 manifest；hash 不一致即视为
@@ -40,7 +40,7 @@
 | 底部区、修复因子、绝对阈值与双路径 | `bottom_panel.py`, `bottom_study.py`, `bottom_factors.py`, `bottom_top1.py`, `bottom_oos.py`, `bottom_threshold.py`, `bottom_dist.py`, `bottom_regime2.py` | 采纳底部区、修复确认、双路径与 ATR gate；否决“每日相对Top-1” | 今日高流动性股票回溯，含幸存者与牛市窗口偏差 |
 | 毒月、2024扩窗和熊市闸门 | `toxic_month.py`, `fix2024.py`, `bear_gate.py` | 采纳月度-3%与滚动20笔雷率熔断；否决 MA250/简单牛熊选股 gate | 2024能证明市况成簇，但不能保证未来熊市形态相同 |
 | 旋转门与候选 filter | `cooldown_sens.py`, `monthly_cooldown.py`, `bottom_filter_research.py`, `analyze_filters.py`, `validate_two_filters.py` | 采纳5交易日冷却；放量、MA250等不进生产规则 | 900根历史不足的字段和分段反向结果不得挑有利窗口引用 |
-| Agent 1.5 书籍启发型 F1—F5 价量否决层 | `agent15_book_filter_study/research.py`, `v02_shadow_grid_search.py`, `v03_grid_search.py`, `verify.py`, `verify_v02.py`, `verify_v03.py` | **v0.1/v0.2/v0.3 均不采纳生产**。v0.3 在61笔后验 shadow 校准样本内过滤5/5笔已知 `✓ stop`，但冻结后在2024—2026-07-12的1,770笔 N=5 逆时间验证中胜率-1.043pp、暴雷率+0.778pp、EV-0.114。即使事后排除2024，2025—2026-07-12合并848→653笔也仅胜率+0.738pp、暴雷率-0.609pp、EV+0.086，19个月月份块 bootstrap 三项区间均跨0；只可视作未确认的弱正向信号 | 五个已知暴雷直接启发阈值扩展，网格达523,864次，训练内效果向2025—2026条件样本缩水约93%—97%；逆时间验证不是前瞻 OOS，事后剔除2024属于 regime 挑选，且股票池非 point-in-time。未找到可在事前可靠识别2024式环境的 gate 前，不得据此宣称适用于“2025、2026及以后” |
+| Agent 1.5 书籍启发型候选否决层 | `agent15_book_filter_study/research.py`, `v02_shadow_grid_search.py`, `v03_grid_search.py`, `v04_rebuild.py`, `verify_v04.py` | **v0.1/v0.2/v0.3/v0.4 均不采纳生产**。v0.3 在61笔后验 shadow 校准样本内过滤5/5笔已知 `✓ stop`，但冻结后在2024—2026-07-12的1,770笔 N=5 逆时间验证中胜率-1.043pp、暴雷率+0.778pp、EV-0.114。v0.4 不再复用F1—F5，改以书籍公开章节映射的B1—B6、E1/E2，在21交易日purge前的1,703笔N=5未冷却候选上测试18条小候选；17条非空规则全部未过稳定性门禁，空模型 `KEEP_ALL` 胜出，五个已知 `✓ stop` 过滤0/5，独立验收16/16 | v0.3有五雷后验扩网格和523,864次多重检验；v0.4虽缩小假设空间并按实际N=5输入重建，但E1命中1,225/1,703而B3/B6零命中，去掉豁免的post-hoc诊断仍无经济增量。07-13后数据已被旧研究看过，只能称污染锁定审计，不是纯OOS；股票池仍非point-in-time。日线形态不足以表达书中的分时/盘口/公告破绽，不得据此宣称能识别庄家或防住未来暴雷 |
 | 资金流 | `bottom_flow.py`, `bottom_flow2.py` | 否决资金流加分/选股 gate | 源口径、缺失和样本选择会改变方向 |
 | 崩盘快刀与尾部成簇 | `toxic_month.py`, `bottom_regime2.py` | 保留买入日崩盘快刀、低仓位和预算熔断；否决“拿久等回来” | 胜负必须使用先到目标/先触-8%的路径口径，不能只看期末收益 |
 | 毒月消息面红旗分型 | `bottom_ml/select_poison.py`, `bottom_ml/select_winners.py` + README 8v8人工证据 | 采纳“恶化型强否决、事件型单独不否”的定性 rubric；不加数值分 | 人工对照仅 n=16，进入数值 gate 前仍需面板验证 |

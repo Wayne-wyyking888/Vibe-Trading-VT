@@ -75,3 +75,25 @@ python verify_v03.py
 
 完整网格、逐行审计、结构化摘要和独立验收分别写到输出目录中的 `v03_grid_all.csv.gz`、
 `v03_shadow_row_audit.csv`、`v03_summary.json/.md`、`v03_verification.json`。
+
+## v0.4 书籍映射重建
+
+v0.4 不沿用 F1—F5，也不以五个已知暴雷选阈值。它把《庄家的破绽》公开目录中的洗盘、试盘、
+平台跳水、避雷针、倾盆大雨、死亡穿越、高位派发、借指数洗盘和高开探天等主题，翻译为
+B1—B6“阶段+形态+截至T确认”，另设E1/E2已收回豁免。逐章映射及公开来源边界见
+[V04_BOOK_TRANSLATION.md](V04_BOOK_TRANSLATION.md)，时间隔离和空模型回退见
+[V04_PRE_REGISTRATION.md](V04_PRE_REGISTRATION.md)。
+
+主母体严格是现行引擎 N=5 旋转门后的 `cooldown=false` 候选。开发期只到2026-06-10，
+06-11至07-10做21交易日 purge；07-13以后因已被旧研究看过，只作污染锁定审计，不称纯OOS。
+
+结果见 [V04_RESULT.md](V04_RESULT.md)：17条非空规则全部未过开发门禁，正式选择为 `KEEP_ALL`，
+五个已知 `✓ stop` 过滤0/5，不进入生产或非空 prospective shadow。独立验收16/16通过。
+
+```powershell
+python v04_rebuild.py
+python verify_v04.py
+```
+
+大结果为 `v04_feature_matrix.csv.gz`、`v04_development_grid.csv`、`v04_row_audit.csv.gz`、
+`v04_summary.json/.md` 与 `v04_verification.json`。
